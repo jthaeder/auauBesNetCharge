@@ -251,7 +251,6 @@ void make_efficiencies(const char* particle, int energy = 14) {
   const double pt_bin[21] = {0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,.0,1.1,1.4,1.7,2.0,2.3,2.7,3.5,4.0,4.5,5.0};
 
   // --------------------------------------------------------------------------------
-
   // -- Initialize pt hists
   TH1D* hpt_f[nCent];
   for (Int_t idxCent = 0; idxCent < nCent; idxCent++) {
@@ -263,7 +262,34 @@ void make_efficiencies(const char* particle, int energy = 14) {
   }
 
   // --------------------------------------------------------------------------------
+  // -- Initialize delta pt hists
+  TH1D* hdeltapt[nCent];  
+  TH1D* hNdeltapt[nCent];
+  for (Int_t idxCent = 0; idxCent < nCent; idxCent++) {
+    hdeltapt[idxCent]  = new TH1D(Form("hdeltapt_%s",  cent[idxCent]), "", 100, 0., 10.);
+    hNdeltapt[idxCent] = new TH1D(Form("hNdeltapt_%s", cent[idxCent]), "", 100, 0., 10.);
 
+    hdeltapt[idxCent]->Sumw2();
+    hNdeltapt[idxCent]->Sumw2();
+  }
+
+  // --------------------------------------------------------------------------------
+  // -- Initialize momemtum resolution hists
+  TH2D* hmomenRes      = new TH2D("hmomenRes", "", Nbins, 0., 5.,20*Nbins,-3.,6.);
+  hmomenRes->GetXaxis()->Set(Nbins, pt_bin);
+  hmomenRes->Sumw2();
+  TH2D* hmomenResDiff  = new TH2D("hmomenResDiff", "", Nbins, 0., 5.,20*Nbins,-50.,50.);
+  hmomenResDiff->GetXaxis()->Set(Nbins, pt_bin);
+  hmomenResDiff->Sumw2();
+
+  TH2D* hmomenResDiffCent[nCent];
+  for (Int_t idxCent = 0; idxCent < nCent; idxCent++) {
+    hmomenResDiffCent[idxCent] = new TH2D(Form("hmomenResDiff_%s", cent[idxCent]), "", Nbins, 0., 5.,20*Nbins,-50.,50.);
+    hmomenResDiffCent[idxCent]->GetXaxis()->Set(Nbins, pt_bin);
+    hmomenResDiffCent[idxCent]->Sumw2(); 
+  }
+
+  // --------------------------------------------------------------------------------
   // -- Initialize eta hists
   TH1D* heta_f[nCent];
   for (Int_t idxCent = 0; idxCent < nCent; idxCent++) {
@@ -315,46 +341,12 @@ void make_efficiencies(const char* particle, int energy = 14) {
   // --------------------------------------------------------------------------------
   // -- QA histograms
 
-  TH1D* hDCA      = new TH1D("hDCA", "", 100, -5., 5.);
-  TH2D* hDCAphi   = new TH2D("hDCAphi", "", 100, -5., 5.,96, -pi, pi);
+  TH1D* hDCA      = new TH1D("hDCA",    "", 100, -5., 5.);
+  TH2D* hDCAphi   = new TH2D("hDCAphi", "", 100, -5., 5., 96, -pi, pi);
+  TH2D* hphipt    = new TH2D("hphipt",  "", 200, -pi, pi, 200, 0.,10.);
 
   // --------------------------------------------------------------------------------
 
-  TH2D* hmomenRes      = new TH2D("hmomenRes", "", Nbins, 0., 5.,20*Nbins,-3.,6.);
-  hmomenRes->GetXaxis()->Set(Nbins, pt_bin);
-  TH2D* hmomenResDiff  = new TH2D("hmomenResDiff", "", Nbins, 0., 5.,20*Nbins,-50.,50.);
-  hmomenResDiff->GetXaxis()->Set(Nbins, pt_bin);
-  TH2D* hmomenResDiffC = new TH2D("hmomenResDiffC", "", Nbins, 0., 5.,20*Nbins,-50.,50.);
-  hmomenResDiffC->GetXaxis()->Set(Nbins, pt_bin);
-  TH2D* hmomenResDiffP = new TH2D("hmomenResDiffP", "", Nbins, 0., 5.,20*Nbins,-50.,50.);
-  hmomenResDiffP->GetXaxis()->Set(Nbins, pt_bin);
-
-  hmomenResDiff->Sumw2(); hmomenResDiffC->Sumw2(); hmomenResDiffP->Sumw2(); hmomenRes->Sumw2();
-
-  // --------------------------------------------------------------------------------
-
-  TH2D* hphipt     = new TH2D("hphipt","",200,-pi,pi,200,0.,10.);
-
-  TH1D* hNdeltaptC = new TH1D("hNdeltaptC","",100,0.,10.);
-  TH1D* hdeltaptC  = new TH1D("hdeltaptC","",100,0.,10.);
-  TH1D* hNdeltaptP = new TH1D("hNdeltaptP","",100,0.,10.);
-  TH1D* hdeltaptP  = new TH1D("hdeltaptP","",100,0.,10.);
-
-  hNdeltaptC->Sumw2();hdeltaptC->Sumw2(); 
-  hNdeltaptP->Sumw2();hdeltaptP->Sumw2();
-
-  // --------------------------------------------------------------------------------
-
-  Double_t xbins[38] = {0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,
-			2.0,2.1,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,3.0,3.5,4.0,4.5,5.0,6.0,7.0,10.0};
-
-  TH1D* hMomenMCCent      = new TH1D("hMomenMCCent","",37,xbins);
-  TH1D* hMomenMatchedCent = new TH1D("hMomenMatchedCent","",37,xbins);
-  TH1D* hMomenMCPer       = new TH1D("hMomenMCPer","",37,xbins);
-  TH1D* hMomenMatchedPer  = new TH1D("hMomenMatchedPer","",37,xbins);
-
-  hMomenMatchedCent->Sumw2(); hMomenMCPer->Sumw2(); hMomenMatchedPer->Sumw2(); hMomenMCCent->Sumw2();
-  
   cout << "histograms created" << endl;
     
   // --------------------------------------------------------------------------------
@@ -563,23 +555,13 @@ void make_efficiencies(const char* particle, int energy = 14) {
       hDCA->Fill(DcaXYGl);
       hDCAphi->Fill(DcaXYGl,PhiPr);
 
+      hNdeltapt[idxCent]->Fill(PtMc);
+      hdeltapt[idxCent]->Fill(PtMc, (PtMc-PtPr));
+
       if (FitPts == NCommonHit)
 	hmomenRes->Fill(PtMc, 1./PtPr-1./PtMc);
-
       hmomenResDiff->Fill(PtMc, PtPr-PtMc);
-
-      if (idxCent == 0) {
-	hmomenResDiffC->Fill(PtMc,PtPr-PtMc);
-	
-	hNdeltaptC->Fill(PtMc);
-	hdeltaptC->Fill(PtMc,(PtMc-PtPr));
-      }
-
-      if (idxCent == 7 || idxCent == 8) {
-	hNdeltaptP->Fill(PtMc);
-	hdeltaptP->Fill(PtMc,(PtMc-PtPr));
-	hmomenResDiffP->Fill(PtMc,PtPr-PtMc);
-      }
+      hmomenResDiffCent[idxCent]->Fill(PtMc,PtPr-PtMc);
     }
     
     // --------------------------------------------------------------------------------
@@ -632,51 +614,44 @@ void make_efficiencies(const char* particle, int energy = 14) {
 
   // --------------------------------------------------------------------------------
 
-  hdeltaptC->Divide(hNdeltaptC);
-  hdeltaptP->Divide(hNdeltaptP);
+  for (Int_t idxCent = 0; idxCent < nCent; idxCent++) 
+    hdeltapt[idxCent]->Divide(hNdeltapt[idxCent]);
 
   // =============================================================================================
   // -- Draw Canvas
   // =============================================================================================
-  
-  TCanvas *cmomentumResC = new TCanvas("cmomentumResC", "momentumResC", 800, 600);
-  hMomenMatchedCent->Draw("C");
 
   TCanvas *cmomRes = new TCanvas("cmomRes", "momRes", 800, 600);
   hmomenRes->Draw("colz");
 
-  TCanvas *cmomentumResP = new TCanvas("cmomentumResP", "momentumResP", 800, 600);
-  hMomenMatchedPer->Draw("C");
-
   TCanvas *cdeltaptC = new TCanvas("cdeltaptC", "deltaptC", 800, 600);
-
   char buffer[100];
   sprintf(buffer,"Efficiency for refmult integrated p_{T} distribution for %s at %dGeV",particle,energy);
   //hdeltaptC->SetTitle(buffer);
-  hdeltaptC->GetXaxis()->SetTitle("p_{T}(GeV/c)");
-  hdeltaptC->GetXaxis()->CenterTitle();
-  hdeltaptC->GetXaxis()->SetRangeUser(0.,5.);
-  hdeltaptC->GetYaxis()->SetTitle("<#Deltap_{T}>(GeV/c)");
-  hdeltaptC->GetYaxis()->SetTitleOffset(1.4);
-  hdeltaptC->GetYaxis()->CenterTitle();
-  hdeltaptC->SetMarkerStyle(20);
-  hdeltaptC->SetStats(kFALSE);
-  hdeltaptC->DrawCopy();
+  hdeltapt[0]->GetXaxis()->SetTitle("p_{T}(GeV/c)");
+  hdeltapt[0]->GetXaxis()->CenterTitle();
+  hdeltapt[0]->GetXaxis()->SetRangeUser(0.,5.);
+  hdeltapt[0]->GetYaxis()->SetTitle("<#Deltap_{T}>(GeV/c)");
+  hdeltapt[0]->GetYaxis()->SetTitleOffset(1.4);
+  hdeltapt[0]->GetYaxis()->CenterTitle();
+  hdeltapt[0]->SetMarkerStyle(20);
+  hdeltapt[0]->SetStats(kFALSE);
+  hdeltapt[0]->DrawCopy();
   sprintf(buffer, "effQA/hdeltaptC%d_%d.png",energy,PID);
-  cdeltaptC->Print(buffer);
+  cdeltaptC[0]->Print(buffer);
 
   TCanvas *cdeltaptP = new TCanvas("cdeltaptP", "deltaptP", 800, 600);
   sprintf(buffer,"Efficiency for refmult integrated p_{T} distribution for %s at %dGeV",particle,energy);
-  //hdeltaptP->SetTitle(buffer);
-  hdeltaptP->GetXaxis()->SetTitle("p_{T}(GeV/c)");
-  hdeltaptP->GetXaxis()->CenterTitle();
-  hdeltaptP->GetYaxis()->SetTitleOffset(1.4);
-  hdeltaptP->GetXaxis()->SetRangeUser(0.,5.);
-  hdeltaptP->GetYaxis()->SetTitle("<#Deltap_{T}>(GeV/c)");
-  hdeltaptP->GetYaxis()->CenterTitle();
-  hdeltaptP->SetMarkerStyle(20);
-  hdeltaptP->SetStats(kFALSE);
-  hdeltaptP->DrawCopy();
+  //hdeltapt[7]->SetTitle(buffer);
+  hdeltapt[7]->GetXaxis()->SetTitle("p_{T}(GeV/c)");
+  hdeltapt[7]->GetXaxis()->CenterTitle();
+  hdeltapt[7]->GetYaxis()->SetTitleOffset(1.4);
+  hdeltapt[7]->GetXaxis()->SetRangeUser(0.,5.);
+  hdeltapt[7]->GetYaxis()->SetTitle("<#Deltap_{T}>(GeV/c)");
+  hdeltapt[7]->GetYaxis()->CenterTitle();
+  hdeltapt[7]->SetMarkerStyle(20);
+  hdeltapt[7]->SetStats(kFALSE);
+  hdeltapt[7]->DrawCopy();
   sprintf(buffer, "effQA/hdeltaptP%d_%d.png",energy,PID);
   cdeltaptP->Print(buffer);
 
