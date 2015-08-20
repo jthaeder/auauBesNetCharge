@@ -638,7 +638,7 @@ void make_efficiencies(const char* particle, int energy = 14) {
   hdeltapt[0]->SetStats(kFALSE);
   hdeltapt[0]->DrawCopy();
   sprintf(buffer, "effQA/hdeltaptC%d_%d.png",energy,PID);
-  cdeltaptC[0]->Print(buffer);
+  cdeltaptC->Print(buffer);
 
   TCanvas *cdeltaptP = new TCanvas("cdeltaptP", "deltaptP", 800, 600);
   sprintf(buffer,"Efficiency for refmult integrated p_{T} distribution for %s at %dGeV",particle,energy);
