@@ -12,7 +12,7 @@
  * *************************************************** *
  *  Output: 
  *    - Fits: 
- *        - fits/fit_eta.root
+ *        - results/fits/fit_eta.root
  *    - Canvas: 
  *        - results/particles_eta
  *        - results/energy_cmp_eta
@@ -47,15 +47,21 @@
 
 using namespace std;
 
+const int   nCent    = 10;
 const char *cent[9]  = {"0005","0510","1020","2030","3040","4050","5060","6070","7080"};
 const char *cent1[9] = {"0-5%","5-10%","10-20%","20-30%","30-40%","40-50%","50-60%","60-70%","70-80%"};
 
+const int   nNames    = 3; 
 const char* names[3]  = {"pion", "kaon", "proton"};
 const char* names2[3] = {"#pi^{+}", "K^{+}", "p"};
 const char* names3[3] = {"#pi^{-}", "K^{-}", "#bar{p}"};
 
+const int   nEnergies        = 3; // 8
 const char* energies[3]      = {"11",   "14",   "19"};
 const char* exactEnergies[3] = {"11.5", "14.5", "19.6"};
+const float xPosLabel[]      = {0.15, 0.45, 0.72};
+//const char *energies[]       = {  "7",   "11",   "14",   "19",   "27",   "39",   "62",  "200"};
+//const char *exactEnergies[] = {"7.7", "11.5", "11.5", "19.6", "27.0", "39.0", "62.4", "62.4"};
 
 const double fitRanges[2]    = {-0.5, 0.5}; 
 
@@ -68,28 +74,28 @@ void fitEfficiencyEta() {
   gROOT->LoadMacro("./setupStyle.C");
   setupStyle();
 
-  gSystem->Exec("mkdir -p fits");
+  gSystem->Exec("mkdir -p ./results/fits");
   gSystem->Exec("mkdir -p ./results/particles_eta/png ./results/particles_eta/pdf ./results/particles_eta/root ./results/particles_eta/root_macro");
   gSystem->Exec("mkdir -p ./results/energy_cmp_eta/png ./results/energy_cmp_eta/pdf ./results/energy_cmp_eta/root ./results/energy_cmp_eta/root_macro");
 
   TColor *color = new TColor(1182, 1, 0, 0, " ", 0);
 
-  TFile *fplus[3][3];
-  TFile *fminus[3][3];
+  TFile *fplus[nNames][nEnergies];
+  TFile *fminus[nNames][nEnergies];
 
-  TCanvas* can[3][3];
-  TCanvas* canCent[10];
+  TCanvas* can[nNames][nEnergies];
+  TCanvas* canCent[nCent];
  
-  TH1D* histsPlus[3][3][10];
-  TH1D* histsMinus[3][3][10];
+  TH1D* histsPlus[nNames][nEnergies][nCent];
+  TH1D* histsMinus[nNames][nEnergies][nCent];
 
-  TF1* funPlus[3][3][10];
-  TF1* funMinus[3][3][10];
+  TF1* funPlus[nNames][nEnergies][nCent];
+  TF1* funMinus[nNames][nEnergies][nCent];
 
   // ----------------------------------------------------------
   // -- read files
   // ----------------------------------------------------------
-  for (int energyIdx = 0 ; energyIdx <3; ++energyIdx) {
+  for (int energyIdx = 0; energyIdx < nEnergies; ++energyIdx) {
     fplus[0][energyIdx]  = TFile::Open(Form("efficiency/piplus%sGeV.root",  energies[energyIdx]));
     fminus[0][energyIdx] = TFile::Open(Form("efficiency/piminus%sGeV.root", energies[energyIdx]));
     
@@ -103,9 +109,9 @@ void fitEfficiencyEta() {
   // ----------------------------------------------------------
   // -- read histograms
   // ----------------------------------------------------------
-  for (int energyIdx = 0 ; energyIdx <3; ++energyIdx) {
-    for (int idx = 0; idx < 3; ++idx) {
-      for (int centIdx = 1; centIdx < 10; centIdx++) {
+  for (int energyIdx = 0; energyIdx < nEnergies; ++energyIdx) {
+    for (int idx = 0; idx < nNames; ++idx) {
+      for (int centIdx = 1; centIdx < nCent; centIdx++) {
 	histsPlus[idx][energyIdx][centIdx] = static_cast<TH1D*>(fplus[idx][energyIdx]->Get(Form("heta_%s",cent[centIdx-1])));
 	histsPlus[idx][energyIdx][centIdx]->SetLineStyle(1);
 	histsPlus[idx][energyIdx][centIdx]->SetMarkerStyle(20);
@@ -128,9 +134,9 @@ void fitEfficiencyEta() {
   // ----------------------------------------------------------
   // -- Fit histograms
   // ----------------------------------------------------------
-  for (int energyIdx = 0 ; energyIdx <3; ++energyIdx) {
-    for (int idx = 0; idx < 3; ++idx) {
-      for (int centIdx = 1; centIdx < 10; centIdx++) {
+  for (int energyIdx = 0; energyIdx < nEnergies; ++energyIdx) {
+    for (int idx = 0; idx < nNames; ++idx) {
+      for (int centIdx = 1; centIdx < nCent; centIdx++) {
 
 	funPlus[idx][energyIdx][centIdx] = new TF1(Form("funEff_Plus_%d_%d_%d", idx, energyIdx,centIdx), plateau, 0.2, 2, 3);
 	funPlus[idx][energyIdx][centIdx]->SetLineColor(kRed+3);
@@ -154,8 +160,8 @@ void fitEfficiencyEta() {
   // ----------------------------------------------------------
   // -- Create Canvas
   // ----------------------------------------------------------
-  for (int energyIdx = 0 ; energyIdx <3; ++energyIdx) {
-    for (int idx = 0; idx < 3; ++idx) {
+  for (int energyIdx = 0; energyIdx < nEnergies; ++energyIdx) {
+    for (int idx = 0; idx < nNames; ++idx) {
       can[idx][energyIdx] = new TCanvas(Form("can_eta_%s_%s", names[idx], energies[energyIdx]), names[idx],0,0,1200,600);
       can[idx][energyIdx]->SetFillColor(0);
       can[idx][energyIdx]->SetBorderMode(0);
@@ -169,8 +175,8 @@ void fitEfficiencyEta() {
   // ----------------------------------------------------------
   // -- Fill canvas by name / energy 
   // ----------------------------------------------------------
-  for (int energyIdx = 0 ; energyIdx <3; ++energyIdx) {
-    for (int idx = 0; idx < 3; ++idx) {
+  for (int energyIdx = 0; energyIdx < nEnergies; ++energyIdx) {
+    for (int idx = 0; idx < nNames; ++idx) {
       can[idx][energyIdx]->cd();
 
       TPad* pad = new TPad("pad", "pad",0.05,0.1,0.99,0.99);
@@ -282,7 +288,7 @@ void fitEfficiencyEta() {
   // -- Get Canvas
   // ----------------------------------------------------------
 
-  for (int centIdx = 1; centIdx < 10; centIdx++) {
+  for (int centIdx = 1; centIdx < nCent; centIdx++) {
     canCent[centIdx] = new TCanvas(Form("canCent_%d", centIdx), Form("canCent_eta_%d", centIdx),0,0,1200,900);
     canCent[centIdx]->SetFillColor(0);
     canCent[centIdx]->SetBorderMode(0);
@@ -298,7 +304,7 @@ void fitEfficiencyEta() {
   
   TLegend *leg2[3] = {NULL, NULL, NULL};
 
-  for (int centIdx = 1; centIdx < 10; centIdx++) {
+  for (int centIdx = 1; centIdx < nCent; centIdx++) {
     canCent[centIdx]->cd();
 
     TPad* pad = new TPad("pad", "pad",0.05,0.08,0.94,0.94);
@@ -306,10 +312,10 @@ void fitEfficiencyEta() {
     pad->SetFillColor(1182);
     pad->Draw();
     pad->cd();
-    pad->Divide(3,3,0.,0.,0.);
+    pad->Divide(nEnergies, nNames, 0.,0.,0.);
     
-    for (int energyIdx = 0 ; energyIdx <3; ++energyIdx) {
-      for (int idx = 0; idx < 3; ++idx) {
+    for (int energyIdx = 0; energyIdx < nEnergies; ++energyIdx) {
+      for (int idx = 0; idx < nNames; ++idx) {
 	pad->cd(idx*3+energyIdx+1);
 	
 	TH2D *ff = new TH2D("","",20,-1.1,1.1,20,0.01,0.99);
@@ -359,19 +365,13 @@ void fitEfficiencyEta() {
     texb_1->SetTextFont(42);
     texb_1->Draw("same");
     
-    TLatex *texb_3a = new TLatex(0.15, 0.925, Form("AuAu #sqrt{s_{NN}} = %s GeV", exactEnergies[0]));
-    texb_3a->SetTextSize(0.02);
-    texb_3a->SetTextFont(42);
-    texb_3a->Draw("same");
-    TLatex *texb_3b = new TLatex(0.45, 0.925, Form("AuAu #sqrt{s_{NN}} = %s GeV", exactEnergies[1]));
-    texb_3b->SetTextSize(0.02);
-    texb_3b->SetTextFont(42);
-    texb_3b->Draw("same");
-    TLatex *texb_3c = new TLatex(0.72, 0.925, Form("AuAu #sqrt{s_{NN}} = %s GeV", exactEnergies[2]));
-    texb_3c->SetTextSize(0.02);
-    texb_3c->SetTextFont(42);
-    texb_3c->Draw("same");
-    
+    for (int energyIdx = 0; energyIdx < nEnergies; ++energyIdx) {
+      TLatex *texb_3 = new TLatex(xPosLabel[energyIdx], 0.925, Form("AuAu #sqrt{s_{NN}} = %s GeV", exactEnergies[energyIdx]));
+      texb_3->SetTextSize(0.02);
+      texb_3->SetTextFont(42);
+      texb_3->Draw("same");
+    }
+
     TLatex *texb_5 = new TLatex(0.52,0.06,"#eta");
     texb_5->SetTextSize(0.03);
     texb_5->SetTextFont(42);
@@ -399,12 +399,12 @@ void fitEfficiencyEta() {
   // ----------------------------------------------------------
   // -- Write out fits
   // ----------------------------------------------------------
-  TFile *fOutput = TFile::Open("fits/fit_eta.root", "RECREATE");
+  TFile *fOutput = TFile::Open("./results/fits/fit_eta.root", "RECREATE");
   fOutput->cd();
 
-  for (int energyIdx = 0 ; energyIdx <3; ++energyIdx) 
-    for (int idx = 0; idx < 3; ++idx) 
-      for (int centIdx = 1; centIdx < 10; centIdx++) {
+  for (int energyIdx = 0; energyIdx < nEnergies; ++energyIdx) 
+    for (int idx = 0; idx < nNames; ++idx) 
+      for (int centIdx = 1; centIdx < nCent; centIdx++) {
    	funPlus[idx][energyIdx][centIdx]->Write();
   	funMinus[idx][energyIdx][centIdx]->Write();
       }
@@ -413,8 +413,8 @@ void fitEfficiencyEta() {
   // ----------------------------------------------------------
   // -- Write out canvas
   // ----------------------------------------------------------
-  for (int energyIdx = 0 ; energyIdx <3; ++energyIdx) {
-    for (int idx = 0; idx < 3; ++idx) {
+  for (int energyIdx = 0; energyIdx < nEnergies; ++energyIdx) {
+    for (int idx = 0; idx < nNames; ++idx) {
       can[idx][energyIdx]->SaveAs(Form("./results/particles_eta/root/eta_%s_%sGeV.root",    names[idx], energies[energyIdx]));
       can[idx][energyIdx]->SaveAs(Form("./results/particles_eta/root_macro/eta_%s_%sGeV.C", names[idx], energies[energyIdx]));
       can[idx][energyIdx]->SaveAs(Form("./results/particles_eta/png/eta_%s_%sGeV.png",      names[idx], energies[energyIdx]));
@@ -422,7 +422,7 @@ void fitEfficiencyEta() {
     }
   }
 
-  for (int centIdx = 1; centIdx < 10; centIdx++) {
+  for (int centIdx = 1; centIdx < nCent; centIdx++) {
     canCent[centIdx]->SaveAs(Form("./results/energy_cmp_eta/root/eta_cmp_%d.root",    centIdx));
     canCent[centIdx]->SaveAs(Form("./results/energy_cmp_eta/root_macro/eta_cmp_%d.C", centIdx));
     canCent[centIdx]->SaveAs(Form("./results/energy_cmp_eta/png/eta_cmp_%d.png",      centIdx));

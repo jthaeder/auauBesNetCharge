@@ -12,8 +12,7 @@
  * *************************************************** *
  *  Output: 
  *    - Fits: 
- *        - fits/fit.root
- *        - par, par_plateau
+ *        - results/fits/fit.root
  *    - Canvas: 
  *        - results/particles_pt
  *        - results/energy_cmp_pt
@@ -57,9 +56,12 @@ const char* names[]  = {"pion", "kaon", "proton"};
 const char* names2[] = {"#pi^{+}", "K^{+}", "p"};
 const char* names3[] = {"#pi^{-}", "K^{-}", "#bar{p}"};
 
-const int   nEnergies       = 1;
+const int   nEnergies       = 3; // 8
 const char* energies[]      = {"11",   "14",   "19"};
 const char* exactEnergies[] = {"11.5", "14.5", "19.6"};
+const float xPosLabel[]     = {0.15, 0.45, 0.72};
+//const char *energies[]       = {  "7",   "11",   "14",   "19",   "27",   "39",   "62",  "200"};
+//const char *exactEnergies[] = {"7.7", "11.5", "11.5", "19.6", "27.0", "39.0", "62.4", "62.4"};
 
 const double fitRanges[2]        = {0.1, 3.};  // {0.2, 1.95};
 const double fitRangesDelta[2]   = {0.1, 4.5}; 
@@ -83,7 +85,7 @@ void fitEfficiencyPt() {
   gROOT->LoadMacro("./setupStyle.C");
   setupStyle();
 
-  gSystem->Exec("mkdir -p  par par_plateau fits");
+  gSystem->Exec("mkdir -p ./results/fits");
   gSystem->Exec("mkdir -p ./results/particles_pt/png  ./results/particles_pt/pdf  ./results/particles_pt/root  ./results/particles_pt/root_macro");
   gSystem->Exec("mkdir -p ./results/particles_deltaPt/png  ./results/particles_deltaPt/pdf  ./results/particles_deltaPt/root  ./results/particles_deltaPt/root_macro");
   gSystem->Exec("mkdir -p ./results/energy_cmp_pt/png ./results/energy_cmp_pt/pdf ./results/energy_cmp_pt/root ./results/energy_cmp_pt/root_macro");
@@ -149,6 +151,7 @@ void fitEfficiencyPt() {
 	histsMinus[idx][energyIdx][centIdx]->SetLineWidth(1);
 	histsMinus[idx][energyIdx][centIdx]->SetLineColor(kAzure);
 
+	//	histsDeltaPlus[idx][energyIdx][centIdx] = static_cast<TH1D*>(fplus[idx][energyIdx]->Get(Form("hdeltapt_%s",cent[centIdx-1])));		
 	histsDeltaPlus[idx][energyIdx][centIdx] = static_cast<TH1D*>(fplus[idx][energyIdx]->Get(Form("hdeltaptC")));
 	histsDeltaPlus[idx][energyIdx][centIdx]->SetLineStyle(1);
 	histsDeltaPlus[idx][energyIdx][centIdx]->SetMarkerStyle(20);
@@ -156,7 +159,8 @@ void fitEfficiencyPt() {
 	histsDeltaPlus[idx][energyIdx][centIdx]->SetMarkerColor(kRed+2);
 	histsDeltaPlus[idx][energyIdx][centIdx]->SetLineWidth(1);
 	histsDeltaPlus[idx][energyIdx][centIdx]->SetLineColor(kRed+3);
-	
+
+	//	histsDeltaMinus[idx][energyIdx][centIdx] = static_cast<TH1D*>(fminus[idx][energyIdx]->Get(Form("hdeltapt_%s",cent[centIdx-1])));
 	histsDeltaMinus[idx][energyIdx][centIdx] = static_cast<TH1D*>(fminus[idx][energyIdx]->Get(Form("hdeltaptC")));	
 	histsDeltaMinus[idx][energyIdx][centIdx]->SetLineStyle(1);
 	histsDeltaMinus[idx][energyIdx][centIdx]->SetMarkerStyle(20);
@@ -183,11 +187,6 @@ void fitEfficiencyPt() {
 
 	histsPlus[idx][energyIdx][centIdx]->Fit(funPlateauPlus[idx][energyIdx][centIdx], "R", "", fitRangesPlateau[0], fitRangesPlateau[1]);
 
-	ofstream outparPlusLine(Form("./par_plateau/par_%s_plus%sGeV_%s.txt", names[idx], energies[energyIdx], cent[centIdx-1]));
-	for(int i=0;i<2;i++)
-	  outparPlusLine << funPlateauPlus[idx][energyIdx][centIdx]->GetParameter(i) << endl;
-	outparPlusLine.close();
-
 	// ----------------------------------------------------------
 	
 	funPlus[idx][energyIdx][centIdx] = new TF1(Form("funEff_Plus_%s_%s_%s", names[idx], energies[energyIdx], cent[centIdx-1]),  
@@ -197,11 +196,6 @@ void fitEfficiencyPt() {
 	funPlus[idx][energyIdx][centIdx]->SetParameters(0.7, 0.2, 2.0);
 
 	histsPlus[idx][energyIdx][centIdx]->Fit(funPlus[idx][energyIdx][centIdx], "R", "", fitRanges[0], fitRanges[1]);
-
-	ofstream outparPlus(Form("./par/par_%s_plus%sGeV_%s.txt", names[idx], energies[energyIdx], cent[centIdx-1]));
-	for(int i=0;i<3;i++)
-	  outparPlus << funPlus[idx][energyIdx][centIdx]->GetParameter(i) << endl;
-	outparPlus.close();
 
 	// ----------------------------------------------------------
 	
@@ -224,11 +218,6 @@ void fitEfficiencyPt() {
 
 	histsMinus[idx][energyIdx][centIdx]->Fit(funPlateauMinus[idx][energyIdx][centIdx], "R", "", fitRangesPlateau[0], fitRangesPlateau[1]);
 
-	ofstream outparMinusLine(Form("./par_plateau/par_%s_plus%sGeV_%s.txt", names[idx], energies[energyIdx], cent[centIdx-1]));
-	for(int i=0;i<2;i++)
-	  outparMinusLine << funPlateauMinus[idx][energyIdx][centIdx]->GetParameter(i) << endl;
-	outparMinusLine.close();
-
 	// ----------------------------------------------------------
 
 	funMinus[idx][energyIdx][centIdx] = new TF1(Form("funEff_Minus_%s_%s_%s", names[idx], energies[energyIdx], cent[centIdx-1]), 
@@ -239,11 +228,6 @@ void fitEfficiencyPt() {
 	
 	histsMinus[idx][energyIdx][centIdx]->Fit(funMinus[idx][energyIdx][centIdx], "R", "", fitRanges[0], fitRanges[1]);
 	
-	ofstream outparMinus(Form("./par/par_%s_minus%sGeV_%s.txt", names[idx], energies[energyIdx], cent[centIdx-1]));
-	for(int i=0;i<3;i++) 
-	  outparMinus << funMinus[idx][energyIdx][centIdx]->GetParameter(i) << endl;
-	outparMinus.close();
-
 	// ----------------------------------------------------------
 	
 	funDeltaMinus[idx][energyIdx][centIdx] = new TF1(Form("funDeltaPt_Minus_%s_%s_%s", names[idx], energies[energyIdx], cent[centIdx-1]),  
@@ -259,7 +243,7 @@ void fitEfficiencyPt() {
   }
 
   // ----------------------------------------------------------
-  // -- Create Canvas
+  // -- Fill canvas by name / energy -- eff
   // ----------------------------------------------------------
   for (int energyIdx = 0 ; energyIdx <nEnergies; ++energyIdx) {
     for (int idx = 0; idx < nNames; ++idx) {
@@ -269,23 +253,6 @@ void fitEfficiencyPt() {
       can[idx][energyIdx]->SetBorderSize(0.0);
       can[idx][energyIdx]->SetFrameFillColor(0);
       can[idx][energyIdx]->SetFrameBorderMode(0);
-      can[idx][energyIdx]->cd();
-
-      canDelta[idx][energyIdx] = new TCanvas(Form("canDelta_%s_%s", names[idx], energies[energyIdx]), names[idx],0,0,1200,600);
-      canDelta[idx][energyIdx]->SetFillColor(0);
-      canDelta[idx][energyIdx]->SetBorderMode(0);
-      canDelta[idx][energyIdx]->SetBorderSize(0.0);
-      canDelta[idx][energyIdx]->SetFrameFillColor(0);
-      canDelta[idx][energyIdx]->SetFrameBorderMode(0);
-      canDelta[idx][energyIdx]->cd();
-    }
-  }
-
-  // ----------------------------------------------------------
-  // -- Fill canvas by name / energy 
-  // ----------------------------------------------------------
-  for (int energyIdx = 0 ; energyIdx <nEnergies; ++energyIdx) {
-    for (int idx = 0; idx < nNames; ++idx) {
       can[idx][energyIdx]->cd();
 
       TPad* pad = new TPad("pad", "pad",0.05,0.1,0.99,0.99);
@@ -305,6 +272,7 @@ void fitEfficiencyPt() {
       leg1->SetBorderSize(0);
       
       for (int centIdx = 1; centIdx < nCent; centIdx++) {
+	//for (int centIdx = nCent-1; centIdx > 0; centIdx--) {
 	pad->cd(centIdx);
 	
 	if (centIdx == 5) {
@@ -398,6 +366,12 @@ void fitEfficiencyPt() {
   // ----------------------------------------------------------
   for (int energyIdx = 0 ; energyIdx < nEnergies; ++energyIdx) {
     for (int idx = 0; idx < nNames; ++idx) {
+      canDelta[idx][energyIdx] = new TCanvas(Form("canDelta_%s_%s", names[idx], energies[energyIdx]), names[idx],0,0,1200,600);
+      canDelta[idx][energyIdx]->SetFillColor(0);
+      canDelta[idx][energyIdx]->SetBorderMode(0);
+      canDelta[idx][energyIdx]->SetBorderSize(0.0);
+      canDelta[idx][energyIdx]->SetFrameFillColor(0);
+      canDelta[idx][energyIdx]->SetFrameBorderMode(0);
       canDelta[idx][energyIdx]->cd();
 
       TPad* pad = new TPad("pad", "pad",0.05,0.1,0.99,0.99);
@@ -427,18 +401,18 @@ void fitEfficiencyPt() {
 	  gPad->SetRightMargin(0.003);
 	}
 	
-	TH2D *ff = new TH2D("","",20, 0.009, 2.09, 21,-0.1,0.1);
+	TH2D *ff = new TH2D("","",20, 0.009, 2.09, 21,-0.015, 0.05);
 	ff->GetXaxis()->SetLabelSize(0.07);
-	ff->GetYaxis()->SetLabelSize(0.07);
+	ff->GetYaxis()->SetLabelSize(0.06);
 	ff->GetXaxis()->SetNdivisions(9,5,0);
 	ff->Draw();
 
-	TLine *line02 = new TLine(0.2, -0.1, 0.2, 1);
+	TLine *line02 = new TLine(0.2, -0.015, 0.2, 0.05);
 	line02->SetLineColor(kGray+4);
 	line02->SetLineStyle(3);
 	line02->Draw();
 
-	TLine *line20 = new TLine(2., -0.1, 2., 1);
+	TLine *line20 = new TLine(2., -0.015, 2., 0.05);
 	line20->SetLineColor(kGray+4);
 	line20->SetLineStyle(3);
 	line20->Draw();
@@ -446,10 +420,10 @@ void fitEfficiencyPt() {
 	histsDeltaPlus[idx][energyIdx][centIdx]->Draw("psame");
         histsDeltaMinus[idx][energyIdx][centIdx]->Draw("psame");
 	
-	TLatex *texb_Cent = new TLatex(0.8,0.1,cent1[centIdx-1]);
-	texb_Cent->SetTextSize(0.10);
-	texb_Cent->SetTextFont(42);
-	texb_Cent->Draw("same");
+	TLatex *texb_Centx = new TLatex(0.95,0.035,cent1[centIdx-1]);
+	texb_Centx->SetTextSize(0.10);
+	texb_Centx->SetTextFont(42);
+	texb_Centx->Draw("same");
 	
 	pad->Modified();
 	canDelta[idx][energyIdx]->cd();
@@ -470,8 +444,8 @@ void fitEfficiencyPt() {
     
       leg1->Draw("lt");
       
-      TLatex *texb_1 = new TLatex(0.15,0.82,"#delta #it{p}_{T} (#it{p}_{T,MC}-#it{p}_{T,rec})/(#it{p}_{T,MC}");
-      texb_1->SetTextSize(0.1);
+      TLatex *texb_1 = new TLatex(0.15,0.82,"#delta#it{p}_{T}  (#it{p}_{T,MC}-#it{p}_{T,rec})/#it{p}_{T,MC}");
+      texb_1->SetTextSize(0.09);
       texb_1->SetTextFont(42);
       texb_1->Draw("same");
       
@@ -503,10 +477,11 @@ void fitEfficiencyPt() {
       canDelta[idx][energyIdx]->cd();
     } // end idx
   } // end energy idx
-
+  
   // ----------------------------------------------------------
-  // -- Get Canvas
+  // -- Fill canvas by cent
   // ----------------------------------------------------------
+  TLegend *leg2[nNames];
 
   for (int centIdx = 1; centIdx < nCent; centIdx++) {
     canCent[centIdx] = new TCanvas(Form("canCent_%d", centIdx), Form("canCent_%d", centIdx),0,0,1200,900);
@@ -516,22 +491,13 @@ void fitEfficiencyPt() {
     canCent[centIdx]->SetFrameFillColor(0);
     canCent[centIdx]->SetFrameBorderMode(0);
     canCent[centIdx]->cd();
-  }
-  
-  // ----------------------------------------------------------
-  // -- Fill canvas by cent
-  // ----------------------------------------------------------
-  TLegend *leg2[nNames];
-
-  for (int centIdx = 1; centIdx < nCent; centIdx++) {
-    canCent[centIdx]->cd();
 
     TPad* pad = new TPad("pad", "pad",0.05,0.08,0.94,0.94);
     pad->SetBorderMode(0);
     pad->SetFillColor(1182);
     pad->Draw();
     pad->cd();
-    pad->Divide(3,3,0.,0.,0.);
+    pad->Divide(nEnergies, nNames, 0.,0.,0.);
 
     for (int energyIdx = 0 ; energyIdx < nEnergies; ++energyIdx) {
       for (int idx = 0; idx < nNames; ++idx) {
@@ -585,19 +551,13 @@ void fitEfficiencyPt() {
     texb_1->SetTextSize(0.03);
     texb_1->SetTextFont(42);
     texb_1->Draw("same");
-    
-    TLatex *texb_3a = new TLatex(0.15, 0.925, Form("AuAu #sqrt{s_{NN}} = %s GeV", exactEnergies[0]));
-    texb_3a->SetTextSize(0.02);
-    texb_3a->SetTextFont(42);
-    texb_3a->Draw("same");
-    TLatex *texb_3b = new TLatex(0.45, 0.925, Form("AuAu #sqrt{s_{NN}} = %s GeV", exactEnergies[1]));
-    texb_3b->SetTextSize(0.02);
-    texb_3b->SetTextFont(42);
-    texb_3b->Draw("same");
-    TLatex *texb_3c = new TLatex(0.72, 0.925, Form("AuAu #sqrt{s_{NN}} = %s GeV", exactEnergies[2]));
-    texb_3c->SetTextSize(0.02);
-    texb_3c->SetTextFont(42);
-    texb_3c->Draw("same");
+
+    for (int energyIdx = 0 ; energyIdx < nEnergies; ++energyIdx) {
+      TLatex *texb_3 = new TLatex(xPosLabel[energyIdx], 0.925, Form("AuAu #sqrt{s_{NN}} = %s GeV", exactEnergies[energyIdx]));
+      texb_3->SetTextSize(0.02);
+      texb_3->SetTextFont(42);
+      texb_3->Draw("same");
+    }
     
     TLatex *texb_5 = new TLatex(0.45,0.06,"#it{p}_{T} (GeV/#it{c})");
     texb_5->SetTextSize(0.03);
@@ -626,7 +586,7 @@ void fitEfficiencyPt() {
   // ----------------------------------------------------------
   // -- Write out fits
   // ----------------------------------------------------------
-  TFile *fOutput = TFile::Open("fits/fit.root", "RECREATE");
+  TFile *fOutput = TFile::Open("./results/fits/fit.root", "RECREATE");
   fOutput->cd();
   
   for (int energyIdx = 0 ; energyIdx < nEnergies; ++energyIdx) 
