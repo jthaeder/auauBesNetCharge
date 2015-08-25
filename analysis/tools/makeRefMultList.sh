@@ -16,7 +16,6 @@ elif [ $# -eq 2 ] ; then
     mode=$2
 fi
 
-
 fileListHasRefMult=${fileList}.hasRefmult
 if [ -f ${fileListHasRefMult} ] ; then
     rm ${fileListHasRefMult}
@@ -37,9 +36,13 @@ while read -r file ; do
     day=`echo $file | cut -d'/' -f 12`
     run=`echo $file | cut -d'/' -f 13`
     name=`echo $file | cut -d'/' -f 14 | awk -F'.' '{ print $1 }'`
-    
+
+    if [ "$energy" = "7.7" ] ; then 
+	energy=7
+    fi
+
     refMultFile=refMultExtract/refMult_${energy}/${day}/${run}/${name}.refMult.txt
-    
+
     if [ -f ${refMultFile} ] ; then 
 	echo ${file} >> ${fileListHasRefMult}
 	if [ $mode -eq 1 ] ; then
