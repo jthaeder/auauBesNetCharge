@@ -36,11 +36,10 @@ else
     exit 0
 fi
 
-echo $fileList 
-
 ./runSplit.csh energy_fileLists/${fileList}
 
 jobIdx=0
+
 for file in `cat datalist` ; do 
     rm -rf $folder/$jobIdx
     mkdir -p $folder
@@ -49,13 +48,9 @@ for file in `cat datalist` ; do
 
     pushd $folder/$jobIdx > /dev/null
     rm file.list*
-
     cp ../../../$file ./file.list
 
-    ls
-#    qsub -l h_vmem=3G -l projectio=1,scratchfree=500,h_cpu=24:00:00 -o ./job.out -e ./job.err run.csh --energy=${energy}
-
-
+    qsub -l h_vmem=3G -l projectio=1,scratchfree=500,h_cpu=24:00:00 -o ./job.out -e ./job.err run.csh --energy=${energy}
     popd > /dev/null
 
     echo "echo $jobIdx.list complete!"

@@ -278,41 +278,44 @@ Int_t main(int argc, char** argv) {
   StRefMultCorr* refmult2Corr = new StRefMultCorr("refmult2");
 
   // -----------------------------------------------------------------------
-  // -- Get refMult / refMult2
+  // -- Get refMult / refMult2 from muDst
   // -----------------------------------------------------------------------
-  ifstream refMultFile;
 
   typedef std::pair<int,int> keyEventRun;
   std::map<keyEventRun, int> refMultMap;
   std::map<keyEventRun, int> refMult2Map;
 
-  // -- open in working dir
-  refMultFile.open("file.list.refMult");
-  if (!refMultFile.is_open()) {
-    cout << "Couldn't open refMult file" << endl;
-    exit(EXIT_FAILURE);
-  }
-  
-  if (refMultFile.is_open()) {
-    int run, event, gRefMult, refMult, refMult2;
-
-    refMultFile.ignore(10000,'\n');
-    while(1) {
-      refMultFile >> run >> event >> gRefMult >> refMult >> refMult2;
-
-      // -- break at at of file
+  if (energyIdx != 2) {
+    ifstream refMultFile;
+    
+    // -- open in working dir
+    refMultFile.open("file.list.refMult");
+    if (!refMultFile.is_open()) {
+      cout << "Couldn't open refMult file" << endl;
+      exit(EXIT_FAILURE);
+    }
+    
+    if (refMultFile.is_open()) {
+      int run, event, gRefMult, refMult, refMult2;
+      
+      refMultFile.ignore(10000,'\n');
+      while(1) {
+	refMultFile >> run >> event >> gRefMult >> refMult >> refMult2;
+	
+	// -- break at at of file
       if (refMultFile.eof())
 	break;
       
       // -- break if error occured during reading
       if (!refMultFile.good()) 
 	break;
-
+      
       refMultMap[std::make_pair(run,event)] = refMult;
       refMult2Map[std::make_pair(run,event)] = refMult2;
+      }
+      
+      refMultFile.close();
     }
-    
-    refMultFile.close();
   }
 
   // -----------------------------------------------------------------------

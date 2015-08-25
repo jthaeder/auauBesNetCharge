@@ -3,9 +3,13 @@
 make clean
 make 
 
-./makeRefMultList.sh file.list 1
+set energy=$1
 
-./analysis --energy=$1
+if ( $energy != 14.5 ) then
+    ./makeRefMultList.sh file.list 1
+endif
+
+echo ./analysis --energy=$energy
 
 
 
