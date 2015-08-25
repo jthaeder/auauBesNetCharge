@@ -31,3 +31,15 @@ eff_hadrons/efficiency*
 eff_hadrons/spectra/
 results*/
 effQA_dedx*/
+
+
+analysis/filelist/
+
+analysis/datalist
+analysis/jobs/
+analysis/data/
+analysis/cleanFileList.sh
+analysis/getFileList.sh
+analysis/makeRefMultList.sh
+analysis/Split.C
+analysis/file.list.*.test
