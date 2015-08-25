@@ -9,7 +9,7 @@ if ( $energy != 14.5 ) then
     ./makeRefMultList.sh file.list 1
 endif
 
-echo ./analysis --energy=$energy
+./analysis --energy=$energy
 
 
 
