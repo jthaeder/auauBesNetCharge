@@ -17,8 +17,7 @@ else
 fi
 
 if [ "$energy" == "7.7" ] ; then
-    fileList=filelist_7.7GeV.list 
-    exit 0
+    fileList=filelist_7.7GeV.list.hasRefmult
 elif [ "$energy" == "11.5" ] ; then
     fileList=filelist_11GeV.list.hasRefmult
 elif [ "$energy" == "14.5" ] ; then
@@ -53,6 +52,5 @@ for file in `cat datalist` ; do
     qsub -l h_vmem=3G -l projectio=1,scratchfree=500,h_cpu=24:00:00 -o ./job.out -e ./job.err run.csh --energy=${energy}
     popd > /dev/null
 
-    echo "echo $jobIdx.list complete!"
     let "jobIdx+=1"
 done

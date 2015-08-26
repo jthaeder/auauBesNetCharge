@@ -395,8 +395,17 @@ Int_t main(int argc, char** argv) {
     Int_t nRefMult2TracksMuDst = refMult2Map[std::make_pair(runId, eventId)];
     Int_t nRefMult2Tracks = (energyIdx == 2) ? 0 : nRefMult2TracksMuDst;
 
-    Int_t nTOFMatch       = pico->Event_mNBTOFMatch[0];
-
+    Int_t nTOFMatch = 0;
+    
+    if (energyIdx == 2) 
+      nTOFMatch = pico->Event_mNBTOFMatch[0];
+    else {
+      for (int idx =0; idx < nTracks; ++idx) {
+	if (pico->Tracks_mBTofMatchFlag[idx] > 0)
+	  nTOFMatch++; 
+      }
+    }
+    
     // ------------------------------------------------------------------
 
     for (Int_t idxTrack = 0; idxTrack < nTracks; idxTrack++)  {
@@ -452,8 +461,39 @@ Int_t main(int argc, char** argv) {
     // -- 2 - trigger - bit 5 || 6
     Int_t triggerId = pico->Event_mTriggerWord[0];
     ++iCut;
-    if ( !(((triggerId>>5)&0x1) || ((triggerId>>6)&0x1)) )
-      aEventCuts[iCut] = 1;
+
+    if (energyIdx == 0) {
+      if (!((triggerId&0x1)||((triggerId>>1)&0x1))) 
+	aEventCuts[iCut] = 1;	
+    }
+    else if (energyIdx == 1) {
+      if (!((triggerId&0x1)||((triggerId>>1)&0x1))) 
+	aEventCuts[iCut] = 1;
+    }
+    else if (energyIdx == 2) {
+      if (!(((triggerId>>5)&0x1)||((triggerId>>6)&0x1))) 
+	aEventCuts[iCut] = 1;
+    }
+    else if (energyIdx == 3) {
+      if(!((triggerId&0x1)||((triggerId>>1)&0x1)||((triggerId>>2)&0x1))) 
+	aEventCuts[iCut] = 1;
+    }
+    else if (energyIdx == 4) {
+      if (!((triggerId&0x1))) 
+	aEventCuts[iCut] = 1;
+    }
+    else if (energyIdx == 5) {
+      if (!((triggerId&0x1))) 
+	aEventCuts[iCut] = 1;
+    }
+    else if (energyIdx == 6) {
+      if(!((triggerId&0x1)||((triggerId>>1)&0x1)||((triggerId>>2)&0x1))) 
+	aEventCuts[iCut] = 1;
+    }
+    else if (energyIdx == 7) {
+      if(!(((triggerId)&0x1)||((triggerId>>1)&0x1)||((triggerId>>2)&0x1)||((triggerId>>3)&0x1))) 
+	aEventCuts[iCut] = 1;
+    }
 
     // -- Vertex cuts
     // ------------------------------------------------------------------
