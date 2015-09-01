@@ -25,16 +25,16 @@ endif
 
 if ( $mode == 1 ) then
     if ( $particle == 0 ) then
-	root4star -b -q make_efficiencies.C'("piplus",       '$energy')'
+	root4star -b -q make_efficiencies.C+'("piplus",       '$energy')'
     else if ( $particle == 1 ) then
-	root4star -b -q make_efficiencies.C'("piminus",      '$energy')'
+	root4star -b -q make_efficiencies.C+'("piminus",      '$energy')'
     else if ( $particle == 2 ) then
-	root4star -b -q make_efficiencies.C'("kaonplus",     '$energy')'
+	root4star -b -q make_efficiencies.C+'("kaonplus",     '$energy')'
     else if ( $particle == 3 ) then
-	root4star -b -q make_efficiencies.C'("kaonminus",    '$energy')'
+	root4star -b -q make_efficiencies.C+'("kaonminus",    '$energy')'
     else if ( $particle == 4 ) then
-	root4star -b -q make_efficiencies.C'("protonplus",   '$energy')'
+	root4star -b -q make_efficiencies.C+'("protonplus",   '$energy')'
     else if ( $particle == 5 ) then
-	root4star -b -q make_efficiencies.C'("protonminus",  '$energy')'
+	root4star -b -q make_efficiencies.C+'("protonminus",  '$energy')'
     endif
 endif

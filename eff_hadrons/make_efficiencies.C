@@ -3,7 +3,9 @@
 #include "TNtuple.h"
 #include "TFile.h"
 #include "TH1D.h"
+#include "TH2D.h"
 #include "TProfile.h"
+#include "TStyle.h"
 #include "TString.h"
 #include "TMath.h"
 #include "math.h"
@@ -12,14 +14,14 @@
 using namespace std;
 
 // _______________________________________________________________
-TH1D* getEffRatio(TH1F* hMC, TH1D* hRec, const char*name) {
+TH1D* getEffRatio(TH1D* hMC, TH1D* hRec, const char*name) {
   TH1D* hEff = static_cast<TH1D*>(hMC->Clone(name));
 
   for (int idx = 1; idx <= hEff->GetXaxis()->GetNbins(); idx++) {
     double binContent = hEff->GetBinContent(idx);
     if (binContent < 0.00001)
       binContent = 1.;
-    double ratio = hRec[idxCent]->GetBinContent(idx)/(double)binContent;
+    double ratio = hRec->GetBinContent(idx)/(double)binContent;
     hEff->SetBinContent(idx, ratio);
     hEff->SetBinError(idx, sqrt((double)binContent*ratio*(1.0-ratio))/(double)binContent);
   }
@@ -28,15 +30,15 @@ TH1D* getEffRatio(TH1F* hMC, TH1D* hRec, const char*name) {
 }
 
 // _______________________________________________________________
-TH2D* getEffRatio(TH2F* hMC, TH2D* hRec, const char*name) {
+TH2D* getEffRatio(TH2D* hMC, TH2D* hRec, const char*name) {
   TH2D* hEff = static_cast<TH2D*>(hMC->Clone(name));
 
-  for (int idxX = 1; idxY <= hEff->GetXaxis()->GetNbins(); idxX++) {
+  for (int idxX = 1; idxX <= hEff->GetXaxis()->GetNbins(); idxX++) {
     for (int idxY = 1; idxY <= hEff->GetYaxis()->GetNbins(); idxY++) {
       double binContent = hEff->GetBinContent(idxX, idxY);
-      if (binContent < <0.00001)
+      if (binContent < 0.00001)
 	binContent = 1.;
-      double ratio = hRec[idxCent]->GetBinContent(idxX, idxY)/(double)binContent;
+      double ratio = hRec->GetBinContent(idxX, idxY)/(double)binContent;
       hEff->SetBinContent(idxX, idxY, ratio);
       hEff->SetBinError(idxX, idxY, sqrt((double)binContent*ratio*(1.0-ratio))/(double)binContent);
     }
@@ -131,43 +133,45 @@ void make_efficiencies(const char* particle, int energy = 14) {
   TString out_file, in_file;
   TString prefix("embeddingTrees");
   TString postfix("efficiency");
-  double  mass;
-  float   PID = 0;
+
+  gSystem->Exec("mkdir -p efficiency");
+
+  int PID = 0;
   
   if(TString(particle) == TString("piplus")){
     in_file = prefix + TString("/SinglePiPlusNT_Embed_") + NRG + TString("GeV.root");
     out_file = postfix + TString("/piplus") + NRG + TString("GeV.root");
-    mass = .13975;
+    //    mass = .13975;
     PID = 8;
   }
   else if(TString(particle) == TString("piminus")){
     in_file = prefix + TString("/SinglePiMinusNT_Embed_") + NRG + TString("GeV.root");
     out_file = postfix + TString("/piminus") + NRG + TString("GeV.root");
-    mass = .13975;
+    //    mass = .13975;
     PID = 9;
   }
   else if(TString(particle) == TString("kaonplus")){
     in_file = prefix + TString("/SingleKPlusNT_Embed_") + NRG + TString("GeV.root");
     out_file = postfix + TString("/kplus") + NRG + TString("GeV.root");
-    mass = .493677;
+    //    mass = .493677;
     PID = 11;
   }
   else if(TString(particle) == TString("kaonminus")){
     in_file = prefix + TString("/SingleKMinusNT_Embed_") + NRG + TString("GeV.root");
     out_file = postfix + TString("/kminus") + NRG + TString("GeV.root");
-    mass = .493677;
+    //    mass = .493677;
     PID = 12;
   }
   else if(TString(particle) == TString("protonplus")){
     in_file = prefix + TString("/SingleProtonNT_Embed_") + NRG + TString("GeV.root");
     out_file = postfix + TString("/pplus") + NRG + TString("GeV.root");
-    mass = .93827;
+    //    mass = .93827;
     PID = 14;
   }
   else if(TString(particle) == TString("protonminus")){
     in_file = prefix + TString("/SinglePbarNT_Embed_") + NRG + TString("GeV.root");
     out_file = postfix + TString("/pminus") + NRG + TString("GeV.root");
-    mass = .93827;
+    //    mass = .93827;
     PID = 15;
   }
 
@@ -234,25 +238,25 @@ void make_efficiencies(const char* particle, int energy = 14) {
   // --------------------------------------------------------------------------------
   // -- open output file
   // --------------------------------------------------------------------------------
-  cout << "opening output file: " << out_file << endl;
 
   TFile *fOut = TFile::Open(out_file, "RECREATE");
-  TFile* fmomenOut =TFile::Open("fmomenOut","UPDATE");   /// does what?
   fOut->cd();
   
   // --------------------------------------------------------------------------------
   // -- Create histograms
   // --------------------------------------------------------------------------------
 
-  const int   nCent   = 10;
-  const char* cent[]  = {"0005","0510","1020","2030","3040","4050","5060","6070","7080"};
+  const int   nCent       = 9;
+  const char* cent[]      = {"0005","0510","1020","2030","3040","4050","5060","6070","7080"};
 
   const int    Nbins      = 20;
-  const double pt_bin[21] = {0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,.0,1.1,1.4,1.7,2.0,2.3,2.7,3.5,4.0,4.5,5.0};
+  const double pt_bin[21] = {0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.4,1.7,2.0,2.3,2.7,3.5,4.0,4.5,5.0};
 
   // --------------------------------------------------------------------------------
   // -- Initialize pt hists
   TH1D* hpt_f[nCent];
+  TH1D* hpt_mc[nCent];
+
   for (Int_t idxCent = 0; idxCent < nCent; idxCent++) {
     hpt_f[idxCent]  = new TH1D(Form("hpt_f_%s",  cent[idxCent]), "", Nbins, 0., 5.);
     hpt_mc[idxCent] = new TH1D(Form("hpt_mc_%s", cent[idxCent]), "", Nbins, 0., 5.);
@@ -292,6 +296,7 @@ void make_efficiencies(const char* particle, int energy = 14) {
   // --------------------------------------------------------------------------------
   // -- Initialize eta hists
   TH1D* heta_f[nCent];
+  TH1D* heta_mc[nCent];
   for (Int_t idxCent = 0; idxCent < nCent; idxCent++) {
     heta_f[idxCent]  = new TH1D(Form("heta_f_%s",  cent[idxCent]), "", 31, -1.5, 1.5);
     heta_mc[idxCent] = new TH1D(Form("heta_mc_%s", cent[idxCent]), "", 31, -1.5, 1.5);
@@ -302,8 +307,6 @@ void make_efficiencies(const char* particle, int energy = 14) {
 
   TH1D* hcent_f     = new TH1D("hcent_f", "", 1000, 0.5, 1000.5);
   TH1D* hcent_mc    = new TH1D("hcent_mc", "", 1000, 0.5, 1000.5);
-  TH1D* heta_f      = new TH1D("heta_f", "", 44, -1.1, 1.1);
-  TH1D* heta_mc     = new TH1D("heta_mc", "", 44, -1.1, 1.1);
   TH1D* hphi_f      = new TH1D("hphi_f", "", 96,-pi,pi);
   TH1D* hphi_mc     = new TH1D("hphi_mc", "",96,-pi,pi);
   TH1D* hvz_f       = new TH1D("hvz_f", "", 100, -max_z, max_z);
@@ -346,17 +349,13 @@ void make_efficiencies(const char* particle, int energy = 14) {
   TH2D* hphipt    = new TH2D("hphipt",  "", 200, -pi, pi, 200, 0.,10.);
 
   // --------------------------------------------------------------------------------
-
-  cout << "histograms created" << endl;
-    
-  // --------------------------------------------------------------------------------
   // -- Loop over MC tracks
   // --------------------------------------------------------------------------------
   int nTracks = McTrack->GetEntries();
 
   int nTracksCut = 0;
   int nTracksCutEta = 0;
-
+  
   for (int idxTrack = 0; idxTrack < nTracks; idxTrack++){
     McTrack->GetEntry(idxTrack);
 
@@ -380,17 +379,17 @@ void make_efficiencies(const char* particle, int energy = 14) {
     // -- basic check cuts
     if (pParentGeantId != 0)
       continue;
-   
-    if (pGeantId == PID )
+
+    if (pGeantId != PID )
       continue;
 
     // -- within Vertex R
     if ( (pVertexX-vxo)*(pVertexX-vxo) + (pVertexY-vyo)*(pVertexY-vyo) > max_r*max_r )
       continue;
-    
+
     // --------------------------------------------------------------------------------
     // -- check cuts
-   
+
     // -- within Vertex Z
     int fVz = (pVertexZ < max_z && pVertexZ > -max_z) ? 0 : 1;	    
 
@@ -405,7 +404,7 @@ void make_efficiencies(const char* particle, int energy = 14) {
 
     // -- -- -- -- -- -- -- -- -- -- 
 
-    if ((fVZ+fEta+fPt) == 0) 
+    if ((fVz+fEta+fPt) == 0) 
       hptcent2_mc->Fill(pPtMc,idxCent);
 
     // apply refmult cut
@@ -422,7 +421,7 @@ void make_efficiencies(const char* particle, int energy = 14) {
     }   
 
     // -- apply vz cut
-    if (fVZ) 
+    if (fVz) 
       continue;
 
     hpteta_mc->Fill(pPtMc, pEtaMc);
@@ -430,7 +429,7 @@ void make_efficiencies(const char* particle, int energy = 14) {
     // --------------------------------------------------------------------------------
     // --- Fill pt hists - MC
     if (fEta == 0) {
-      nTracksCut += 1;
+      ++nTracksCut;
       hpt_mc[idxCent]->Fill(pPtMc);
 
       hcent_mc->Fill(pRefMultCorrected);
@@ -442,22 +441,20 @@ void make_efficiencies(const char* particle, int energy = 14) {
     // --------------------------------------------------------------------------------
     // --- Fill eta hists - eta
     if (fPt == 0) {
-      nTracksCutEta += 1;
-      hpt_eta[idxCent]->Fill(pEtaMc);
-
-      heta_mc->Fill(pEtaMc);
+      ++nTracksCutEta;
+      heta_mc[idxCent]->Fill(pEtaMc);
       hetacent_mc->Fill(pEtaMc, pRefMultCorrected);
     }
 
     // --------------------------------------------------------------------------------
   } // for (int idxTrack = 0; idxTrack < nTracks; idxTrack++){
-  
+
   // --------------------------------------------------------------------------------
   // -- Loop over matched rec tracks
   // --------------------------------------------------------------------------------
   int nMatched = MatchedPairs->GetEntries();
   int nMatchedCut = 0;
-  int nmatchedCutEta = 0;
+  int nMatchedCutEta = 0;
 
   for (int idxMatch = 0; idxMatch < nMatched; idxMatch++){
     MatchedPairs->GetEntry(idxMatch);
@@ -482,7 +479,7 @@ void make_efficiencies(const char* particle, int energy = 14) {
     if (ParentGeantId != 0)
       continue;
    
-    if (GeantId == PID )
+    if (GeantId != PID )
       continue;
 
     if ((VertexX-vxo)*(VertexX-vxo) + (VertexY-vyo)*(VertexY-vyo) > max_r*max_r) 
@@ -515,7 +512,7 @@ void make_efficiencies(const char* particle, int energy = 14) {
     // --------------------------------------------------------------------------------
     // -- check cuts
 
-    int VZ   = (VertexZ < max_z && VertexZ > -max_z) ? 0 : 1;
+    int fVz   = (VertexZ < max_z && VertexZ > -max_z) ? 0 : 1;
 
     int fPt  = (PtMc*PtMc > min_pt*min_pt && PtMc*PtMc < max_pt*max_pt)  ? 0 : 1;
     int fEta = (fabs(EtaMc) < max_eta )  ? 0 : 1;
@@ -532,7 +529,7 @@ void make_efficiencies(const char* particle, int energy = 14) {
     }
     
     // -- apply vz cut
-    if (fVZ)
+    if (fVz)
       continue;
     
     if ((fEta+fPt) == 0)
@@ -543,7 +540,7 @@ void make_efficiencies(const char* particle, int energy = 14) {
     // --------------------------------------------------------------------------------
     // --- Fill pt hists - matched
     if (fEta == 0) {
-      nMatchedCut += 1;
+      ++nMatchedCut;
       hpt_f[idxCent]->Fill(PtMc);
 
       hcent_f->Fill(RefMultCorrected);
@@ -567,14 +564,12 @@ void make_efficiencies(const char* particle, int energy = 14) {
     // --------------------------------------------------------------------------------
     // --- Fill eta hists - matched
     if (fPt == 0) {
-      nmatchedcutEta += 1;
+      ++nMatchedCutEta;
       heta_f[idxCent]->Fill(EtaMc);
-
-      heta_f->Fill(EtaMc);
       hetacent_f->Fill(EtaMc,RefMultCorrected);
     }
   } //   for (int idxMatch = 0; idxMatch < nMatched; idxMatch++){
-  
+
   cout << "nMatched: " << nMatched << endl;
   cout << "nTracks:  " << nTracks << endl;
 
@@ -585,7 +580,7 @@ void make_efficiencies(const char* particle, int energy = 14) {
   cout << "nTracksCut (eta) : " << nTracksCutEta << endl;
   
   // =============================================================================================
-  // -- Mke efficiencies 
+  // -- Make efficiencies 
   // =============================================================================================
 
   TH1D* hpt[nCent];
@@ -597,7 +592,6 @@ void make_efficiencies(const char* particle, int energy = 14) {
     heta[idxCent] = getEffRatio(heta_mc[idxCent], heta_f[idxCent], Form("heta_%s", cent[idxCent]));
   
   TH1D* hcent    = getEffRatio(hcent_mc,    hcent_f,    "hcent");
-  TH1D* heta     = getEffRatio(heta_mc,     heta_f,     "heta");
   TH1D* hphi     = getEffRatio(hphi_mc,     hphi_f,     "hphi");
   TH1D* hvz      = getEffRatio(hvz_mc,      hvz_f,      "hvz");
 
@@ -621,39 +615,35 @@ void make_efficiencies(const char* particle, int energy = 14) {
   // -- Draw Canvas
   // =============================================================================================
 
+  gSystem->Exec(Form("mkdir -p effQA/%d", energy));
+
+  // --------------------------------------------------------------------------------
+
   TCanvas *cmomRes = new TCanvas("cmomRes", "momRes", 800, 600);
   hmomenRes->Draw("colz");
+  cmomRes->SaveAs(Form("effQA/%d/hmomRes%d_%d.png",energy,energy,PID));
 
-  TCanvas *cdeltaptC = new TCanvas("cdeltaptC", "deltaptC", 800, 600);
-  char buffer[100];
-  sprintf(buffer,"Efficiency for refmult integrated p_{T} distribution for %s at %dGeV",particle,energy);
-  //hdeltaptC->SetTitle(buffer);
-  hdeltapt[0]->GetXaxis()->SetTitle("p_{T}(GeV/c)");
-  hdeltapt[0]->GetXaxis()->CenterTitle();
-  hdeltapt[0]->GetXaxis()->SetRangeUser(0.,5.);
-  hdeltapt[0]->GetYaxis()->SetTitle("<#Deltap_{T}>(GeV/c)");
-  hdeltapt[0]->GetYaxis()->SetTitleOffset(1.4);
-  hdeltapt[0]->GetYaxis()->CenterTitle();
-  hdeltapt[0]->SetMarkerStyle(20);
-  hdeltapt[0]->SetStats(kFALSE);
-  hdeltapt[0]->DrawCopy();
-  sprintf(buffer, "effQA/hdeltaptC%d_%d.png",energy,PID);
-  cdeltaptC->Print(buffer);
+  // --------------------------------------------------------------------------------
 
-  TCanvas *cdeltaptP = new TCanvas("cdeltaptP", "deltaptP", 800, 600);
-  sprintf(buffer,"Efficiency for refmult integrated p_{T} distribution for %s at %dGeV",particle,energy);
-  //hdeltapt[7]->SetTitle(buffer);
-  hdeltapt[7]->GetXaxis()->SetTitle("p_{T}(GeV/c)");
-  hdeltapt[7]->GetXaxis()->CenterTitle();
-  hdeltapt[7]->GetYaxis()->SetTitleOffset(1.4);
-  hdeltapt[7]->GetXaxis()->SetRangeUser(0.,5.);
-  hdeltapt[7]->GetYaxis()->SetTitle("<#Deltap_{T}>(GeV/c)");
-  hdeltapt[7]->GetYaxis()->CenterTitle();
-  hdeltapt[7]->SetMarkerStyle(20);
-  hdeltapt[7]->SetStats(kFALSE);
-  hdeltapt[7]->DrawCopy();
-  sprintf(buffer, "effQA/hdeltaptP%d_%d.png",energy,PID);
-  cdeltaptP->Print(buffer);
+  TCanvas *cdeltapt = new TCanvas("cdeltapt", "deltapt", 800, 600);
+  cdeltapt->Divide(3,3,0,0);
+
+  for (Int_t idxCent = 0; idxCent < nCent; idxCent++) {
+    cdeltapt->cd(idxCent+1);
+    hdeltapt[idxCent]->SetTitle(Form("Efficiency for refmult integrated p_{T} distribution for %s at %dGeV - cent %d",particle,energy,idxCent));
+    hdeltapt[idxCent]->GetXaxis()->SetTitle("p_{T}(GeV/c)");
+    hdeltapt[idxCent]->GetXaxis()->CenterTitle();
+    hdeltapt[idxCent]->GetXaxis()->SetRangeUser(0.,5.);
+    hdeltapt[idxCent]->GetYaxis()->SetTitle("<#Deltap_{T}>(GeV/c)");
+    hdeltapt[idxCent]->GetYaxis()->SetTitleOffset(1.4);
+    hdeltapt[idxCent]->GetYaxis()->CenterTitle();
+    hdeltapt[idxCent]->SetMarkerStyle(20);
+    hdeltapt[idxCent]->SetStats(kFALSE);
+    hdeltapt[idxCent]->DrawCopy();
+  }    
+  cdeltapt->SaveAs(Form("effQA/%d/dhdeltapt%d_%d.png",energy,energy,PID));
+
+  // --------------------------------------------------------------------------------
 
   TCanvas *cphi = new TCanvas("cphi", "phi", 800, 600);
   hphi->GetXaxis()->SetTitle("#phi");
@@ -662,20 +652,9 @@ void make_efficiencies(const char* particle, int energy = 14) {
   hphi->GetYaxis()->CenterTitle();
   hphi->SetStats(kFALSE);
   hphi->DrawCopy();
-  sprintf(buffer, "effQA/hphi%d_%d.png",energy,PID);
   hphi->GetYaxis()->SetRangeUser(0.,1.2);
-  //cphi->Print(buffer);
-  
-  TCanvas *ceta = new TCanvas("ceta", "eta", 800, 600);
-  heta->GetXaxis()->SetTitle("#eta");
-  heta->GetXaxis()->CenterTitle();
-  heta->GetYaxis()->SetTitle("Efficiency");
-  heta->GetYaxis()->CenterTitle();
-  heta->SetStats(kFALSE);
-  heta->DrawCopy();
-  sprintf(buffer, "effQA/heta%d_%d.png",energy,PID);
-  ceta->Print(buffer);
-  
+  cphi->SaveAs(Form("effQA/%d/hphi%d_%d.png",energy,energy,PID));
+    
   TCanvas *cvz = new TCanvas("cvz", "vz", 800, 600);
   hvz->GetXaxis()->SetTitle("V_{Z}");
   hvz->GetXaxis()->CenterTitle();
@@ -683,8 +662,7 @@ void make_efficiencies(const char* particle, int energy = 14) {
   hvz->GetYaxis()->CenterTitle();
   hvz->SetStats(kFALSE);
   hvz->DrawCopy();
-  sprintf(buffer, "effQA/hvz%d_%d.png",energy,PID);
-  cvz->Print(buffer);
+  cvz->SaveAs(Form("effQA/%d/hvz%d_%d.png",energy,energy,PID));
   
   TCanvas *ccent = new TCanvas("ccent", "cent", 800, 600);
   hcent->GetXaxis()->SetTitle("refMult");
@@ -693,8 +671,7 @@ void make_efficiencies(const char* particle, int energy = 14) {
   hcent->GetYaxis()->CenterTitle();
   hcent->SetStats(kFALSE);
   hcent->DrawCopy();
-  sprintf(buffer, "effQA/hcent%d_%d.png",energy,PID);
-  ccent->Print(buffer);
+  ccent->SaveAs(Form("effQA/%d/hcent%d_%d.png",energy,energy,PID));
   
   TCanvas *cptcent = new TCanvas("cptcent", "ptcent", 800, 600);
   hptcent->GetXaxis()->SetTitle("p_{T}(GeV/c)");
@@ -704,8 +681,7 @@ void make_efficiencies(const char* particle, int energy = 14) {
   hptcent->GetYaxis()->CenterTitle();
   hptcent->SetStats(kFALSE);
   hptcent->DrawCopy("colz");
-  sprintf(buffer, "effQA/hptcent%d_%d.png",energy,PID);
-  cptcent->Print(buffer);
+  cptcent->SaveAs(Form("effQA/%d/hptcent%d_%d.png",energy,energy,PID));
 
   TCanvas *cptcent2 = new TCanvas("cptcent2", "ptcent2", 800, 600);
   hptcent2->GetXaxis()->SetTitle("p_{T}(GeV/c)");
@@ -715,8 +691,7 @@ void make_efficiencies(const char* particle, int energy = 14) {
   hptcent2->GetYaxis()->CenterTitle();
   hptcent2->SetStats(kFALSE);
   hptcent2->DrawCopy("colz");
-  sprintf(buffer, "effQA/hptcent2%d_%d.png",energy,PID);
-  cptcent2->Print(buffer);
+  cptcent2->SaveAs(Form("effQA/%d/hptcent2%d_%d.png",energy,energy,PID));
   
   TCanvas *cpteta = new TCanvas("cpteta", "pteta", 800, 600);
   hpteta->GetXaxis()->SetTitle("p_{T}(GeV/c)");
@@ -726,8 +701,7 @@ void make_efficiencies(const char* particle, int energy = 14) {
   hpteta->GetYaxis()->CenterTitle();
   hpteta->SetStats(kFALSE);
   hpteta->DrawCopy("colz");
-  sprintf(buffer, "effQA/hpteta%d_%d.png",energy,PID);
-  cpteta->Print(buffer);
+  cpteta->SaveAs(Form("effQA/%d/hpteta%d_%d.png",energy,energy,PID));
   
   TCanvas *cptvz = new TCanvas("cptvz", "ptvz", 800, 600);
   hptvz->GetXaxis()->SetTitle("p_{T}(GeV/c)");
@@ -737,8 +711,7 @@ void make_efficiencies(const char* particle, int energy = 14) {
   hptvz->GetYaxis()->CenterTitle();
   hptvz->SetStats(kFALSE);
   hptvz->DrawCopy("colz");
-  sprintf(buffer, "effQA/hptvz%d_%d.png",energy,PID);
-  cptvz->Print(buffer);
+  cptvz->SaveAs(Form("effQA/%d/hptvz%d_%d.png",energy,energy,PID));
   
   TCanvas *cetacent = new TCanvas("cetacent", "etacent", 800, 600);
   hetacent->GetXaxis()->SetTitle("#eta");
@@ -747,8 +720,7 @@ void make_efficiencies(const char* particle, int energy = 14) {
   hetacent->GetYaxis()->CenterTitle();
   hetacent->SetStats(kFALSE);
   hetacent->DrawCopy("colz");
-  sprintf(buffer, "effQA/hetacent%d_%d.png",energy,PID);
-  cetacent->Print(buffer);
+  cetacent->SaveAs(Form("effQA/%d/hetacent%d_%d.png",energy,energy,PID));
   
   TCanvas *cetavz = new TCanvas("cetavz", "etavz", 800, 600);
   hetavz->GetXaxis()->SetTitle("#eta");
@@ -757,8 +729,7 @@ void make_efficiencies(const char* particle, int energy = 14) {
   hetavz->GetYaxis()->CenterTitle();
   hetavz->SetStats(kFALSE);
   hetavz->DrawCopy("colz");
-  sprintf(buffer, "effQA/hetavz%d_%d.png",energy,PID);
-  cetavz->Print(buffer);
+  cetavz->SaveAs(Form("effQA/%d/hetavz%d_%d.png",energy,energy,PID));
   
   TCanvas *ccentvz = new TCanvas("ccentvz", "centvz", 800, 600);
   hcentvz->GetXaxis()->SetTitle("refmult");
@@ -767,8 +738,7 @@ void make_efficiencies(const char* particle, int energy = 14) {
   hcentvz->GetYaxis()->CenterTitle();
   hcentvz->SetStats(kFALSE);
   hcentvz->DrawCopy("colz");
-  sprintf(buffer, "effQA/hcentvz%d_%d.png",energy,PID);
-  ccentvz->Print(buffer);
+  ccentvz->SaveAs(Form("effQA/%d/hcentvz%d_%d.png",energy,energy,PID));
   
   TCanvas *cptphi = new TCanvas("cptphi", "ptphi", 800, 600);
   hptphi->GetXaxis()->SetTitle("p_{T}(GeV/c)");
@@ -778,8 +748,7 @@ void make_efficiencies(const char* particle, int energy = 14) {
   hptphi->GetYaxis()->CenterTitle();
   hptphi->SetStats(kFALSE);
   hptphi->DrawCopy("colz");
-  sprintf(buffer, "effQA/hptphi%d_%d.png",energy,PID);
-  cptphi->Print(buffer);
+  cptphi->SaveAs(Form("effQA/%d/hptphi%d_%d.png",energy,energy,PID));
 
   TCanvas *cDCA = new TCanvas("cDCA", "DCA", 800, 600);
   hDCA->GetXaxis()->SetTitle("DCA(cm)");
@@ -788,8 +757,7 @@ void make_efficiencies(const char* particle, int energy = 14) {
   hDCA->GetYaxis()->CenterTitle();
   hDCA->SetStats(kFALSE);
   hDCA->DrawCopy("");
-  sprintf(buffer, "effQA/hDCA%d_%d.png",energy,PID);
-  cDCA->Print(buffer);
+  cDCA->SaveAs(Form("effQA/%d/hDCA%d_%d.png",energy,energy,PID));
 
   TCanvas *cDCAphi = new TCanvas("cDCAphi", "DCAphi", 800, 600);
   hDCAphi->GetXaxis()->SetTitle("DCA(cm)");
@@ -798,8 +766,7 @@ void make_efficiencies(const char* particle, int energy = 14) {
   hDCAphi->GetYaxis()->CenterTitle();
   hDCAphi->SetStats(kFALSE);
   hDCAphi->DrawCopy("colz");
-  sprintf(buffer, "effQA/hDCAphi%d_%d.png",energy,PID);
-  cDCAphi->Print(buffer);
+  cDCAphi->SaveAs(Form("effQA/%d/hDCAphi%d_%d.png",energy,energy,PID));
   
   fOut->Write();
   fOut->Close();

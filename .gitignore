@@ -49,3 +49,7 @@ analysis/file.list.*.test
 
 temp_gccflags.c
 .sl64_gcc482/
+
+eff_embedding/efficiency
+eff_embedding/effQA
+eff_embedding/embeddingTrees/
