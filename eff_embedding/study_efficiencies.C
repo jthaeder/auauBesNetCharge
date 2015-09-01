@@ -13,8 +13,6 @@
 
 using namespace std;
 
-
-
 void study_efficiencies(const char* particle, int energy = 14) {
 
   gStyle->SetOptStat(111111);
@@ -109,37 +107,31 @@ void study_efficiencies(const char* particle, int energy = 14) {
   if(TString(particle) == TString("piplus")){
     in_file = prefix + TString("/SinglePiPlusNT_Embed_") + NRG + TString("GeV.root");
     out_file = postfix + TString("/piplus") + NRG + TString("GeV.root");
-    //    mass = .13975;
     PID = 8;
   }
   else if(TString(particle) == TString("piminus")){
     in_file = prefix + TString("/SinglePiMinusNT_Embed_") + NRG + TString("GeV.root");
     out_file = postfix + TString("/piminus") + NRG + TString("GeV.root");
-    //    mass = .13975;
     PID = 9;
   }
   else if(TString(particle) == TString("kaonplus")){
     in_file = prefix + TString("/SingleKPlusNT_Embed_") + NRG + TString("GeV.root");
     out_file = postfix + TString("/kplus") + NRG + TString("GeV.root");
-    //    mass = .493677;
     PID = 11;
   }
   else if(TString(particle) == TString("kaonminus")){
     in_file = prefix + TString("/SingleKMinusNT_Embed_") + NRG + TString("GeV.root");
     out_file = postfix + TString("/kminus") + NRG + TString("GeV.root");
-    //    mass = .493677;
     PID = 12;
   }
   else if(TString(particle) == TString("protonplus")){
     in_file = prefix + TString("/SingleProtonNT_Embed_") + NRG + TString("GeV.root");
     out_file = postfix + TString("/pplus") + NRG + TString("GeV.root");
-    //    mass = .93827;
     PID = 14;
   }
   else if(TString(particle) == TString("protonminus")){
     in_file = prefix + TString("/SinglePbarNT_Embed_") + NRG + TString("GeV.root");
     out_file = postfix + TString("/pminus") + NRG + TString("GeV.root");
-    //    mass = .93827;
     PID = 15;
   }
 

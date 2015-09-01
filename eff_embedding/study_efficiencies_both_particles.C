@@ -13,7 +13,7 @@
 
 using namespace std;
 
-void study_efficiencies2(const char* particle, int energy = 14) {
+void study_efficiencies_both_particles(const char* particle, int energy = 14) {
 
   gStyle->SetOptStat(111111);
   gStyle->SetPalette(1);
@@ -42,6 +42,8 @@ void study_efficiencies2(const char* particle, int energy = 14) {
   float max_eta          = 0.5;
   float max_dca          = 1.0;
   
+  int   max_events       = 500;
+
   // --------------------------------------------------------------------------------
   // -- vertex cuts
   // --------------------------------------------------------------------------------
@@ -259,11 +261,38 @@ void study_efficiencies2(const char* particle, int energy = 14) {
   // --------------------------------------------------------------------------------
   // -- Initialize pt hists
   TProfile2D *effProfile2D[nCent];
+  TProfile *effProfile[nCent];
+  TProfile *effProfileAllPt[nCent];
+  TH1D* hpt_mc[nCent];
+  TH1D* hpt_rec[nCent];
+
+  TH1D* hpt_width[nCent];
+  TH1D* hpt_relativeWidth[nCent];
+
   for (Int_t idxCent = 0; idxCent < nCent; idxCent++) {
     effProfile2D[idxCent] = new TProfile(Form("effProfile2D_%s", cent[idxCent]), 
 					 Form("effProfile2D_%s", cent[idxCent]), Nbins, 0., 5., Nbins, 0., 5.);
     effProfile2D[idxCent]->GetXaxis()->Set(Nbins,pt_bin);
     effProfile2D[idxCent]->GetYaxis()->Set(Nbins,pt_bin);
+
+    effProfileAllPt[idxCent] = new TProfile(Form("effProfileAllPt_%s", cent[idxCent]), 
+					    Form("effProfileAllPt_%s", cent[idxCent]), 1, 0., 1.);
+
+    effProfile[idxCent] = new TProfile(Form("effProfile_%s", cent[idxCent]), 
+				       Form("effProfile_%s", cent[idxCent]), Nbins, 0., 5.);
+    effProfile[idxCent]->GetXaxis()->Set(Nbins,pt_bin);
+
+    hpt_mc[idxCent] = new TH1D(Form("hpt_mc_%s",  cent[idxCent]), "", Nbins, 0., 5.);
+    hpt_mc[idxCent]->GetXaxis()->Set(Nbins, pt_bin);
+
+    hpt_rec[idxCent] = new TH1D(Form("hpt_rec_%s", cent[idxCent]), "", Nbins, 0., 5.);
+    hpt_rec[idxCent]->GetXaxis()->Set(Nbins, pt_bin);
+
+    hpt_width[idxCent] = new TH1D(Form("hpt_width_%s", cent[idxCent]), "Width", Nbins, 0., 5.);
+    hpt_width[idxCent]->GetXaxis()->Set(Nbins, pt_bin);
+
+    hpt_relativeWidth[idxCent] = new TH1D(Form("hpt_relativeWidth_%s", cent[idxCent]), "Relative Width", Nbins, 0., 5.);
+    hpt_relativeWidth[idxCent]->GetXaxis()->Set(Nbins, pt_bin);
   }
 
   // --------------------------------------------------------------------------------
@@ -351,6 +380,10 @@ void study_efficiencies2(const char* particle, int energy = 14) {
   int currentEventRec = Int_t(EventId);
   int lastEventRec    = 0;
 
+  int eventCounter[nCent];
+  for (Int_t idxCent = 0; idxCent < nCent; idxCent++)
+    eventCounter[idxCent] = 0;
+
   // -- event loop
   for (int idxEvent = 0; idxEvent < nEventsMC; ++idxEvent) {
     int nTracksPerEventMC  = 0;
@@ -368,9 +401,24 @@ void study_efficiencies2(const char* particle, int energy = 14) {
 #if 0
       // --------------------------------------------------------------------------------
       // -- analyze current MC event
+      //    - get Centrality
       //    - check cuts
       //    - fill nTracksPerEventMC;
       // --------------------------------------------------------------------------------
+    
+      int idxCent = -1;
+      if (pCentrality16 == 15)      idxCent = 0;
+      else if (pCentrality16 == 14) idxCent = 1;
+      else if (pCentrality16 == 12 || pCentrality16 == 13) idxCent = 2;
+      else if (pCentrality16 == 10 || pCentrality16 == 11) idxCent = 3;
+      else if (pCentrality16 == 8  || pCentrality16 == 9)  idxCent = 4;
+      else if (pCentrality16 == 6  || pCentrality16 == 7)  idxCent = 5;
+      else if (pCentrality16 == 4  || pCentrality16 == 5)  idxCent = 6;
+      else if (pCentrality16 == 2  || pCentrality16 == 3)  idxCent = 7;
+      else if (pCentrality16 == 0  || pCentrality16 == 1)  idxCent = 8;
+      else 
+	continue;    
+      
       if (pParentGeantId != 0)
 	continue;
       
@@ -399,8 +447,6 @@ void study_efficiencies2(const char* particle, int energy = 14) {
     
     // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
 
-    bool skipEventMC = false;
-
     // -- Rec loop
     // --------------------------------------------------------------------------------
     lastEventRec = currentEventRec;
@@ -411,18 +457,29 @@ void study_efficiencies2(const char* particle, int energy = 14) {
       if (currentEventRec != lastEventRec) 
 	break;
 
-      if (currentEventRec != lastEventMC) {
-	skipEventMC = true;
+      if (currentEventRec != lastEventMC)
 	break;
-      }
-
+#if 0
       // --------------------------------------------------------------------------------
       // -- analyze current Rec event
+      //    - get Centrality
       //    - check cuts
       //    - fill nTracksPerEventRec;
       // --------------------------------------------------------------------------------
-#if 0
-      // -- basic check cuts
+   
+      int idxCent = -1;
+      if (Centrality16 == 15)      idxCent = 0;
+      else if (Centrality16 == 14) idxCent = 1;
+      else if (Centrality16 == 12 || Centrality16 == 13) idxCent = 2;
+      else if (Centrality16 == 10 || Centrality16 == 11) idxCent = 3;
+      else if (Centrality16 == 8  || Centrality16 == 9)  idxCent = 4;
+      else if (Centrality16 == 6  || Centrality16 == 7)  idxCent = 5;
+      else if (Centrality16 == 4  || Centrality16 == 5)  idxCent = 6;
+      else if (Centrality16 == 2  || Centrality16 == 3)  idxCent = 7;
+      else if (Centrality16 == 0  || Centrality16 == 1)  idxCent = 8;
+      else 
+	continue;    
+
       if (ParentGeantId != 0)
 	continue;
       
@@ -465,20 +522,16 @@ void study_efficiencies2(const char* particle, int energy = 14) {
 #endif
       ++nTracksPerEventRec;
     } // for(; idxRec < nTracksRec; idxRec++) {
-
-    float efficiencyPerEvent = 0.;
 #if 0
-    if (skipEventMC) {
-      // -- No Rec event present
-      continue;
-    }    
-    else 
-      efficiencyPerEvent = (nTracksPerEventMC != 0) ? nTracksPerEventRec / Float_t(nTracksPerEventMC) : 0;
+
+    // -----------------------------------------------
+
+    float efficiencyPerEvent = (nTracksPerEventMC != 0) ? nTracksPerEventRec / Float_t(nTracksPerEventMC) : 0;
     
     // -----------------------------------------------
     // -- get centrality
     int idxCent = -1;
-    if (pCentrality16 == 15)     idxCent = 0;
+    if (pCentrality16 == 15)      idxCent = 0;
     else if (pCentrality16 == 14) idxCent = 1;
     else if (pCentrality16 == 12 || pCentrality16 == 13) idxCent = 2;
     else if (pCentrality16 == 10 || pCentrality16 == 11) idxCent = 3;
@@ -492,25 +545,68 @@ void study_efficiencies2(const char* particle, int energy = 14) {
 
     // -----------------------------------------------
 
-    effProfile[idxCent]->Fill(PtMc, efficiencyPerEvent);
+    // -- all pts
+    effProfileAllPt[idxCent]->Fill(0.5, efficiencyPerEvent);
+
+    // -- pT dependent average over max_events
+    ++(eventCounter[idxCent]);
+    if (eventCounter[idxCent] >= max_events) {
+      for (int idx = 1; idx <= hpt_mc[idxCent]->GetXaxis()->GetNbins(); idx++) { 
+	double binContent = hpt_mc[idxCent]->GetBinContent(idx);
+	if (binContent < 0.00001)
+	  binContent = 1.;
+	double ratio = hpt_rec[idxCent]->GetBinContent(idx)/(double)binContent;
+
+	effProfile[idxCent]->Fill(hpt_mc[idxCent]->GetBinCenter(idx), ratio);
+      }
+      
+      hpt_mc[idxCent]->Reset();
+      hpt_rec[idxCent]->Reset();
+      
+      eventCounter[idxCent] = 0;
+    }
 #endif
   } //  for (int idxEvent = 0 ; idxEvent < nEventsMC; ++idxEvent) {
 
-
-  // TCanvas *c1 = new TCanvas("c1", "", 10, 10, 1200, 800);
-  // c1->Divide(3,3);
-  // for (int idxCent = 0; idxCent < nCent; ++idxCent) {
-  //   c1->cd(idxCent+1);
-  //   effProfile[idxCent]->GetYaxis()->SetRangeUser(0., 0.8);
-  //   effProfile[idxCent]->SetMarkerStyle(21);
-  //   effProfile[idxCent]->SetMarkerColor(kRed+2);
-  //   effProfile[idxCent]->SetLineColor(kRed+2);
-
-  //   effProfile[idxCent]->Draw("e1");
-  // }
+#if 0
 
   // --------------------------------------------------------------------------------
-  return;
+ 
+  for (int idxCent = 0; idxCent < nCent; ++idxCent) {
+    for (int idx = 1; idx <= effProfile[idxCent]->GetXaxis()->GetNbins(); idx++) { 
+      hpt_width[idxCent]->SetBinContent(idx, effProfile[idxCent]->GetBinError(idx));
+      double relativeWidth = (effProfile[idxCent]->GetBinContent(idx) != 0) ? 
+	effProfile[idxCent]->GetBinError(idx)/effProfile[idxCent]->GetBinContent(idx) : 0.;
+      hpt_relativeWidth[idxCent]->SetBinContent(idx, relativeWidth);
+    }
+  }
+
+  // --------------------------------------------------------------------------------
+
+  for (int idxCent = 0; idxCent < nCent; ++idxCent) {
+    effProfile[idxCent]->GetYaxis()->SetRangeUser(0., 1.0);
+    effProfile[idxCent]->SetMarkerStyle(21);
+    effProfile[idxCent]->SetMarkerColor(kRed+2);
+    effProfile[idxCent]->SetMarkerColor(kRed+2);
+
+    effProfileAllPt[idxCent]->GetYaxis()->SetRangeUser(0., 1.0);
+    effProfileAllPt[idxCent]->SetMarkerStyle(22);
+    effProfileAllPt[idxCent]->SetMarkerColor(kAzure);
+    effProfileAllPt[idxCent]->SetLineColor(kAzure);
+
+    hpt_width[idxCent]->GetYaxis()->SetRangeUser(0., 0.2);
+    hpt_width[idxCent]->SetMarkerStyle(20);
+    hpt_width[idxCent]->SetMarkerColor(kRed+2);
+    hpt_width[idxCent]->SetLineColor(kRed+2);
+
+    hpt_relativeWidth[idxCent]->GetYaxis()->SetRangeUser(0., 0.2);
+    hpt_relativeWidth[idxCent]->SetMarkerStyle(21);
+    hpt_relativeWidth[idxCent]->SetMarkerColor(kAzure);
+    hpt_relativeWidth[idxCent]->SetLineColor(kAzure);
+  }
+  
+  // --------------------------------------------------------------------------------
+#endif
   fOut->Write();
   fOut->Close();
 }
