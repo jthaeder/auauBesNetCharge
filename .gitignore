@@ -3,6 +3,9 @@
 *.lo
 *.o
 *.obj
+*.d
+*.so
+.consign
 
 # Precompiled Headers
 *.gch
@@ -31,7 +34,7 @@ eff_hadrons/efficiency*
 eff_hadrons/spectra/
 results*/
 effQA_dedx*/
-
+badFiles.list
 
 analysis/filelist/
 
@@ -43,3 +46,6 @@ analysis/getFileList.sh
 analysis/makeRefMultList.sh
 analysis/Split.C
 analysis/file.list.*.test
+
+temp_gccflags.c
+.sl64_gcc482/
