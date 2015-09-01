@@ -32,9 +32,6 @@ void study_efficiencies(const char* particle, int energy = 14) {
   // -- track cuts
   // --------------------------------------------------------------------------------
   
-  float min_pt           = 0.2;
-  float max_pt           = 2.0;
-
   float min_dedx         = 5;  // default - was 10 , try not to use  10
   float min_nCommon      = 10;
   float min_fitpts       = 20;//15 // 10
@@ -90,8 +87,6 @@ void study_efficiencies(const char* particle, int energy = 14) {
   cout << "min_fitpts_nposs = " << min_fitpts_nposs << endl;
   cout << "max_eta          = " << max_eta << endl;
   cout << "max_dca          = " << max_dca << endl;
-  cout << "min_pt           = " << min_pt << endl;
-  cout << "max_pt           = " << max_pt << endl;
 
   // --------------------------------------------------------------------------------
   // -- get file names
