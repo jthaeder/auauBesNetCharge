@@ -4,7 +4,10 @@ particles="KPlus KMinus AntiProton Proton PiPlus PiMinus"
 
 outputdir=`pwd`/lists
 
-for energy in 11 14 19 ; do 
+
+for energy in 7 11 14 19 27 39 62 ; do 
+    cat log/job_${energy}*.err | grep " file " | grep "/star/" | awk -F '/star/' '{ print "/star/"$2 }' |  awk -F '.root' '{ print $1".root" }' > $outputdir/badFiles.list
+
     for p in ${particles} ; do 
 	
 	outfile=${outputdir}/${p}_${energy}.list
@@ -31,4 +34,6 @@ for energy in 11 14 19 ; do
 	
 	echo $outfile $lines $linesClean
     done
+
+    rm -f $outputdir/badFiles.list
 done
