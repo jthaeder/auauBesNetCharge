@@ -14,7 +14,6 @@
 using namespace std;
 
 void study_efficiencies(const char* particle, int energy = 14) {
-  static const Double_t pi = TMath::Pi();
 
   gStyle->SetOptStat(111111);
   gStyle->SetPalette(1);
@@ -97,9 +96,9 @@ void study_efficiencies(const char* particle, int energy = 14) {
   // --------------------------------------------------------------------------------
   TString out_file, in_file;
   TString prefix("embeddingTrees");
-  TString postfix("efficiency");
+  TString postfix("efficiencyStudy");
 
-  gSystem->Exec("mkdir -p efficiency");
+  gSystem->Exec("mkdir -p efficiencyStudy");
 
   int PID = 0;
   
@@ -223,7 +222,7 @@ void study_efficiencies(const char* particle, int energy = 14) {
   // -- Initialize pt hists
   TProfile *effProfile[nCent];
   for (Int_t idxCent = 0; idxCent < nCent; idxCent++) {
-    effProfile[idxCent] = new TProfile(Form("effProfile_%d", idxCent), Form("effProfile_%d", idxCent), Nbins, 0., 5.);
+    effProfile[idxCent] = new TProfile(Form("effProfile_%s", cent[idxCent]), Form("effProfile_%s", cent[idxCent]), Nbins, 0., 5.);
     effProfile[idxCent]->GetXaxis()->Set(Nbins,pt_bin);
   }
 
@@ -397,7 +396,7 @@ void study_efficiencies(const char* particle, int energy = 14) {
       continue;
     }    
     else 
-      efficiencyPerEvent = (nTracksPerEventMC != 0) ? nTracksPerEventRec / Float_t(nTracksPerEventMC);
+      efficiencyPerEvent = (nTracksPerEventMC != 0) ? nTracksPerEventRec / Float_t(nTracksPerEventMC) : 0;
     
     // -----------------------------------------------
     // -- get centrality
