@@ -65,7 +65,13 @@ const char *cent1[]         = {   "0-5%",   "5-10%",  "10-20%",  "20-30%",  "30-
 const char *spectraCent[]   = {"cl8.ch8", "cl7.ch7", "cl6.ch6", "cl4.ch5", "cl4.ch5", "cl2.ch3", "cl2.ch3", "cl0.ch1", "cl0.ch1"};
 
 // -- refmult2 [nEnergies][nCent]
-const double refMult2[3][9] = { {407, 336.4, 258.3, 178.3, 118.7, 75, 44.2, 24, 12},   
+const double refMult2[9][9] = { {407, 336.4, 258.3, 178.3, 118.7, 75, 44.2, 24, 12},   
+				{407, 336.4, 258.3, 178.3, 118.7, 75, 44.2, 24, 12},
+				{407, 336.4, 258.3, 178.3, 118.7, 75, 44.2, 24, 12},
+				{407, 336.4, 258.3, 178.3, 118.7, 75, 44.2, 24, 12},   
+				{407, 336.4, 258.3, 178.3, 118.7, 75, 44.2, 24, 12},
+				{407, 336.4, 258.3, 178.3, 118.7, 75, 44.2, 24, 12}, 
+				{407, 336.4, 258.3, 178.3, 118.7, 75, 44.2, 24, 12},   
 				{407, 336.4, 258.3, 178.3, 118.7, 75, 44.2, 24, 12},
 				{407, 336.4, 258.3, 178.3, 118.7, 75, 44.2, 24, 12} };
 
@@ -83,12 +89,13 @@ const char *spectraParticles[] = {   "c0",   "c1"};
 const int   chargedColor[]     = { kAzure, kRed+2, kGray};
 
 // -- energies
-const int   nEnergies         = 3;
-const char *energies[]        = {"11",   "14",   "19"};
-const char *exactEnergies[]   = {"11.5", "14.5", "19.6"};
-const char *spectraEnergies[] = {"11.5", "11.5", "19.6"};
-//const char *energies[3]       = {  "7",   "11",   "14",   "19",   "27",   "39",   "62",  "200"};
-//const char *spectraEnergies[] = {"7.7", "11.5", "11.5", "19.6", "27.0", "39.0", "62.4", "62.4"};
+const int   nEnergies         = 7;
+// const char *energies[]        = {"11",   "14",   "19"};
+// const char *exactEnergies[]   = {"11.5", "14.5", "19.6"};
+// const char *spectraEnergies[] = {"11.5", "11.5", "19.6"};
+const char *energies[]        = {  "7",   "11",   "14",   "19",   "27",   "39",   "62",  "200"};
+const char *exactEnergies[]   = {"7.7", "11.5", "14.5", "19.6", "27.0", "39.0", "62.4", "200"};
+const char *spectraEnergies[] = {"7.7", "11.5", "11.5", "19.6", "27.0", "39.0", "62.4", "62.4"};
 
 // -- pT range for average efficiencies
 const double ptRange[] = {0.2, 2.0};
