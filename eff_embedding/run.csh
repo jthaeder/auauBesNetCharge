@@ -5,7 +5,7 @@ set energy=$1
 
 set particle=$2
 
-set mode=1
+set mode=2
 
 if ( $mode == 0 ) then
     if ( $particle == 0 ) then
@@ -36,5 +36,21 @@ if ( $mode == 1 ) then
 	root4star -b -q make_efficiencies.C+'("protonplus",   '$energy')'
     else if ( $particle == 5 ) then
 	root4star -b -q make_efficiencies.C+'("protonminus",  '$energy')'
+    endif
+endif
+
+if ( $mode == 2 ) then
+    if ( $particle == 0 ) then
+	root4star -b -q study_efficiencies.C+'("piplus",       '$energy')'
+    else if ( $particle == 1 ) then
+	root4star -b -q study_efficiencies.C+'("piminus",      '$energy')'
+    else if ( $particle == 2 ) then
+	root4star -b -q study_efficiencies.C+'("kaonplus",     '$energy')'
+    else if ( $particle == 3 ) then
+	root4star -b -q study_efficiencies.C+'("kaonminus",    '$energy')'
+    else if ( $particle == 4 ) then
+	root4star -b -q study_efficiencies.C+'("protonplus",   '$energy')'
+    else if ( $particle == 5 ) then
+	root4star -b -q study_efficiencies.C+'("protonminus",  '$energy')'
     endif
 endif

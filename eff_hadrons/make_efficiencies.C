@@ -19,11 +19,10 @@ TH1D* getEffRatio(TH1D* hMC, TH1D* hRec, const char*name) {
 
   for (int idx = 1; idx <= hEff->GetXaxis()->GetNbins(); idx++) {
     double binContent = hEff->GetBinContent(idx);
-    if (binContent < 0.00001)
-      binContent = 1.;
-    double ratio = hRec->GetBinContent(idx)/(double)binContent;
+    double ratio = (binContent < 0.00001) ? 0. : hRec->GetBinContent(idx)/(double)binContent;
+    double error = (binContent < 0.00001) ? 0. : sqrt((double)binContent*ratio*(1.0-ratio))/(double)binContent;
     hEff->SetBinContent(idx, ratio);
-    hEff->SetBinError(idx, sqrt((double)binContent*ratio*(1.0-ratio))/(double)binContent);
+    hEff->SetBinError(idx, error);
   }
  
   return hEff;
@@ -36,11 +35,10 @@ TH2D* getEffRatio(TH2D* hMC, TH2D* hRec, const char*name) {
   for (int idxX = 1; idxX <= hEff->GetXaxis()->GetNbins(); idxX++) {
     for (int idxY = 1; idxY <= hEff->GetYaxis()->GetNbins(); idxY++) {
       double binContent = hEff->GetBinContent(idxX, idxY);
-      if (binContent < 0.00001)
-	binContent = 1.;
-      double ratio = hRec->GetBinContent(idxX, idxY)/(double)binContent;
+      double ratio = (binContent < 0.00001) ? 0. : hRec->GetBinContent(idxX, idxY)/(double)binContent;
+      double ratio = (binContent < 0.00001) ? 0. : sqrt((double)binContent*ratio*(1.0-ratio))/(double)binContent);
       hEff->SetBinContent(idxX, idxY, ratio);
-      hEff->SetBinError(idxX, idxY, sqrt((double)binContent*ratio*(1.0-ratio))/(double)binContent);
+      hEff->SetBinError(idxX, idxY, error);
     }
   }
  

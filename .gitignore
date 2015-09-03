@@ -53,3 +53,4 @@ temp_gccflags.c
 eff_embedding/efficiency
 eff_embedding/effQA
 eff_embedding/embeddingTrees/
+eff_embedding/log
