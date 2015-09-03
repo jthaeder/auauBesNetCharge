@@ -56,12 +56,12 @@ const char* names[]  = {"pion", "kaon", "proton"};
 const char* names2[] = {"#pi^{+}", "K^{+}", "p"};
 const char* names3[] = {"#pi^{-}", "K^{-}", "#bar{p}"};
 
-const int   nEnergies       = 3; // 8
-const char* energies[]      = {"11",   "14",   "19"};
-const char* exactEnergies[] = {"11.5", "14.5", "19.6"};
-const float xPosLabel[]     = {0.15, 0.45, 0.72};
-//const char *energies[]       = {  "7",   "11",   "14",   "19",   "27",   "39",   "62",  "200"};
-//const char *exactEnergies[] = {"7.7", "11.5", "11.5", "19.6", "27.0", "39.0", "62.4", "62.4"};
+const int   nEnergies       = 7;
+// const char* energies[]      = {"11",   "14",   "19"};
+// const char* exactEnergies[] = {"11.5", "14.5", "19.6"};
+const float xPosLabel[]     =  {0.08,   0.20,   0.32,   0.45,  0.57,    0.69,  0.82,    0.92};
+const char *energies[]      = {  "7",   "11",   "14",   "19",   "27",   "39",   "62",  "200"};
+const char *exactEnergies[] = {"7.7", "11.5", "11.5", "19.6", "27.0", "39.0", "62.4", "62.4"};
 
 const double fitRanges[2]        = {0.1, 3.};  // {0.2, 1.95};
 const double fitRangesDelta[2]   = {0.1, 4.5}; 
@@ -151,8 +151,7 @@ void fitEfficiencyPt() {
 	histsMinus[idx][energyIdx][centIdx]->SetLineWidth(1);
 	histsMinus[idx][energyIdx][centIdx]->SetLineColor(kAzure);
 
-	//	histsDeltaPlus[idx][energyIdx][centIdx] = static_cast<TH1D*>(fplus[idx][energyIdx]->Get(Form("hdeltapt_%s",cent[centIdx-1])));		
-	histsDeltaPlus[idx][energyIdx][centIdx] = static_cast<TH1D*>(fplus[idx][energyIdx]->Get(Form("hdeltaptC")));
+	histsDeltaPlus[idx][energyIdx][centIdx] = static_cast<TH1D*>(fplus[idx][energyIdx]->Get(Form("hdeltapt_%s",cent[centIdx-1])));		
 	histsDeltaPlus[idx][energyIdx][centIdx]->SetLineStyle(1);
 	histsDeltaPlus[idx][energyIdx][centIdx]->SetMarkerStyle(20);
 	histsDeltaPlus[idx][energyIdx][centIdx]->SetMarkerSize(0.5);
@@ -160,8 +159,7 @@ void fitEfficiencyPt() {
 	histsDeltaPlus[idx][energyIdx][centIdx]->SetLineWidth(1);
 	histsDeltaPlus[idx][energyIdx][centIdx]->SetLineColor(kRed+3);
 
-	//	histsDeltaMinus[idx][energyIdx][centIdx] = static_cast<TH1D*>(fminus[idx][energyIdx]->Get(Form("hdeltapt_%s",cent[centIdx-1])));
-	histsDeltaMinus[idx][energyIdx][centIdx] = static_cast<TH1D*>(fminus[idx][energyIdx]->Get(Form("hdeltaptC")));	
+	histsDeltaMinus[idx][energyIdx][centIdx] = static_cast<TH1D*>(fminus[idx][energyIdx]->Get(Form("hdeltapt_%s",cent[centIdx-1])));
 	histsDeltaMinus[idx][energyIdx][centIdx]->SetLineStyle(1);
 	histsDeltaMinus[idx][energyIdx][centIdx]->SetMarkerStyle(20);
 	histsDeltaMinus[idx][energyIdx][centIdx]->SetMarkerSize(0.5);
@@ -501,7 +499,7 @@ void fitEfficiencyPt() {
 
     for (int energyIdx = 0 ; energyIdx < nEnergies; ++energyIdx) {
       for (int idx = 0; idx < nNames; ++idx) {
-	pad->cd(idx*nNames+energyIdx+1);
+	pad->cd(idx*nEnergies+energyIdx+1);
 			
 	TH2D *ff = new TH2D("","",20,0.009,2.09,20,0.01,0.99);
 	ff->GetXaxis()->SetLabelSize(0.07);
@@ -554,7 +552,7 @@ void fitEfficiencyPt() {
 
     for (int energyIdx = 0 ; energyIdx < nEnergies; ++energyIdx) {
       TLatex *texb_3 = new TLatex(xPosLabel[energyIdx], 0.925, Form("AuAu #sqrt{s_{NN}} = %s GeV", exactEnergies[energyIdx]));
-      texb_3->SetTextSize(0.02);
+      texb_3->SetTextSize(0.015);
       texb_3->SetTextFont(42);
       texb_3->Draw("same");
     }

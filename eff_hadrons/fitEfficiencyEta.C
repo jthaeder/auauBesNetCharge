@@ -56,12 +56,12 @@ const char* names[3]  = {"pion", "kaon", "proton"};
 const char* names2[3] = {"#pi^{+}", "K^{+}", "p"};
 const char* names3[3] = {"#pi^{-}", "K^{-}", "#bar{p}"};
 
-const int   nEnergies        = 3; // 8
-const char* energies[3]      = {"11",   "14",   "19"};
-const char* exactEnergies[3] = {"11.5", "14.5", "19.6"};
-const float xPosLabel[]      = {0.15, 0.45, 0.72};
-//const char *energies[]       = {  "7",   "11",   "14",   "19",   "27",   "39",   "62",  "200"};
-//const char *exactEnergies[] = {"7.7", "11.5", "11.5", "19.6", "27.0", "39.0", "62.4", "62.4"};
+const int   nEnergies       = 7;
+// const char* energies[3]      = {"11",   "14",   "19"};
+// const char* exactEnergies[3] = {"11.5", "14.5", "19.6"};
+const float xPosLabel[]     =  {0.08,   0.20,   0.32,   0.45,  0.57,    0.69,  0.82,    0.92};
+const char *energies[]      = {  "7",   "11",   "14",   "19",   "27",   "39",   "62",  "200"};
+const char *exactEnergies[] = {"7.7", "11.5", "11.5", "19.6", "27.0", "39.0", "62.4", "62.4"};
 
 const double fitRanges[2]    = {-0.5, 0.5}; 
 
@@ -316,7 +316,7 @@ void fitEfficiencyEta() {
     
     for (int energyIdx = 0; energyIdx < nEnergies; ++energyIdx) {
       for (int idx = 0; idx < nNames; ++idx) {
-	pad->cd(idx*3+energyIdx+1);
+	pad->cd(idx*nEnergies+energyIdx+1);
 	
 	TH2D *ff = new TH2D("","",20,-1.1,1.1,20,0.01,0.99);
 	ff->GetXaxis()->SetLabelSize(0.07);
@@ -367,7 +367,7 @@ void fitEfficiencyEta() {
     
     for (int energyIdx = 0; energyIdx < nEnergies; ++energyIdx) {
       TLatex *texb_3 = new TLatex(xPosLabel[energyIdx], 0.925, Form("AuAu #sqrt{s_{NN}} = %s GeV", exactEnergies[energyIdx]));
-      texb_3->SetTextSize(0.02);
+      texb_3->SetTextSize(0.015);
       texb_3->SetTextFont(42);
       texb_3->Draw("same");
     }
