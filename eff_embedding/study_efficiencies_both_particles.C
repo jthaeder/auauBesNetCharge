@@ -5,11 +5,14 @@
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TProfile.h"
+#include "TProfile2D.h"
 #include "TStyle.h"
 #include "TString.h"
 #include "TMath.h"
 #include "math.h"
 #include <iostream>
+#include <map>
+#include <utility>
 
 using namespace std;
 
@@ -139,8 +142,9 @@ void study_efficiencies_both_particles(const char* particle, int energy = 14) {
   // -- get matched ntuple 1
   float Dedx1, RefMult1, RefMultCorrected1, CentralityWeight1, Centrality161, VertexX1, VertexY1, VertexZ1;
   float PtMc1, PzMc1, EtaMc1, PhiMc1, PtPr1, PtGl1, EtaPr1, PhiPr1, DcaGl1, DcaZGl1, DcaXYGl1, Flag1, FitPts1, DedxPts1;
-  float AllPts1, NPossible1, ParentGeantId1, GeantId1, mErrP1, NCommonHit1, EventId1;
+  float AllPts1, NPossible1, ParentGeantId1, GeantId1, mErrP1, NCommonHit1, EventId1, RunId1;
   MatchedPairs1->SetBranchAddress("EventId", &EventId1);
+  MatchedPairs1->SetBranchAddress("RunId", &RunId1);
   MatchedPairs1->SetBranchAddress("Dedx", &Dedx1);
   MatchedPairs1->SetBranchAddress("RefMult", &RefMult1);
   MatchedPairs1->SetBranchAddress("RefMultCorrected", &RefMultCorrected1);
@@ -174,8 +178,9 @@ void study_efficiencies_both_particles(const char* particle, int energy = 14) {
   // -- get matched ntuple 2
   float Dedx2, RefMult2, RefMultCorrected2, CentralityWeight2, Centrality162, VertexX2, VertexY2, VertexZ2;
   float PtMc2, PzMc2, EtaMc2, PhiMc2, PtPr2, PtGl2, EtaPr2, PhiPr2, DcaGl2, DcaZGl2, DcaXYGl2, Flag2, FitPts2, DedxPts2;
-  float AllPts2, NPossible2, ParentGeantId2, GeantId2, mErrP2, NCommonHit2, EventId2;
+  float AllPts2, NPossible2, ParentGeantId2, GeantId2, mErrP2, NCommonHit2, EventId2, RunId2;
   MatchedPairs2->SetBranchAddress("EventId", &EventId2);
+  MatchedPairs2->SetBranchAddress("RunId", &RunId2);
   MatchedPairs2->SetBranchAddress("Dedx", &Dedx2);
   MatchedPairs2->SetBranchAddress("RefMult", &RefMult2);
   MatchedPairs2->SetBranchAddress("RefMultCorrected", &RefMultCorrected2);
@@ -207,8 +212,9 @@ void study_efficiencies_both_particles(const char* particle, int energy = 14) {
 
   // --------------------------------------------------------------------------------
   // -- get MC ntuple 1 
-  float pRefMult1, pRefMultCorrected1, pCentralityWeight1, pCentrality161, pVertexX1, pVertexY1, pVertexZ1, pPtMc1, pPzMc1, pEtaMc1, pPhiMc1, pParentGeantId1, pGeantId1, pEventId1;
+  float pRefMult1, pRefMultCorrected1, pCentralityWeight1, pCentrality161, pVertexX1, pVertexY1, pVertexZ1, pPtMc1, pPzMc1, pEtaMc1, pPhiMc1, pParentGeantId1, pGeantId1, pEventId1, pRunId1;
   McTrack1->SetBranchAddress("EventId", &pEventId1);
+  McTrack1->SetBranchAddress("RunId", &pRunId1);
   McTrack1->SetBranchAddress("RefMult", &pRefMult1);
   McTrack1->SetBranchAddress("RefMultCorrected", &pRefMultCorrected1);
   McTrack1->SetBranchAddress("CentralityWeight", &pCentralityWeight1);
@@ -225,8 +231,9 @@ void study_efficiencies_both_particles(const char* particle, int energy = 14) {
   
   // --------------------------------------------------------------------------------
   // -- get MC ntuple 2 
-  float pRefMult2, pRefMultCorrected2, pCentralityWeight2, pCentrality162, pVertexX2, pVertexY2, pVertexZ2, pPtMc2, pPzMc2, pEtaMc2, pPhiMc2, pParentGeantId2, pGeantId2, pEventId2;
+  float pRefMult2, pRefMultCorrected2, pCentralityWeight2, pCentrality162, pVertexX2, pVertexY2, pVertexZ2, pPtMc2, pPzMc2, pEtaMc2, pPhiMc2, pParentGeantId2, pGeantId2, pEventId2, pRunId2;
   McTrack2->SetBranchAddress("EventId", &pEventId2);
+  McTrack2->SetBranchAddress("RunId", &pRunId2);
   McTrack2->SetBranchAddress("RefMult", &pRefMult2);
   McTrack2->SetBranchAddress("RefMultCorrected", &pRefMultCorrected2);
   McTrack2->SetBranchAddress("CentralityWeight", &pCentralityWeight2);
@@ -270,7 +277,7 @@ void study_efficiencies_both_particles(const char* particle, int energy = 14) {
   TH1D* hpt_relativeWidth[nCent];
 
   for (Int_t idxCent = 0; idxCent < nCent; idxCent++) {
-    effProfile2D[idxCent] = new TProfile(Form("effProfile2D_%s", cent[idxCent]), 
+    effProfile2D[idxCent] = new TProfile2D(Form("effProfile2D_%s", cent[idxCent]), 
 					 Form("effProfile2D_%s", cent[idxCent]), Nbins, 0., 5., Nbins, 0., 5.);
     effProfile2D[idxCent]->GetXaxis()->Set(Nbins,pt_bin);
     effProfile2D[idxCent]->GetYaxis()->Set(Nbins,pt_bin);
@@ -305,16 +312,24 @@ void study_efficiencies_both_particles(const char* particle, int energy = 14) {
   int nEventsMC1  = 0;
   int nEventsRec1 = 0;
 
+  typedef std::pair<int,int> keyEventRun;
+  std::map<keyEventRun, int> eventMC1;
+  std::map<keyEventRun, int> eventMC2;
+  std::map<keyEventRun, int> eventRec1;
+  std::map<keyEventRun, int> eventRec2;
+
   for(int i = 0; i < nTracksMC1; i++){
     McTrack1->GetEntry(i);
     int current=Int_t(pEventId1);
-    
+
     if (current != lastEvent1) {
       lastEvent1 = current;
       ++nEventsMC1;
+      eventMC1[std::make_pair(Int_t(pRunId1), Int_t(pEventId1))] = i;
+      cout << " ======  " << i << " " << nEventsMC1 << " - "<< eventMC1.size() << " || " << Int_t(pRunId1) << " : " << current << endl;
     }
   }
-  
+  return; 
   lastEvent1 = -1;
   for(int i = 0; i < nTracksRec1; i++){
     MatchedPairs1->GetEntry(i);
@@ -323,11 +338,12 @@ void study_efficiencies_both_particles(const char* particle, int energy = 14) {
     if (current != lastEvent1) {
       lastEvent1 = current;
       ++nEventsRec1;
+      eventRec1[std::make_pair(Int_t(RunId1), Int_t(EventId1))] = i;
     }
   }
 
-  printf("nEvents (1) MC %d \n",  nEventsMC1);
-  printf("nEvents (1) Rec %d \n", nEventsRec1);
+  printf("nEvents (1) MC %d  - %d\n",  nEventsMC1, eventMC1.size());
+  printf("nEvents (1) Rec %d - %d\n", nEventsRec1, eventRec1.size());
 
 
   // --------------------------------------------------------------------------------
@@ -347,6 +363,7 @@ void study_efficiencies_both_particles(const char* particle, int energy = 14) {
     if (current != lastEvent2) {
       lastEvent2 = current;
       ++nEventsMC2;
+      eventMC2[std::make_pair(Int_t(pRunId2), Int_t(pEventId2))] = i;
     }
   }
   
@@ -358,13 +375,61 @@ void study_efficiencies_both_particles(const char* particle, int energy = 14) {
     if (current != lastEvent2) {
       lastEvent2 = current;
       ++nEventsRec2;
+      eventRec2[std::make_pair(Int_t(RunId2), Int_t(EventId2))] = i;
     }
   }
 
-  printf("nEvents (2) MC %d \n",  nEventsMC2);
-  printf("nEvents (2) Rec %d \n", nEventsRec2);
+  printf("nEvents (2) MC %d  - %d\n",  nEventsMC2, eventMC2.size());
+  printf("nEvents (2) Rec %d - %d\n", nEventsRec2, eventRec2.size());
 
-#if 
+  // --------------------------------------------------------------------------------
+  int idxMC2 = -1;
+  lastEvent1 = -1;     
+  nEventsMC1 = 0;
+  int commonEvents1 = 0;
+  for(int i = 0; i < nTracksMC1; i++){
+    McTrack1->GetEntry(i);
+    int current1=Int_t(pEventId1);
+    
+    if (current1 != lastEvent1) {
+      lastEvent1 = current1;
+      ++nEventsMC1;
+   
+      std::map<keyEventRun, int>::iterator iter = eventMC2.find(std::make_pair(Int_t(pRunId1), Int_t(pEventId1)));
+      if (iter != eventMC2.end()) {
+	idxMC2 = eventMC2[std::make_pair(Int_t(pRunId1), Int_t(pEventId1))];
+	//	cout << nEventsMC1 << " -- " << i << " -- " << idxMC2 << endl;
+	++commonEvents1;
+      }
+    }
+  }
+
+  // --------------------------------------------------------------------------------
+  int idxMC1 = -1;
+  lastEvent2 = -1;     
+  nEventsMC2 = 0;
+  int commonEvents2 = 0;
+  for(int i = 0; i < nTracksMC2; i++){
+    McTrack2->GetEntry(i);
+    int current2=Int_t(pEventId2);
+    
+    if (current2 != lastEvent2) {
+      lastEvent2 = current2;
+      ++nEventsMC2;
+
+      std::map<keyEventRun, int>::iterator iter = eventMC1.find(std::make_pair(Int_t(pRunId2), Int_t(pEventId2)));
+      if (iter != eventMC1.end()) {
+	idxMC1 = eventMC1[std::make_pair(Int_t(pRunId2), Int_t(pEventId2))];
+	//	cout << nEventsMC2 << " -- " << i << " -- " << idxMC1 << endl;
+	++commonEvents2;
+      }
+    }
+  }
+
+  printf("nEvents (common1) %d - %d \n", commonEvents1, nEventsMC1);
+  printf("nEvents (common2) %d - %d \n", commonEvents2, nEventsMC2);
+
+#if 0
   // --------------------------------------------------------------------------------
   // -- Loop over events 
   //    - and associate tracks to them
@@ -609,4 +674,5 @@ void study_efficiencies_both_particles(const char* particle, int energy = 14) {
 #endif
   fOut->Write();
   fOut->Close();
+#endif
 }
