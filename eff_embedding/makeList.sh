@@ -12,8 +12,8 @@ outputdir=`pwd`/lists
 
 disks="data18 data19 data20 data21 data22"
 
-for energy in 7 11 14 19 27 39 62 ; do
 
+for energy in 7 11 14 19 27 39 62 ; do
     if [ $energy -eq 7 ] ; then
 	basedirString=AuAu7_production
     elif [ $energy -eq 11 ] ; then
@@ -30,10 +30,6 @@ for energy in 7 11 14 19 27 39 62 ; do
 	basedirString=AuAu62_production
     elif [ $energy -eq 200 ] ; then
 	basedirString=AuAu200_production
-	#AuAu200_production
-	#AuAu200_production_2011
-	#AuAu_200_production_2014
-	#AuAu_200_production_mid_2014
     fi
 
     for p in ${particles} ; do 
