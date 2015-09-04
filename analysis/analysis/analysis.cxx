@@ -78,9 +78,9 @@ Double_t NN(Double_t, Int_t);
 
 // ----------------------------------------------------------------------------  
 
-Int_t    binHnEvent[9] = {  10,   21,   21,    201,   20,   601,   601,   3001,    2};
-Double_t minHnEvent[9] = {-0.5, -2.0, -3.0, -100.0,  0.0,   0.0,   0.0,    0.0, -0.5};
-Double_t maxHnEvent[9] = { 9.5,  2.0,  1.0,  100.0,  2.0, 600.0, 600.0, 3000.0,  1.5};
+Int_t    binHnEvent[11] = {  10,   21,   21,    201,   21,   601,   601,   3001,    2,    201,   21};
+Double_t minHnEvent[11] = {-0.5, -2.0, -3.0, -100.0,  0.0,   0.0,   0.0,    0.0, -0.5, -100.0,  0.0};
+Double_t maxHnEvent[11] = { 9.5,  2.0,  1.0,  100.0,  2.0, 600.0, 600.0, 3000.0,  1.5,  100.0, 20.0};
 
 Int_t    binHnUnCorr[12] = {  10,  34,   21,    3,  50,   51,   51,   51, 101,    2,    2, 81};
 Double_t minHnUnCorr[12] = {-0.5, 0.1, -1.0, -1.5,   0,  0.0,  0.0,  0.0, 0.0, -0.5, -0.5, -4};
@@ -245,6 +245,8 @@ Int_t main(int argc, char** argv) {
   fHnEvent->GetAxis(6)->SetTitle("refMult2Corr");
   fHnEvent->GetAxis(7)->SetTitle("nTracks");
   fHnEvent->GetAxis(8)->SetTitle("isRejected");
+  fHnEvent->GetAxis(9)->SetTitle("#it{v}_{z}^{vpd} (cm)");
+  fHnEvent->GetAxis(10)->SetTitle("#Delta#it{v} (cm)");
 #endif
 
   // ------------------------------------------------------------------
@@ -574,8 +576,9 @@ Int_t main(int argc, char** argv) {
 
     // -- fill ThnSparse - events
     // ------------------------------------------------------------------
-    Double_t aEvent[9] = {Double_t(centrality), vx, vy, vz, shiftedVtx, 
-			  Double_t(nRefMult2Tracks), Double_t(nRefMult2TracksCorr), Double_t(nTracks), Double_t(isRejected)};
+    Double_t aEvent[11] = {Double_t(centrality), vx, vy, vz, shiftedVtx, 
+			   Double_t(nRefMult2Tracks), Double_t(nRefMult2TracksCorr), Double_t(nTracks), Double_t(isRejected),
+			   vpdVz, deltaVz};
       
     Double_t aMult[7]  = {Double_t(centrality), Double_t(nRefMultTracks), 
 			  Double_t(nRefMult2Tracks), Double_t(nRefMult2TracksCorr), 
@@ -1053,12 +1056,15 @@ void InitializeEventHists() {
 
     // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 
-    list->Add(new TH1F(Form("runs_%s", eventNames[ii]),      Form("Events per run%s;Runs;Events", eventTitles[ii]),            17021, 15053001, 15070021));
-    list->Add(new TH1F(Form("vx_%s", eventNames[ii]),        Form("v_{x}%s;v_{x} (cm);Events", eventTitles[ii]),               binHnEvent[1], minHnEvent[1], maxHnEvent[1]));
-    list->Add(new TH1F(Form("vy_%s", eventNames[ii]),        Form("v_{y}%s;v_{y} (cm);Events", eventTitles[ii]),               binHnEvent[2], minHnEvent[2], maxHnEvent[2]));
-    list->Add(new TH1F(Form("vz_%s", eventNames[ii]),        Form("v_{z}%s;v_{z} (cm);Events", eventTitles[ii]),               binHnEvent[3], minHnEvent[3], maxHnEvent[3]));
-    list->Add(new TH1F(Form("shiftedVr_%s", eventNames[ii]), Form("v_{r}^{shifted}%s;v_{r}^{shifted} (cm);Events", eventTitles[ii]), binHnEvent[4], minHnEvent[4], maxHnEvent[4]));
-    list->Add(new TH2F(Form("vxvy_%s", eventNames[ii]),      Form("v_{x} vs v_{y}%s;v_{x} (cm); v_{y} (cm)", eventTitles[ii]), binHnEvent[1], minHnEvent[1], maxHnEvent[1], binHnEvent[2], minHnEvent[2], maxHnEvent[2]));
+    list->Add(new TH1F(Form("vx_%s", eventNames[ii]),        Form("#it{v}_{x}%s;#it{v}_{x} (cm);Events", eventTitles[ii]),               binHnEvent[1], minHnEvent[1], maxHnEvent[1]));
+    list->Add(new TH1F(Form("vy_%s", eventNames[ii]),        Form("#it{v}_{y}%s;#it{v}_{y} (cm);Events", eventTitles[ii]),               binHnEvent[2], minHnEvent[2], maxHnEvent[2]));
+    list->Add(new TH1F(Form("vz_%s", eventNames[ii]),        Form("#it{v}_{z}%s;#it{v}_{z} (cm);Events", eventTitles[ii]),               binHnEvent[3], minHnEvent[3], maxHnEvent[3]));
+    list->Add(new TH1F(Form("shiftedVr_%s", eventNames[ii]), Form("#it{v}_{r}^{shifted}%s;#it{v}_{r}^{shifted} (cm);Events", eventTitles[ii]), binHnEvent[4], minHnEvent[4], maxHnEvent[4]));
+    list->Add(new TH2F(Form("vxvy_%s", eventNames[ii]),      Form("#it{v}_{x} vs #it{v}_{y}%s;#it{v}_{x} (cm); #it{v}_{y} (cm)", eventTitles[ii]), binHnEvent[1], minHnEvent[1], maxHnEvent[1], binHnEvent[2], minHnEvent[2], maxHnEvent[2]));
+
+    list->Add(new TH1F(Form("vzVpd_%s", eventNames[ii]),     Form("#it{v}_{z}^{vpd}%s;#it{v}_{z}^{vpd} (cm);Events", eventTitles[ii]),         binHnEvent[9], minHnEvent[9], maxHnEvent[9]));
+
+    list->Add(new TH1F(Form("deltaVz_%s", eventNames[ii]),   Form("#Delta#it{v}_{z}%s;#Delta#it{v}_{z} (cm);Events", eventTitles[ii]),         binHnEvent[10], minHnEvent[10], maxHnEvent[10]));
   }
 }
 
@@ -1069,12 +1075,13 @@ void FillEventHists(Int_t runId, Double_t *aEvent, Int_t mode) {
 
   TList* list = static_cast<TList*>(fOutList->FindObject(Form("f%s_eventHists_%s", name, eventNames[mode])));
   
-  (static_cast<TH1F*>(list->FindObject(Form("runs_%s",eventNames[mode]))))->Fill(runId);
   (static_cast<TH1F*>(list->FindObject(Form("vx_%s",eventNames[mode]))))->Fill(aEvent[1]);
   (static_cast<TH1F*>(list->FindObject(Form("vy_%s",eventNames[mode]))))->Fill(aEvent[2]);
   (static_cast<TH1F*>(list->FindObject(Form("vz_%s",eventNames[mode]))))->Fill(aEvent[3]);
-  (static_cast<TH1F*>(list->FindObject(Form("shiftedVr_%s",eventNames[mode]))))->Fill(aEvent[4]);
+  (static_cast<TH1F*>(list->FindObject(Form("shiftedVr_%s",eventNames[mode]))))->Fill(aEvent[3]);
   (static_cast<TH2F*>(list->FindObject(Form("vxvy_%s",eventNames[mode]))))->Fill(aEvent[1], aEvent[2]);
+  (static_cast<TH1F*>(list->FindObject(Form("vzVpd_%s",eventNames[mode]))))->Fill(aEvent[9]);
+  (static_cast<TH1F*>(list->FindObject(Form("deltaVz_%s",eventNames[mode]))))->Fill(aEvent[10]);
 }
 
 //________________________________________________________________________
