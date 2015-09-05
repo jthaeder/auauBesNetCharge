@@ -36,7 +36,7 @@ TH2D* getEffRatio(TH2D* hMC, TH2D* hRec, const char*name) {
     for (int idxY = 1; idxY <= hEff->GetYaxis()->GetNbins(); idxY++) {
       double binContent = hEff->GetBinContent(idxX, idxY);
       double ratio = (binContent < 0.00001) ? 0. : hRec->GetBinContent(idxX, idxY)/(double)binContent;
-      double ratio = (binContent < 0.00001) ? 0. : sqrt((double)binContent*ratio*(1.0-ratio))/(double)binContent);
+      double error = (binContent < 0.00001) ? 0. : sqrt((double)binContent*ratio*(1.0-ratio))/(double)binContent;
       hEff->SetBinContent(idxX, idxY, ratio);
       hEff->SetBinError(idxX, idxY, error);
     }
