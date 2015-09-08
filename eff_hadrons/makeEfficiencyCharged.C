@@ -117,18 +117,24 @@ const double parLimits2[3][2][2] = { { {0.09, 10.}, {0.09, 10.} },    // pi-  | 
 // -- input efficiencies (input = fits)
 TObjArray aEffFits;
 
-// -- fitted efficiencies (input = fits)
+// -- fitted efficiencies (input = fits) 
 TF1* funEff[nCharges][nNames][nEnergies][nCent];
 
-// -- fitted Delta Pt
+// -- fitted Delta pT   / (pT_MC - pT_Rec) 
 TF1* funEffDeltaPt[nCharges][nNames][nEnergies][nCent];
 
 // -- spectras (histograms)
 TH1D* hSpectra[nCharges][nNames][nEnergies][nCent];
 
-// -- spectras (fits to histgrams)
-TF1* funSpectra[nCharges][nNames][nEnergies][nCent];
+// -- spectras
 TObjArray aSpectraFits;
+
+// -- spectras:  1/pT dN/dpT - fits to histgrams
+TF1* funSpectra1[nCharges][nNames][nEnergies][nCent];
+// -- spectras:  dN/dpT 
+TF1* funSpectra2[nCharges][nNames][nEnergies][nCent];
+// -- spectras:  corrected dN/dpT 
+TF1* funSpectra3[nCharges][nNames][nEnergies][nCent];
 
 // -- charged spectra
 TF1* funSpectraCharged[3][nEnergies][nCent];
@@ -162,6 +168,8 @@ void drawSpectraCharged();
 void drawEffCharged();
 
 // -- function sumation / multiplication / division
+double deltaPt(double *x, double *par);
+
 double spectraChargedNeg(double *x, double *par);
 double spectraChargedPos(double *x, double *par);
 double spectraChargedAll(double *x, double *par);
@@ -204,7 +212,6 @@ void makeEfficiencyCharged() {
 												    chargedModes[idxParticle], names[idx], 
 												    energies[energyIdx], cent[centIdx])));
 	  aEffFits.Add(funEffDeltaPt[idxParticle][idx][energyIdx][centIdx]);
-
 	}
 
   // ----------------------------------------------------------
@@ -221,9 +228,9 @@ void makeEfficiencyCharged() {
 												    spectraNames[idx], spectraCent[centIdx], 
 												    spectraEnergies[energyIdx])));
 	}
-  
+   
   // ----------------------------------------------------------
-  // -- fit spectra
+  // -- fit spectra 1/pT dN/dpT
   // ----------------------------------------------------------
   for (idxParticle = 0; idxParticle < nCharges; ++idxParticle) 
     for (energyIdx = 0 ; energyIdx < nEnergies; ++energyIdx) 
@@ -231,51 +238,66 @@ void makeEfficiencyCharged() {
 	for (centIdx = 0; centIdx < nCent; centIdx++) {
 	  TH1D* hist = hSpectra[idxParticle][idx][energyIdx][centIdx];
 	  
-	  funSpectra[idxParticle][idx][energyIdx][centIdx] = new TF1(Form("funSpectra%s_%s_%s_%s", chargedModes[idxParticle],
-									  names[idx], energies[energyIdx], cent[centIdx]),  
-								     "[0]*pow(1.-[1]*(1.-[2])*x*x,1./(1.-[2]))", 0.10, 10.0);
-	  
-	  aSpectraFits.Add(funSpectra[idxParticle][idx][energyIdx][centIdx]);
+	  funSpectra1[idxParticle][idx][energyIdx][centIdx] = new TF1(Form("funSpectra1_%s_%s_%s_%s", chargedModes[idxParticle],
+									   names[idx], energies[energyIdx], cent[centIdx]),  
+								      "[0]*pow(1.-[1]*(1.-[2])*x*x,1./(1.-[2]))", 0.10, 10.0);
 
-	  TF1* fun = funSpectra[idxParticle][idx][energyIdx][centIdx];
-	  
-	  fun->SetParameters(100.*hist->GetBinContent(10), 1.55836, 1.10682);
+	  aSpectraFits.Add(funSpectra1[idxParticle][idx][energyIdx][centIdx]);
 
-	  fun->SetParLimits(1, parLimits1[idx][idxParticle][0], parLimits1[idx][idxParticle][1]);
-	  fun->SetParLimits(2, parLimits2[idx][idxParticle][0], parLimits2[idx][idxParticle][1]);
+	  TF1* fun1 = funSpectra1[idxParticle][idx][energyIdx][centIdx];	  
+	  fun1->SetParameters(100.*hist->GetBinContent(10), 1.55836, 1.10682);
 	  
-	  int fitFlag = hist->Fit(fun, "QRsame", "", 0.10, 10.0);
-	  TFitResultPtr fitResult = hist->Fit(fun, "QRSsame", "", 0.10, 10.0);
+	  fun1->SetParLimits(1, parLimits1[idx][idxParticle][0], parLimits1[idx][idxParticle][1]);
+	  fun1->SetParLimits(2, parLimits2[idx][idxParticle][0], parLimits2[idx][idxParticle][1]);
+	  
+	  int fitFlag = hist->Fit(fun1, "QRsame", "", 0.10, 10.0);
+	  TFitResultPtr fitResult = hist->Fit(fun1, "QRSsame", "", 0.10, 10.0);
 	  //	  cout << " ADD ID   #chi^{2} = " << (double) fitResult.Chi2() << endl;
 	  cout << "fit flag           = " << fitFlag << endl;
-	
+
 	  // ----------------------------------------------------------
 
 	  cout << "ID  = " << fun->GetName() << endl;
 	  cout << "[0] = " << fun->GetParameter(0) << endl;
 	  cout << "[1] = " << fun->GetParameter(1) << endl;
 	  cout << "[2] = " << fun->GetParameter(2) << endl;
+	
+	  // ----------------------------------------------------------
 
+	  funSpectra2[idxParticle][idx][energyIdx][centIdx] = new TF1(Form("funSpectra2_%s_%s_%s_%s", chargedModes[idxParticle],
+									   names[idx], energies[energyIdx], cent[centIdx]),  
+								      "[0]*x*pow(1.-[1]*(1.-[2])*x*x,1./(1.-[2]))", 0.10, 10.0);
+	  aSpectraFits.Add(funSpectra2[idxParticle][idx][energyIdx][centIdx]);
+	  funSpectra2[idxParticle][idx][energyIdx][centIdx]->SetParameters(fun1->GetParameter(0), fun1->GetParameter(1), fun1->GetParameter(2));
+
+	  // ----------------------------------------------------------
+	  //   x-deltaPt = pt-deltaPt = pt - (ptMC-ptRec) = pt + (ptRec ptMC) 
+	  
+	  funSpectra3[idxParticle][idx][energyIdx][centIdx] = new TF1(Form("funSpectra3_%s_%s_%s_%s", chargedModes[idxParticle],
+									   names[idx], energies[energyIdx], cent[centIdx]),  
+								      "[0]*(x-deltaPt)*pow(1.-[1]*(1.-[2])*(x-deltaPt)*(x-deltaPt),1./(1.-[2]))", 0.10, 10.0);
+	  aSpectraFits.Add(funSpectra3[idxParticle][idx][energyIdx][centIdx]);
+	  funSpectra3[idxParticle][idx][energyIdx][centIdx]->SetParameters(fun1->GetParameter(0), fun1->GetParameter(1), fun1->GetParameter(2));
 	} // for (centIdx = 0; centIdx < nCent; centIdx++) {
 
   // ----------------------------------------------------------
   // -- Set range for fitted spectra
   // ----------------------------------------------------------
-    for (idxParticle = 0; idxParticle < nCharges; idxParticle++) 
-    for (energyIdx = 0 ; energyIdx < nEnergies; energyIdx++) 
-      for (idx = 0; idx < nNames; ++idx) 
-	for (centIdx = 0; centIdx < nCent; centIdx++) 
-	  funSpectra[idxParticle][idx][energyIdx][centIdx]->SetRange(0.1, 10.);
+  // for (idxParticle = 0; idxParticle < nCharges; idxParticle++) 
+  //   for (energyIdx = 0 ; energyIdx < nEnergies; energyIdx++) 
+  //     for (idx = 0; idx < nNames; ++idx) 
+  // 	for (centIdx = 0; centIdx < nCent; centIdx++) 
+  // 	  funSpectra1[idxParticle][idx][energyIdx][centIdx]->SetRange(0.1, 10.);
 
   // ----------------------------------------------------------
-  // -- Get charged spectra functions
+  // -- Get charged spectra functions (of with corrected pT - already in inputSpectra)
   // ----------------------------------------------------------
   for (energyIdx = 0 ; energyIdx < nEnergies; ++energyIdx) 
     for (centIdx = 0; centIdx < nCent; ++centIdx) {
       TString namePostFix(Form("%s_%s", energies[energyIdx], cent[centIdx]));
-      funSpectraCharged[0][energyIdx][centIdx] = new TF1(Form("funSpectraCharged_%s_%s", chargedModes[0], namePostFix.Data()), spectraChargedNeg, 0.10, 10.0);
-      funSpectraCharged[1][energyIdx][centIdx] = new TF1(Form("funSpectraCharged_%s_%s", chargedModes[1], namePostFix.Data()), spectraChargedPos, 0.10, 10.0);
-      funSpectraCharged[2][energyIdx][centIdx] = new TF1(Form("funSpectraCharged_%s_%s", chargedModes[2], namePostFix.Data()), spectraChargedAll, 0.10, 10.0);
+      funSpectraCharged[0][energyIdx][centIdx] = new TF1(Form("funSpectra2Charged_%s_%s", chargedModes[0], namePostFix.Data()), spectraChargedNeg, 0.10, 10.0);
+      funSpectraCharged[1][energyIdx][centIdx] = new TF1(Form("funSpectra2Charged_%s_%s", chargedModes[1], namePostFix.Data()), spectraChargedPos, 0.10, 10.0);
+      funSpectraCharged[2][energyIdx][centIdx] = new TF1(Form("funSpectra2Charged_%s_%s", chargedModes[2], namePostFix.Data()), spectraChargedAll, 0.10, 10.0);
     }
 
   // ----------------------------------------------------------
@@ -602,26 +624,26 @@ void drawSpectra() {
 	line20->SetLineStyle(3);
 	line20->Draw();
 
-	funSpectra[idxParticle][0][energyIdx][centIdx]->SetLineColor(kAzure);
+	funSpectra1[idxParticle][0][energyIdx][centIdx]->SetLineColor(kAzure);
 	hSpectra[idxParticle][0][energyIdx][centIdx]->SetLineColor(kAzure);
 	hSpectra[idxParticle][0][energyIdx][centIdx]->SetMarkerColor(kAzure);
 	hSpectra[idxParticle][0][energyIdx][centIdx]->SetMarkerStyle(24);
 	hSpectra[idxParticle][0][energyIdx][centIdx]->Draw("psame");
-	funSpectra[idxParticle][0][energyIdx][centIdx]->Draw("psame");
+	funSpectra1[idxParticle][0][energyIdx][centIdx]->Draw("psame");
 
-	funSpectra[idxParticle][1][energyIdx][centIdx]->SetLineColor(kRed+2);
+	funSpectra1[idxParticle][1][energyIdx][centIdx]->SetLineColor(kRed+2);
 	hSpectra[idxParticle][1][energyIdx][centIdx]->SetLineColor(kRed+2);
 	hSpectra[idxParticle][1][energyIdx][centIdx]->SetMarkerColor(kRed+2);
 	hSpectra[idxParticle][1][energyIdx][centIdx]->SetMarkerStyle(25);
 	hSpectra[idxParticle][1][energyIdx][centIdx]->Draw("psame");
-	funSpectra[idxParticle][1][energyIdx][centIdx]->Draw("psame");
+	funSpectra1[idxParticle][1][energyIdx][centIdx]->Draw("psame");
 
-	funSpectra[idxParticle][2][energyIdx][centIdx]->SetLineColor(kGreen+2);
+	funSpectra1[idxParticle][2][energyIdx][centIdx]->SetLineColor(kGreen+2);
 	hSpectra[idxParticle][2][energyIdx][centIdx]->SetLineColor(kGreen+2);
 	hSpectra[idxParticle][2][energyIdx][centIdx]->SetMarkerColor(kGreen+2);
 	hSpectra[idxParticle][2][energyIdx][centIdx]->SetMarkerStyle(26);
 	hSpectra[idxParticle][2][energyIdx][centIdx]->Draw("psame");
-	funSpectra[idxParticle][2][energyIdx][centIdx]->Draw("psame");
+	funSpectra1[idxParticle][2][energyIdx][centIdx]->Draw("psame");
 	
 	TLatex *texb_Cent = new TLatex(0.3,0.001,cent1[centIdx]);
 	texb_Cent->SetTextSize(0.10);
@@ -817,20 +839,25 @@ void drawSpectraCharged() {
 // =========================================================================================================
 // =========================================================================================================
 
+double deltaPt(double *x, double *par) {
+  // -- get deltaPt (pT_MC - pT_Rec) 
+  return ( funEffDeltaPt[idxParticle][idx][energyIdx][centIdx]->Eval(x,par) );
+}
+
 // __________________________________________________________________
 double spectraChargedNeg(double *x, double *par) {
   // -- get spectra for negative particles
-  return ( funSpectra[0][0][energyIdx][centIdx]->EvalPar(x,par) + 
-	   funSpectra[0][1][energyIdx][centIdx]->EvalPar(x,par) + 
-	   funSpectra[0][2][energyIdx][centIdx]->EvalPar(x,par) );
+  return ( funSpectra2[0][0][energyIdx][centIdx]->EvalPar(x,par) + 
+	   funSpectra2[0][1][energyIdx][centIdx]->EvalPar(x,par) + 
+	   funSpectra2[0][2][energyIdx][centIdx]->EvalPar(x,par) );
 }
 
 // __________________________________________________________________
 double spectraChargedPos(double *x, double *par) {
   // -- get spectra for positive particles
-  return ( funSpectra[1][0][energyIdx][centIdx]->EvalPar(x,par) + 
-	   funSpectra[1][1][energyIdx][centIdx]->EvalPar(x,par) + 
-	   funSpectra[1][2][energyIdx][centIdx]->EvalPar(x,par) );
+  return ( funSpectra2[1][0][energyIdx][centIdx]->EvalPar(x,par) + 
+	   funSpectra2[1][1][energyIdx][centIdx]->EvalPar(x,par) + 
+	   funSpectra2[1][2][energyIdx][centIdx]->EvalPar(x,par) );
 }
 
 // __________________________________________________________________
@@ -843,17 +870,17 @@ double spectraChargedAll(double *x, double *par) {
 // __________________________________________________________________
 double effWeightedChargedNeg(double *x, double *par) {
   // -- get weighted efficiency for negative particles
-  return  ( (funSpectra[0][0][energyIdx][centIdx]->EvalPar(x,par)*funEff[0][0][energyIdx][centIdx]->EvalPar(x, par)) +
-	    (funSpectra[0][1][energyIdx][centIdx]->EvalPar(x,par)*funEff[0][1][energyIdx][centIdx]->EvalPar(x, par)) +
-	    (funSpectra[0][2][energyIdx][centIdx]->EvalPar(x,par)*funEff[0][2][energyIdx][centIdx]->EvalPar(x, par)) );
+  return  ( (funSpectra3[0][0][energyIdx][centIdx]->EvalPar(x,par)*funEff[0][0][energyIdx][centIdx]->EvalPar(x, par)) +
+	    (funSpectra3[0][1][energyIdx][centIdx]->EvalPar(x,par)*funEff[0][1][energyIdx][centIdx]->EvalPar(x, par)) +
+	    (funSpectra3[0][2][energyIdx][centIdx]->EvalPar(x,par)*funEff[0][2][energyIdx][centIdx]->EvalPar(x, par)) );
 }
 
 // __________________________________________________________________
 double effWeightedChargedPos(double *x, double *par) {
   // -- get weighted efficiency for postive particles
-  return  ( (funSpectra[1][0][energyIdx][centIdx]->EvalPar(x,par)*funEff[1][0][energyIdx][centIdx]->EvalPar(x, par)) +
-	    (funSpectra[1][1][energyIdx][centIdx]->EvalPar(x,par)*funEff[1][1][energyIdx][centIdx]->EvalPar(x, par)) +
-	    (funSpectra[1][2][energyIdx][centIdx]->EvalPar(x,par)*funEff[1][2][energyIdx][centIdx]->EvalPar(x, par)) );
+  return  ( (funSpectra3[1][0][energyIdx][centIdx]->EvalPar(x,par)*funEff[1][0][energyIdx][centIdx]->EvalPar(x, par)) +
+	    (funSpectra3[1][1][energyIdx][centIdx]->EvalPar(x,par)*funEff[1][1][energyIdx][centIdx]->EvalPar(x, par)) +
+	    (funSpectra3[1][2][energyIdx][centIdx]->EvalPar(x,par)*funEff[1][2][energyIdx][centIdx]->EvalPar(x, par)) );
 }
 
 // __________________________________________________________________
