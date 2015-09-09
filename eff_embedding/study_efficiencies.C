@@ -40,7 +40,7 @@ void study_efficiencies(const char* particle, int energy = 14) {
   float max_eta          = 0.5;
   float max_dca          = 1.0;
   
-  int   max_events       = 250;
+  int   max_events       = 100;
   double smearBin        = 0.3;
   // --------------------------------------------------------------------------------
   // -- vertex cuts
@@ -250,12 +250,9 @@ void study_efficiencies(const char* particle, int energy = 14) {
     hpt_relativeWidth[idxCent] = new TH1D(Form("hpt_relativeWidth_%s", cent[idxCent]), "Relative Width;#it{p}_{T} (GeV/#it{c});width/mean", Nbins, 0., 5.);
     hpt_relativeWidth[idxCent]->GetXaxis()->Set(Nbins, pt_bin);
 
-    hpt_2D[idxCent] = new TH2D(Form("hpt_2D_%s", cent[idxCent]), "distribution;#it{p}_{T} (GeV/#it{c});efficiency", Nbins, 0., 5., 101, 0., 1.);
+    hpt_2D[idxCent] = new TH2D(Form("hpt_2D_%s", cent[idxCent]), "distribution;#it{p}_{T} (GeV/#it{c});efficiency", Nbins, 0., 5., 40, 0., 1.);
     hpt_2D[idxCent]->GetXaxis()->Set(Nbins, pt_bin);
   }
-
-  TH2D* hpt_2DAll= new TH2D(Form("hpt_2DAll"), "distribution;#it{p}_{T} (GeV/#it{c});efficiency", Nbins, 0., 5., 101, 0., 1.);
-  hpt_2DAll->GetXaxis()->Set(Nbins, pt_bin);
 
   // --------------------------------------------------------------------------------
   // -- Prepare syncing - get nEvents for MC and Rec
@@ -497,13 +494,12 @@ void study_efficiencies(const char* particle, int energy = 14) {
 	double ratio = binRec / binMC;
 	effProfile[idxCent]->Fill(hpt_mc[idxCent]->GetBinCenter(idx), ratio);
 
-	binMC  += (gRandom->Rndm() - smearBin);
-	binRec += (gRandom->Rndm() - smearBin);
+	binMC  += ((2*smearBin*gRandom->Rndm()) - smearBin);
+	binRec += ((2*smearBin*gRandom->Rndm()) - smearBin);
 	ratio = binRec / binMC;
 	effProfileSmeared[idxCent]->Fill(hpt_mc[idxCent]->GetBinCenter(idx), ratio);
 	
-	hpt_2DAll->Fill(hpt_mc[idxCent]->GetBinCenter(idx),           ratio);
-	hpt_2D[idxCent]->Fill(hpt_mc[idxCent]->GetBinCenter(idx),     ratio);
+	hpt_2D[idxCent]->Fill(           hpt_mc[idxCent]->GetBinCenter(idx), ratio);
       }
       
       hpt_mc[idxCent]->Reset();
@@ -513,6 +509,12 @@ void study_efficiencies(const char* particle, int energy = 14) {
       eventCounter[idxCent] = 0;
     } // if (eventCounter[idxCent] >= max_events) {
   } //  for (int idxEvent = 0 ; idxEvent < nEventsMC; ++idxEvent) {
+
+  for (int idxCent = 0; idxCent < nCent; ++idxCent) 
+    for (int idx = 1; idx <= hpt_mc[idxCent]->GetXaxis()->GetNbins(); idx++) {
+      effProfile[idxCent]->SetBinError(idx, effProfile[idxCent]->GetRMS(idx));
+      effProfileSmeared[idxCent]->SetBinError(idx, effProfileSmeared[idxCent]->GetRMS(idx));
+    }
 
   // --------------------------------------------------------------------------------
 
