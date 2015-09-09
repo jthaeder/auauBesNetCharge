@@ -9,6 +9,7 @@
 #include "TString.h"
 #include "TMath.h"
 #include "math.h"
+#include "TRandom3.h"
 #include <iostream>
 
 using namespace std;
@@ -39,8 +40,8 @@ void study_efficiencies(const char* particle, int energy = 14) {
   float max_eta          = 0.5;
   float max_dca          = 1.0;
   
-  int   max_events       = 25;
-
+  int   max_events       = 250;
+  double smearBin        = 0.3;
   // --------------------------------------------------------------------------------
   // -- vertex cuts
   // --------------------------------------------------------------------------------
@@ -143,8 +144,9 @@ void study_efficiencies(const char* particle, int energy = 14) {
   // -- get matched ntuple
   float Dedx, RefMult, RefMultCorrected, CentralityWeight, Centrality16, VertexX, VertexY, VertexZ;
   float PtMc, PzMc, EtaMc, PhiMc, PtPr, PtGl, EtaPr, PhiPr, DcaGl, DcaZGl, DcaXYGl, Flag, FitPts, DedxPts;
-  float AllPts, NPossible, ParentGeantId, GeantId,mErrP, NCommonHit, EventId;
+  float AllPts, NPossible, ParentGeantId, GeantId,mErrP, NCommonHit, EventId, RunId;
   MatchedPairs->SetBranchAddress("EventId", &EventId);
+  MatchedPairs->SetBranchAddress("RunId", &RunId);
   MatchedPairs->SetBranchAddress("Dedx", &Dedx);
   MatchedPairs->SetBranchAddress("RefMult", &RefMult);
   MatchedPairs->SetBranchAddress("RefMultCorrected", &RefMultCorrected);
@@ -176,8 +178,9 @@ void study_efficiencies(const char* particle, int energy = 14) {
 
   // --------------------------------------------------------------------------------
   // -- get MC ntuple
-  float pRefMult, pRefMultCorrected, pCentralityWeight, pCentrality16, pVertexX, pVertexY, pVertexZ, pPtMc, pPzMc, pEtaMc, pPhiMc, pParentGeantId, pGeantId, pEventId;
+  float pRefMult, pRefMultCorrected, pCentralityWeight, pCentrality16, pVertexX, pVertexY, pVertexZ, pPtMc, pPzMc, pEtaMc, pPhiMc, pParentGeantId, pGeantId, pEventId, pRunId;
   McTrack->SetBranchAddress("EventId", &pEventId);
+  McTrack->SetBranchAddress("RunId", &pRunId);
   McTrack->SetBranchAddress("RefMult", &pRefMult);
   McTrack->SetBranchAddress("RefMultCorrected", &pRefMultCorrected);
   McTrack->SetBranchAddress("CentralityWeight", &pCentralityWeight);
@@ -212,11 +215,13 @@ void study_efficiencies(const char* particle, int energy = 14) {
   // --------------------------------------------------------------------------------
   // -- Initialize pt hists
   TProfile *effProfile[nCent];
+  TProfile *effProfileSmeared[nCent];
 
   TH1D* hpt_mc[nCent];
   TH1D* hpt_rec[nCent];
 
   TH1D* hpt_width[nCent];
+  TH1D* hpt_widthSmeared[nCent];
   TH1D* hpt_relativeWidth[nCent];
 
   TH2D* hpt_2D[nCent];
@@ -226,6 +231,10 @@ void study_efficiencies(const char* particle, int energy = 14) {
 				       Form("effProfile_%s;#it{p}_{T} (GeV/#it{c});efficiency", cent[idxCent]), Nbins, 0., 5.);
     effProfile[idxCent]->GetXaxis()->Set(Nbins,pt_bin);
 
+    effProfileSmeared[idxCent] = new TProfile(Form("effProfileSmeared_%s", cent[idxCent]), 
+				       Form("effProfileSmeared_%s;#it{p}_{T} (GeV/#it{c});efficiency", cent[idxCent]), Nbins, 0., 5.);
+    effProfileSmeared[idxCent]->GetXaxis()->Set(Nbins,pt_bin);
+
     hpt_mc[idxCent] = new TH1D(Form("hpt_mc_%s",  cent[idxCent]), "", Nbins, 0., 5.);
     hpt_mc[idxCent]->GetXaxis()->Set(Nbins, pt_bin);
 
@@ -234,6 +243,9 @@ void study_efficiencies(const char* particle, int energy = 14) {
 
     hpt_width[idxCent] = new TH1D(Form("hpt_width_%s", cent[idxCent]), "Width;#it{p}_{T} (GeV/#it{c});width", Nbins, 0., 5.);
     hpt_width[idxCent]->GetXaxis()->Set(Nbins, pt_bin);
+
+    hpt_widthSmeared[idxCent] = new TH1D(Form("hpt_widthSmeared_%s", cent[idxCent]), "Width;#it{p}_{T} (GeV/#it{c});width", Nbins, 0., 5.);
+    hpt_widthSmeared[idxCent]->GetXaxis()->Set(Nbins, pt_bin);
 
     hpt_relativeWidth[idxCent] = new TH1D(Form("hpt_relativeWidth_%s", cent[idxCent]), "Relative Width;#it{p}_{T} (GeV/#it{c});width/mean", Nbins, 0., 5.);
     hpt_relativeWidth[idxCent]->GetXaxis()->Set(Nbins, pt_bin);
@@ -297,6 +309,14 @@ void study_efficiencies(const char* particle, int energy = 14) {
   for (Int_t idxCent = 0; idxCent < nCent; idxCent++)
     eventCounter[idxCent] = 0;
   int nEventsCommon  = 0;
+
+  // -----------------------------------------------
+
+  int lastRun = -1;
+  int nRuns   = 0;
+
+  // -----------------------------------------------
+
 
   // -- event loop
   for (int idxEvent = 0; idxEvent < nEventsMC; ++idxEvent) {
@@ -457,25 +477,41 @@ void study_efficiencies(const char* particle, int energy = 14) {
 
     // -----------------------------------------------
 
-    // -- pT dependent average over max_events
+    int currentRun = Int_t(pRunId);
+    if (currentRun != lastRun) {
+      lastRun = currentRun;
+      ++nRuns;
+    }
+
+    //  if (nRuns > 20) {
+      // -- pT dependent average over max_events
     if (eventCounter[idxCent] >= max_events) {
       for (int idx = 1; idx <= hpt_mc[idxCent]->GetXaxis()->GetNbins(); idx++) { 
-	double binContent = hpt_mc[idxCent]->GetBinContent(idx);
-	if (binContent < 0.00001)
-	  continue;
-	double ratio = hpt_rec[idxCent]->GetBinContent(idx)/(double)binContent;
+	
+	double binMC  = hpt_mc[idxCent]->GetBinContent(idx);
+	double binRec = hpt_rec[idxCent]->GetBinContent(idx);
 
+	if (binMC < 0.00001)
+	  continue;
+
+	double ratio = binRec / binMC;
+	effProfile[idxCent]->Fill(hpt_mc[idxCent]->GetBinCenter(idx), ratio);
+
+	binMC  += (gRandom->Rndm() - smearBin);
+	binRec += (gRandom->Rndm() - smearBin);
+	ratio = binRec / binMC;
+	effProfileSmeared[idxCent]->Fill(hpt_mc[idxCent]->GetBinCenter(idx), ratio);
+	
 	hpt_2DAll->Fill(hpt_mc[idxCent]->GetBinCenter(idx),           ratio);
 	hpt_2D[idxCent]->Fill(hpt_mc[idxCent]->GetBinCenter(idx),     ratio);
-	effProfile[idxCent]->Fill(hpt_mc[idxCent]->GetBinCenter(idx), ratio);
       }
       
       hpt_mc[idxCent]->Reset();
       hpt_rec[idxCent]->Reset();
       
+      nRuns = 0;
       eventCounter[idxCent] = 0;
     } // if (eventCounter[idxCent] >= max_events) {
-
   } //  for (int idxEvent = 0 ; idxEvent < nEventsMC; ++idxEvent) {
 
   // --------------------------------------------------------------------------------
@@ -487,6 +523,8 @@ void study_efficiencies(const char* particle, int energy = 14) {
   for (int idxCent = 0; idxCent < nCent; ++idxCent) {
     for (int idx = 1; idx <= effProfile[idxCent]->GetXaxis()->GetNbins(); idx++) { 
       hpt_width[idxCent]->SetBinContent(idx, effProfile[idxCent]->GetBinError(idx));
+      hpt_widthSmeared[idxCent]->SetBinContent(idx, effProfileSmeared[idxCent]->GetBinError(idx));
+
       double relativeWidth = (effProfile[idxCent]->GetBinContent(idx) != 0) ? 
 	effProfile[idxCent]->GetBinError(idx)/effProfile[idxCent]->GetBinContent(idx) : 0.;
       hpt_relativeWidth[idxCent]->SetBinContent(idx, relativeWidth);
@@ -501,10 +539,21 @@ void study_efficiencies(const char* particle, int energy = 14) {
     effProfile[idxCent]->SetMarkerColor(kRed+2);
     effProfile[idxCent]->SetMarkerColor(kRed+2);
 
+    effProfileSmeared[idxCent]->GetYaxis()->SetRangeUser(0., 1.0);
+    effProfileSmeared[idxCent]->SetMarkerStyle(21);
+    effProfileSmeared[idxCent]->SetMarkerColor(kRed+2);
+    effProfileSmeared[idxCent]->SetMarkerColor(kRed+2);
+
+
     hpt_width[idxCent]->GetYaxis()->SetRangeUser(0., 0.2);
     hpt_width[idxCent]->SetMarkerStyle(20);
     hpt_width[idxCent]->SetMarkerColor(kRed+2);
     hpt_width[idxCent]->SetLineColor(kRed+2);
+
+    hpt_widthSmeared[idxCent]->GetYaxis()->SetRangeUser(0., 0.2);
+    hpt_widthSmeared[idxCent]->SetMarkerStyle(20);
+    hpt_widthSmeared[idxCent]->SetMarkerColor(kRed+2);
+    hpt_widthSmeared[idxCent]->SetLineColor(kRed+2);
 
     hpt_relativeWidth[idxCent]->GetYaxis()->SetRangeUser(0., 0.2);
     hpt_relativeWidth[idxCent]->SetMarkerStyle(21);
