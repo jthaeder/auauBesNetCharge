@@ -30,7 +30,6 @@
 *.out
 *.app
 
-eff_hadrons/efficiency*
 eff_hadrons/spectra/
 results*/
 effQA_dedx*/
