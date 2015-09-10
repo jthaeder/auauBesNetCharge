@@ -56,12 +56,10 @@ const char* names[]  = {"pion", "kaon", "proton"};
 const char* names2[] = {"#pi^{+}", "K^{+}", "p"};
 const char* names3[] = {"#pi^{-}", "K^{-}", "#bar{p}"};
 
-const int   nEnergies       = 7;
-// const char* energies[]      = {"11",   "14",   "19"};
-// const char* exactEnergies[] = {"11.5", "14.5", "19.6"};
-const float xPosLabel[]     =  {0.08,   0.20,   0.32,   0.45,  0.57,    0.69,  0.82,    0.92};
-const char *energies[]      = {  "7",   "11",   "14",   "19",   "27",   "39",   "62",  "200"};
-const char *exactEnergies[] = {"7.7", "11.5", "11.5", "19.6", "27.0", "39.0", "62.4", "62.4"};
+const int   nEnergies       = 8;
+const float xPosLabel[]     = { 0.08,   0.19,   0.30,   0.40,  0.51,    0.62,  0.73,   0.84};
+const char *energies[]      = {  "7",   "11",   "14",   "19",   "27",   "39",   "62", "200"};
+const char *exactEnergies[] = {"7.7", "11.5", "14.5", "19.6", "27.0", "39.0", "62.4", "200"};
 
 const double fitRanges[2]        = {0.1, 3.};  // {0.2, 1.95};
 const double fitRangesDelta[2]   = {0.1, 4.5}; 
@@ -86,9 +84,9 @@ void fitEfficiencyPt() {
   setupStyle();
 
   gSystem->Exec("mkdir -p ./results/fits");
-  gSystem->Exec("mkdir -p ./results/particles_pt/png  ./results/particles_pt/pdf  ./results/particles_pt/root  ./results/particles_pt/root_macro");
-  gSystem->Exec("mkdir -p ./results/particles_deltaPt/png  ./results/particles_deltaPt/pdf  ./results/particles_deltaPt/root  ./results/particles_deltaPt/root_macro");
-  gSystem->Exec("mkdir -p ./results/energy_cmp_pt/png ./results/energy_cmp_pt/pdf ./results/energy_cmp_pt/root ./results/energy_cmp_pt/root_macro");
+  gSystem->Exec("mkdir -p ./results/particles_pt/png  ./results/particles_pt/pdf ./results/particles_pt/eps  ./results/particles_pt/root  ./results/particles_pt/root_macro");
+  gSystem->Exec("mkdir -p ./results/particles_deltaPt/png  ./results/particles_deltaPt/pdf ./results/particles_deltaPt/eps  ./results/particles_deltaPt/root  ./results/particles_deltaPt/root_macro");
+  gSystem->Exec("mkdir -p ./results/energy_cmp_pt/png ./results/energy_cmp_pt/pdf ./results/energy_cmp_pt/eps ./results/energy_cmp_pt/root ./results/energy_cmp_pt/root_macro");
 
   TColor *color = new TColor(1182, 1, 0, 0, " ", 0);
 
@@ -475,14 +473,14 @@ void fitEfficiencyPt() {
       canDelta[idx][energyIdx]->cd();
     } // end idx
   } // end energy idx
-  
+
   // ----------------------------------------------------------
   // -- Fill canvas by cent
   // ----------------------------------------------------------
   TLegend *leg2[nNames];
 
   for (int centIdx = 1; centIdx < nCent; centIdx++) {
-    canCent[centIdx] = new TCanvas(Form("canCent_%d", centIdx), Form("canCent_%d", centIdx),0,0,1200,900);
+    canCent[centIdx] = new TCanvas(Form("canCent_%d", centIdx), Form("canCent_%d", centIdx),0,0,1400,800);
     canCent[centIdx]->SetFillColor(0);
     canCent[centIdx]->SetBorderMode(0);
     canCent[centIdx]->SetBorderSize(0.0);
@@ -607,11 +605,13 @@ void fitEfficiencyPt() {
       can[idx][energyIdx]->SaveAs(Form("./results/particles_pt/root_macro/pt_%s_%sGeV.C", names[idx], energies[energyIdx]));
       can[idx][energyIdx]->SaveAs(Form("./results/particles_pt/png/pt_%s_%sGeV.png",      names[idx], energies[energyIdx]));
       can[idx][energyIdx]->SaveAs(Form("./results/particles_pt/pdf/pt_%s_%sGeV.pdf",      names[idx], energies[energyIdx]));
+      can[idx][energyIdx]->SaveAs(Form("./results/particles_pt/eps/pt_%s_%sGeV.eps",      names[idx], energies[energyIdx]));
  
       canDelta[idx][energyIdx]->SaveAs(Form("./results/particles_deltaPt/root/pt_%s_%sGeV.root",    names[idx], energies[energyIdx]));
       canDelta[idx][energyIdx]->SaveAs(Form("./results/particles_deltaPt/root_macro/pt_%s_%sGeV.C", names[idx], energies[energyIdx]));
       canDelta[idx][energyIdx]->SaveAs(Form("./results/particles_deltaPt/png/pt_%s_%sGeV.png",      names[idx], energies[energyIdx]));
       canDelta[idx][energyIdx]->SaveAs(Form("./results/particles_deltaPt/pdf/pt_%s_%sGeV.pdf",      names[idx], energies[energyIdx]));
+      canDelta[idx][energyIdx]->SaveAs(Form("./results/particles_deltaPt/eps/pt_%s_%sGeV.eps",      names[idx], energies[energyIdx]));
     }
   }
 
@@ -620,6 +620,7 @@ void fitEfficiencyPt() {
     canCent[centIdx]->SaveAs(Form("./results/energy_cmp_pt/root_macro/pt_cmp_%d.C", centIdx));
     canCent[centIdx]->SaveAs(Form("./results/energy_cmp_pt/png/pt_cmp_%d.png",      centIdx));
     canCent[centIdx]->SaveAs(Form("./results/energy_cmp_pt/pdf/pt_cmp_%d.pdf",      centIdx));
+    canCent[centIdx]->SaveAs(Form("./results/energy_cmp_pt/eps/pt_cmp_%d.eps",      centIdx));
   }
 }
 
