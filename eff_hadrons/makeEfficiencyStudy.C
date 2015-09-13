@@ -251,7 +251,7 @@ void makeEfficiencyStudy() {
 
       TPad* pad = new TPad("pad", "pad",0.05,0.1,0.99,0.99);
       pad->SetBorderMode(0);
-      pad->SetFillColor(1182);
+      pad->SetFillColor(0);
       pad->Draw();
       pad->cd();
       pad->Divide(5,2,0.,0.,0.);
@@ -378,7 +378,7 @@ void makeEfficiencyStudy() {
 
       TPad* pad = new TPad("pad", "pad",0.05,0.1,0.99,0.99);
       pad->SetBorderMode(0);
-      pad->SetFillColor(1182);
+      pad->SetFillColor(0);
       pad->Draw();
       pad->cd();
       pad->Divide(5,2,0.,0.,0.);
@@ -490,7 +490,7 @@ void makeEfficiencyStudy() {
 
       TPad* pad = new TPad("pad", "pad",0.05,0.1,0.99,0.99);
       pad->SetBorderMode(0);
-      pad->SetFillColor(1182);
+      pad->SetFillColor(0);
       pad->Draw();
       pad->cd();
       pad->Divide(5,2,0.,0.,0.);
@@ -604,7 +604,7 @@ void makeEfficiencyStudy() {
 
     TPad* padContent = new TPad("padContent", "", 0.05, 0.1, 0.99, 0.99);
     padContent->SetBorderMode(0);
-    padContent->SetFillColor(1182);
+    padContent->SetFillColor(0);
     padContent->Draw();
     padContent->cd();
     padContent->Divide(3,1,0.,0.,0.);

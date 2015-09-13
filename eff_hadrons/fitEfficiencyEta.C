@@ -179,7 +179,7 @@ void fitEfficiencyEta() {
 
       TPad* pad = new TPad("pad", "pad",0.05,0.1,0.99,0.99);
       pad->SetBorderMode(0);
-      pad->SetFillColor(1182);
+      pad->SetFillColor(0);
       pad->Draw();
       pad->cd();
       pad->Divide(5,2,0.,0.,0.);
@@ -306,7 +306,7 @@ void fitEfficiencyEta() {
 
     TPad* pad = new TPad("pad", "pad",0.05,0.08,0.94,0.94);
     pad->SetBorderMode(0);
-    pad->SetFillColor(1182);
+    pad->SetFillColor(0);
     pad->Draw();
     pad->cd();
     pad->Divide(nEnergies, nNames, 0.,0.,0.);
