@@ -246,6 +246,13 @@ void makeEfficiencyCharged() {
 
 	  TF1* fun = funSpectra1[idxParticle][idx][energyIdx][centIdx];	  
 	  fun->SetParameters(100.*hist->GetBinContent(10), 1.55836, 1.10682);
+
+	  // -- specific setting for failing fits at 62.4 GeV 20-30 and 30-40
+	  if ((energyIdx == 6 || energyIdx == 7) && (centIdx == 3 || centIdx == 4)) {
+	      fun->SetParameters(funSpectra1[idxParticle][idx][energyIdx][2]->GetParameter(0),
+				 funSpectra1[idxParticle][idx][energyIdx][2]->GetParameter(1),
+				 funSpectra1[idxParticle][idx][energyIdx][2]->GetParameter(2));
+	  }
 	  
 	  fun->SetParLimits(1, parLimits1[idx][idxParticle][0], parLimits1[idx][idxParticle][1]);
 	  fun->SetParLimits(2, parLimits2[idx][idxParticle][0], parLimits2[idx][idxParticle][1]);
