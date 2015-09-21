@@ -160,11 +160,11 @@ void plotVsEta_nice(const Char_t* name = "ratioVsEta") {
 	    line00->Draw();
 
 	    if (idxMoment == 5) {
-	      TLine *line0 = new TLine(aMinX, 0, aMaxX, 0);
-	      line0->SetLineColor(kGray+1);
-	      line0->SetLineStyle(2);
-	      line0->SetLineWidth(2);
-	      line0->Draw();
+	      // TLine *line0 = new TLine(aMinX, 0, aMaxX, 0);
+	      // line0->SetLineColor(kGray+1);
+	      // line0->SetLineStyle(2);
+	      // line0->SetLineWidth(2);
+	      // line0->Draw();
 	    }
 	    else if (idxMoment == 6) {
 	      TLine *line1 = new TLine(aMinX, 1, aMaxX, 1);
@@ -174,7 +174,6 @@ void plotVsEta_nice(const Char_t* name = "ratioVsEta") {
 	      line1->Draw();
 	    }
 	  }
-
 	  g->Draw("PSAME");
 
 	} // for (int idxMoment = 0 ; idxMoment < nMoments; ++idxMoment) {
@@ -196,7 +195,7 @@ void plotVsEta_nice(const Char_t* name = "ratioVsEta") {
       texb_3->SetTextSize(0.07);
       texb_3->Draw("same");
 
-      TLatex *texb_3a = new TLatex(-0.49,8.9, "Net-Charge, 0.2 < #it{p}_{T} (GeV/#it{c}) < 2.0");
+      TLatex *texb_3a = new TLatex(-0.49,8.9, "Net-Charge, 0.2 < #it{p}_{T} (GeV/#it{c}) < 2.0, 0-5%");
       texb_3a->SetTextSize(0.07);
       texb_3a->Draw("same");
 

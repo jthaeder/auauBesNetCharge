@@ -131,11 +131,11 @@ void plotEta_nice(const Char_t* name = "ratioEtaVsNpart") {
 	    g->Draw("AP");
 	    
 	    if (idxMoment == 5) {
-	      TLine *line0 = new TLine(aMinX, 0, aMaxX, 0);
-	      line0->SetLineColor(kGray+1);
-	      line0->SetLineStyle(2);
-	      line0->SetLineWidth(2);
-	      line0->Draw();
+	      // TLine *line0 = new TLine(aMinX, 0, aMaxX, 0);
+	      // line0->SetLineColor(kGray+1);
+	      // line0->SetLineStyle(2);
+	      // line0->SetLineWidth(2);
+	      // line0->Draw();
 	    }
 	    else if (idxMoment == 6) {
 	      TLine *line1 = new TLine(aMinX, 1, aMaxX, 1);

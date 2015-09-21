@@ -128,11 +128,11 @@ void plotVsDeltaEta_nice(const Char_t* name = "ratioVsDeltaEta") {
 	  g->Draw("AP");
 	  
 	  if (idxMoment == 5) {
-	    TLine *line0 = new TLine(aMinX, 0, aMaxX, 0);
-	    line0->SetLineColor(kGray+1);
-	    line0->SetLineStyle(2);
-	    line0->SetLineWidth(2);
-	    line0->Draw();
+	    // TLine *line0 = new TLine(aMinX, 0, aMaxX, 0);
+	    // line0->SetLineColor(kGray+1);
+	    // line0->SetLineStyle(2);
+	    // line0->SetLineWidth(2);
+	    // line0->Draw();
 	  }
 	  else if (idxMoment == 6) {
 	    TLine *line1 = new TLine(aMinX, 1, aMaxX, 1);
@@ -157,7 +157,7 @@ void plotVsDeltaEta_nice(const Char_t* name = "ratioVsDeltaEta") {
     texb_3->SetTextSize(0.07);
     texb_3->Draw("same");
     
-    TLatex *texb_3a = new TLatex(0.05, 0.49, "Net-Charge, 0.2 < #it{p}_{T} (GeV/#it{c}) < 2.0");
+    TLatex *texb_3a = new TLatex(0.05, 0.49, "Net-Charge, 0.2 < #it{p}_{T} (GeV/#it{c}) < 2.0, 0-5%");
     texb_3a->SetTextSize(0.07);
     texb_3a->Draw("same");
     

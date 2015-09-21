@@ -136,6 +136,8 @@ void SaveCanvas(const Char_t* name) {
   
   gSystem->Exec(Form("mkdir -p results/nice/%s/png",  name));
   gSystem->Exec(Form("mkdir -p results/nice/%s/pdf",  name));
+  gSystem->Exec(Form("mkdir -p results/nice/pdf"));
+  gSystem->Exec(Form("mkdir -p results/nice/png"));
   gSystem->Exec(Form("mkdir -p results/nice/%s/eps",  name));
   gSystem->Exec(Form("mkdir -p results/nice/%s/gif",  name));
   gSystem->Exec(Form("mkdir -p results/nice/%s/root", name));
@@ -151,6 +153,8 @@ void SaveCanvas(const Char_t* name) {
     c->SaveAs(Form("results/nice/%s/eps/%s_14GeV.eps",   name, c->GetName()));
     c->SaveAs(Form("results/nice/%s/gif/%s_14GeV.gif",   name, c->GetName()));
     c->SaveAs(Form("results/nice/%s/pdf/%s_14GeV.pdf",   name, c->GetName()));
+    c->SaveAs(Form("results/nice/pdf/%s_14GeV.pdf",            c->GetName()));
+    c->SaveAs(Form("results/nice/png/%s_14GeV.png",            c->GetName()));
     c->SaveAs(Form("results/nice/%s/root/%s_14GeV.C",    name, c->GetName()));
     c->SaveAs(Form("results/nice/%s/root/%s_14GeV.root", name, c->GetName()));
   }
