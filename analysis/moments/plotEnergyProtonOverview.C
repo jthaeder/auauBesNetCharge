@@ -17,7 +17,7 @@ void SetGlobals() {
 }
 
 // ______________________________________________________________________________________
-void plotEnergyProton(const Char_t* name = "ratioNetProtonVsEnergy") {
+void plotEnergyProtonOverview(const Char_t* name = "ratioNetProtonVsEnergyOverview") {
 
   gROOT->LoadMacro("include/toolsEnergyNice.C++");
   gROOT->LoadMacro("include/getPublished.C++");
@@ -124,7 +124,7 @@ void plotEnergyProton(const Char_t* name = "ratioNetProtonVsEnergy") {
   // -----------------------------------------------------
 
   SetupCanvas(name, "Net-Proton Ratio energy dependence");
-  CreateLegends(3, 4, 0.4, 0.28);
+  CreateLegends(2, 3, 0.4, 0.28);
 
   // -----------------------------------------------------
 
@@ -133,7 +133,7 @@ void plotEnergyProton(const Char_t* name = "ratioNetProtonVsEnergy") {
     gPad->SetLogx();
 
     for (int idxCent = 0; idxCent < nCent; ++idxCent) {
-      if (idxCent != 0 && idxCent != 1 && idxCent != 8)
+      if (idxCent != 0 && idxCent != 8)
 	continue;
 
       DrawSet(graphStat[0][idxMoment][idxCent],    graphSys[0][idxMoment][idxCent],

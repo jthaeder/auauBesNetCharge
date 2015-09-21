@@ -124,7 +124,7 @@ void plotEnergyKaon(const Char_t* name = "ratioNetKaonVsEnergy") {
 
   // -----------------------------------------------------
 
-  SetupCanvas("canNetKaonRatioEnergy", "Net-Kaon Ratio energy dependence");
+  SetupCanvas(name, "Net-Kaon Ratio energy dependence");
   CreateLegends(2, 3, 0.4, 0.09);
 
   for (int idxMoment = 4; idxMoment < nMoments; ++idxMoment) {

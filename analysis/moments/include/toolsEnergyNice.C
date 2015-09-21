@@ -151,8 +151,7 @@ void DrawSet(TGraphErrors *gStat, TGraphErrors *gSys, TGraphErrors *gPoisson, TG
   ConfigGraph(gStat,    idxMoment, idxCent);
   ConfigGraph(gSys,     idxMoment, idxCent, 2);
   ConfigGraph(gPoisson, idxMoment, idxCent, 1);
-  
-  if (idxCent == 0) 
+    if (idxCent == 0) 
     ConfigGraph(gUrqmd, idxMoment, idxCent, 3);
   
   // -- draw box
@@ -183,8 +182,8 @@ void DrawSet(TGraphErrors *gStat, TGraphErrors *gSys, TGraphErrors *gPoisson, TG
   //gSys->Draw("B2,SAME");
   gStat->Draw("P,SAME");
   gSys->Draw("[],SAME");
-  
-    if (idxMoment == 4) {
+
+  if (idxMoment == 4) {
     legExp->AddEntry(gStat, Form("%s", cent1[idxCent]), "pl");
     legTheo->AddEntry(gPoisson, Form("%s Poisson", cent1[idxCent]), "l");
   }
@@ -194,7 +193,7 @@ void DrawSet(TGraphErrors *gStat, TGraphErrors *gSys, TGraphErrors *gPoisson, TG
 TPad* SetupCanvas(const Char_t* canName, const Char_t *canTitle) {
   // -- setup canvas and pad
   
-  canA.Add(new TCanvas(canName, canTitle, 0, 0 , 600, 1000));
+  canA.Add(new TCanvas(Form("can%s", canName), canTitle, 0, 0 , 600, 1000));
   can = static_cast<TCanvas*>(canA.Last());
   can->SetFillColor(0);
   can->SetBorderMode(0);

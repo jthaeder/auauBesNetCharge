@@ -116,7 +116,7 @@ void plotEnergyCharge(const Char_t* name = "ratioNetChargeVsEnergy") {
 
   // -----------------------------------------------------
 
-  SetupCanvas("canNetChargeRatioEnergy", "Net-Charge Ratio energy dependence");
+  SetupCanvas(name, "Net-Charge Ratio energy dependence");
   CreateLegends(2, 3, 0.4, 0.09);
 
   for (int idxMoment = 4; idxMoment < nMoments; ++idxMoment) {
