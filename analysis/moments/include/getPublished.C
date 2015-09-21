@@ -23,6 +23,7 @@
 TGraphErrors *graphStat[2][7][9];
 TGraphErrors *graphSys[2][7][9];
 TGraphErrors *graphPoisson[2][7][9];
+TGraphErrors *graphUrqmd[2][7][9];
 
 void getPublished() {
 
@@ -113,15 +114,24 @@ void getPublished() {
   Double_t mub[] = {422,  316,  266,  206, 156, 112,   73,  24};
   Double_t tc[]  = {140,  152,  156,  160, 163, 164,  165, 166};
 
+  Double_t snnRed[] = {7.7, 11.5, 19.6,  27,  39, 62.4, 200};
+  Double_t mubRed[] = {422,  316,  206, 156, 112,   73,  24};
+
+
   // ---------------------------------------------------------------------------------
   
   const Int_t nEnergyMax = 8;
 
   Double_t y[2][nEnergyMax], eyStat[2][nEnergyMax], eySys[2][nEnergyMax], yPoisson[2][nEnergyMax];
+  
+  Double_t exSys[nEnergyMax] = {0.75, 3, 3, 3, 4, 4, 4, 10};
+
+  for (Int_t idxEnergy = 0; idxEnergy < nEnergyMax; ++idxEnergy)   
+    exSys[idxEnergy] = 1.;
 
   // -------------------------------------------------
   //  -- VM
-  // -------------------------------------------------
+  // ------------------------------------------------
   int idxMoment = 4;
   for (Int_t ii = 0; ii < 2; ++ii) {
     Int_t idxCent = (ii == 1) ? 8 : 0;
@@ -145,6 +155,9 @@ void getPublished() {
     
     graphStat[0][idxMoment][idxCent]    = new TGraphErrors(nEnergyMax, snn, y[ii], 0, eyStat[ii]);    
     graphStat[1][idxMoment][idxCent]    = new TGraphErrors(nEnergyMax, mub, y[ii], 0, eyStat[ii]);    
+
+    // graphSys[0][idxMoment][idxCent]     = new TGraphErrors(nEnergyMax, snn, y[ii], exSys, eySys[ii]);    
+    // graphSys[1][idxMoment][idxCent]     = new TGraphErrors(nEnergyMax, mub, y[ii], exSys, eySys[ii]);
 
     graphSys[0][idxMoment][idxCent]     = new TGraphErrors(nEnergyMax, snn, y[ii], 0, eySys[ii]);    
     graphSys[1][idxMoment][idxCent]     = new TGraphErrors(nEnergyMax, mub, y[ii], 0, eySys[ii]);
@@ -224,183 +237,31 @@ void getPublished() {
     graphPoisson[0][idxMoment][idxCent] = new TGraphErrors(nEnergyMax, snn, yPoisson[ii], 0, 0);    
     graphPoisson[1][idxMoment][idxCent] = new TGraphErrors(nEnergyMax, mub, yPoisson[ii], 0, 0);
   } // for (Int_t ii = 0; ii < 2; ++i) {
- }
+
+  // -----------------------------------------------------------------------
   
-  #if 0
-  
+  for (idxMoment = 0; idxMoment < 7; ++idxMoment) {
+    for (Int_t idxCent = 0; idxCent < 9; ++idxCent) {
+      if (!graphStat[0][idxMoment][idxCent]) {
+	graphStat[0][idxMoment][idxCent]    = new TGraphErrors(nEnergyMax, snn, 0, 0, 0);    
+	graphStat[1][idxMoment][idxCent]    = new TGraphErrors(nEnergyMax, mub, 0, 0, 0);    
+      }
+      if (!graphSys[0][idxMoment][idxCent]) {
+	graphSys[0][idxMoment][idxCent]     = new TGraphErrors(nEnergyMax, snn, 0, 0, 0);    
+	graphSys[1][idxMoment][idxCent]     = new TGraphErrors(nEnergyMax, mub, 0, 0, 0);    
+      }
+      if (!graphPoisson[0][idxMoment][idxCent]) {
+	graphPoisson[0][idxMoment][idxCent] = new TGraphErrors(nEnergyMax, snn, 0, 0, 0);    
+	graphPoisson[1][idxMoment][idxCent] = new TGraphErrors(nEnergyMax, mub, 0, 0, 0);    
+      }
+      if (!graphUrqmd[0][idxMoment][idxCent]) {
+	graphUrqmd[0][idxMoment][idxCent]   = new TGraphErrors(nEnergyMax-1, snnRed, 0, 0, 0);    
+	graphUrqmd[1][idxMoment][idxCent]   = new TGraphErrors(nEnergyMax-1, mubRed, 0, 0, 0);    
+      }
+    }
+  }
   
   // -----------------------------------------------------------------------
 
-  // -- Get new results
-  TFile *fKVM = TFile::Open(Form("output/%s/%s/Moments_VM.root", name, dataSet));
-  TGraphErrors * kVM = static_cast<TGraphErrors*>(fKVM->Get("VM"));
-
-  TFile *fKSD = TFile::Open(Form("output/%s/%s/Moments_SD.root", name, dataSet));
-  TGraphErrors * kSD = static_cast<TGraphErrors*>(fKSD->Get("SD"));
-
-  TFile *fKKV = TFile::Open(Form("output/%s/%s/Moments_KV.root", name, dataSet));
-  TGraphErrors * kKV = static_cast<TGraphErrors*>(fKKV->Get("KV"));
-
-  int idxLow = 8;
-  int idxHigh = 0;
-  int aIdx14[2] = {0, 8};
-
-  // -------------------------------------------------
-  //  VM
-  // -------------------------------------------------
-  TGraphErrors *graphVM[4];
-  TGraphErrors *graphVM14[4];
-  
-  for (Int_t jj = 0; jj < 2; ++jj) {
-    for (Int_t ii = 0; ii < n; ++ii) {
-      y[jj][ii]  = publishedVM[jj][ii][1];
-      ey[jj][ii] = publishedVM[jj][ii][2];
-    }
-
-    graphVM[jj]   = new TGraphErrors(n, snn, y[jj], 0, ey[jj]);
-    graphVM[jj+2] = new TGraphErrors(n, mub, y[jj], 0, ey[jj]);
-
-    y14[jj][0]  = kVM->GetY()[aIdx14[jj]];
-    ey14[jj][0] = kVM->GetEY()[aIdx14[jj]];
-    
-    graphVM14[jj]   = new TGraphErrors(n14, snn14, y14[jj], 0, ey14[jj]);
-    graphVM14[jj+2] = new TGraphErrors(n14, mub14, y14[jj], 0, ey14[jj]);
-  }
-
-  SetGraph(graphVM[0], "#sigma^{2}/M - Net-Charge , 0.2 < #it{p}_{T} < 2.0 , |#eta| < 0.5", "#sqrt{s_{NN}} (GeV)", "#sigma^{2}/M", kRed+1, 24, 2, 250);
-  SetGraphStyle(graphVM[1], kAzure, 25);
-  SetGraph(graphVM[2], "#sigma^{2}/M - Net-Charge , 0.2 < #it{p}_{T} < 2.0 , |#eta| < 0.5", "#mu_{B} (MeV)",      "#sigma^{2}/M", kRed+1, 24, 2, 250);
-  SetGraphStyle(graphVM[3], kAzure, 25);
-
-  SetGraph(graphVM14[0], "#sigma^{2}/M - Net-Charge , 0.2 < #it{p}_{T} < 2.0 , |#eta| < 0.5", "#sqrt{s_{NN}} (GeV)", "#sigma^{2}/M", kRed+1, 20, 2, 250);
-  SetGraphStyle(graphVM14[1], kAzure, 21);
-  SetGraph(graphVM14[2], "#sigma^{2}/M - Net-Charge , 0.2 < #it{p}_{T} < 2.0 , |#eta| < 0.5", "#mu_{B} (MeV)",      "#sigma^{2}/M", kRed+1, 20, 2, 250);
-  SetGraphStyle(graphVM14[3], kAzure, 21);
-
-  Draw(can, graphVM, graphVM14, 1);
-
-  // -------------------------------------------------
-  //  SD
-  // -------------------------------------------------
-  TGraphErrors *graphSD[4];
-  TGraphErrors *graphSD14[4];
-  
-  for (Int_t jj = 0; jj < 2; ++jj) {
-    for (Int_t ii = 0; ii < n; ++ii) {
-      y[jj][ii]  = publishedSD[jj][ii][1];
-      ey[jj][ii] = publishedSD[jj][ii][2];
-    }
-    graphSD[jj]   = new TGraphErrors(n, snn, y[jj], 0, ey[jj]);
-    graphSD[jj+2] = new TGraphErrors(n, mub, y[jj], 0, ey[jj]);
-
-    y14[jj][0]  = kSD->GetY()[aIdx14[jj]];
-    ey14[jj][0] = kSD->GetEY()[aIdx14[jj]];
-    
-    graphSD14[jj]   = new TGraphErrors(n14, snn14, y14[jj], 0, ey14[jj]);
-    graphSD14[jj+2] = new TGraphErrors(n14, mub14, y14[jj], 0, ey14[jj]);
-  }
-
-  SetGraph(graphSD[0], "S #sigma - Net-Charge , 0.2 < #it{p}_{T} < 2.0 , |#eta| < 0.5", "#sqrt{s_{NN}} (GeV)", "S #sigma", kRed+2, 24, -0.1, 1);
-  SetGraphStyle(graphSD[1], kAzure, 25);
-  SetGraph(graphSD[2], "S #sigma - Net-Charge , 0.2 < #it{p}_{T} < 2.0 , |#eta| < 0.5", "#mu_{B} (MeV)",       "S #sigma", kRed+2, 24, -0.1, 1);
-  SetGraphStyle(graphSD[3], kAzure, 25);
-
-  SetGraph(graphSD14[0], "S #sigma - Net-Charge , 0.2 < #it{p}_{T} < 2.0 , |#eta| < 0.5", "#sqrt{s_{NN}} (GeV)", "S #sigma", kRed+2, 20, -0.1, 1);
-  SetGraphStyle(graphSD14[1], kAzure, 21);
-  SetGraph(graphSD14[2], "S #sigma - Net-Charge , 0.2 < #it{p}_{T} < 2.0 , |#eta| < 0.5", "#mu_{B} (MeV)",       "S #sigma", kRed+2, 20, -0.1, 1);
-  SetGraphStyle(graphSD14[3], kAzure, 21);
-
-  Draw(can, graphSD, graphSD14, 2);
-
-  // -------------------------------------------------
-  //  KV
-  // -------------------------------------------------
-  TGraphErrors *graphKV[4];
-  TGraphErrors *graphKV14[4];
-  
-  for (Int_t jj = 0; jj < 2; ++jj) {
-    for (Int_t ii = 0; ii < n; ++ii) {
-      y[jj][ii]  = publishedKV[jj][ii][1];
-      ey[jj][ii] = publishedKV[jj][ii][2];
-    }
-    graphKV[jj]   = new TGraphErrors(n, snn, y[jj], 0, ey[jj]);
-    graphKV[jj+2] = new TGraphErrors(n, mub, y[jj], 0, ey[jj]);
-    
-    y14[jj][0]  = kKV->GetY()[aIdx14[jj]];
-    ey14[jj][0] = kKV->GetEY()[aIdx14[jj]];
-    
-    graphKV14[jj]   = new TGraphErrors(n14, snn14, y14[jj], 0, ey14[jj]);
-    graphKV14[jj+2] = new TGraphErrors(n14, mub14, y14[jj], 0, ey14[jj]);
-  }
-
-  SetGraph(graphKV[0], "#kappa #sigma^{2} - Net-Charge , 0.2 < #it{p}_{T} < 2.0 , |#eta| < 0.5", "#sqrt{s_{NN}} (GeV)", "#kappa #sigma^{2}", kRed+1, 24, -15, 10);
-  SetGraphStyle(graphKV[1], kAzure, 25);
-  SetGraph(graphKV[2], "#kappa #sigma^{2} - Net-Charge , 0.2 < #it{p}_{T} < 2.0 , |#eta| < 0.5", "#mu_{B} (MeV)",      "#kappa #sigma^{2}", kRed+1, 24, -15, 10);
-  SetGraphStyle(graphKV[3], kAzure, 25);
-
-  SetGraph(graphKV14[0], "#kappa #sigma^{2} - Net-Charge , 0.2 < #it{p}_{T} < 2.0 , |#eta| < 0.5", "#sqrt{s_{NN}} (GeV)", "#kappa #sigma^{2}", kRed+1, 20, -15, 10);
-  SetGraphStyle(graphKV14[1], kAzure, 21);
-  SetGraph(graphKV14[2], "#kappa #sigma^{2} - Net-Charge , 0.2 < #it{p}_{T} < 2.0 , |#eta| < 0.5", "#mu_{B} (MeV)",      "#kappa #sigma^{2}", kRed+1, 20, -15, 10);
-  SetGraphStyle(graphKV14[3], kAzure, 21);
-
-  Draw(can, graphKV, graphKV14, 3);
-  
-  TLegend * leg2 = new TLegend(0.13, 0.79, 0.75, 0.88);
-  leg2->SetTextAlign(12);
-  leg2->SetTextSize(0.035);
-  leg2->SetTextFont(42);
-  leg2->SetFillColor(1182);
-  leg2->SetLineColor(0);
-  leg2->SetBorderSize(0);
-
-  leg2->AddEntry(graphKV[0], "0-5% - published", "p");
-  leg2->AddEntry(graphKV[1], "70-80% - published", "p");
-
-  can[0]->cd(2);
-  leg2->Draw();
-  can[2]->cd(2);
-  leg2->Draw();
-
-
-  TLegend * leg4 = new TLegend(0.13, 0.70, 0.75, 0.88);
-  leg4->SetTextAlign(12);
-  leg4->SetTextSize(0.035);
-  leg4->SetTextFont(42);
-  leg4->SetFillColor(1182);
-  leg4->SetLineColor(0);
-  leg4->SetBorderSize(0);
-
-  leg4->AddEntry(graphKV[0],   "0-5% - published", "p");
-  leg4->AddEntry(graphKV[1],   "70-80% - published", "p");
-  leg4->AddEntry(graphKV14[0], "0-5% - corrected - 11.5 GeV #epsilon_{1}, #epsilon_{2}", "p");
-  leg4->AddEntry(graphKV14[1], "70-80% - corrected - 11.5 GeV #epsilon_{1}, #epsilon_{2}", "p");
-
-  can[1]->cd(2);
-  leg4->Draw();
-  can[3]->cd(2);
-  leg4->Draw();
-
-  can[0]->SaveAs(Form("results/%s/png/can_NetCharge_Ratio_snn.png",   name));
-  can[0]->SaveAs(Form("results/%s/pdf/can_NetCharge_Ratio_snn.pdf",   name));
-  can[0]->SaveAs(Form("results/%s/root/can_NetCharge_Ratio_snn.C",    name));
-  can[0]->SaveAs(Form("results/%s/root/can_NetCharge_Ratio_snn.root", name));
-  
-  can[1]->SaveAs(Form("results/%s/png/can_NetCharge_Ratio_snn_14GeV_%s.png",   name, dataSet));
-  can[1]->SaveAs(Form("results/%s/pdf/can_NetCharge_Ratio_snn_14GeV_%s.pdf",   name, dataSet));
-  can[1]->SaveAs(Form("results/%s/root/can_NetCharge_Ratio_snn_14GeV_%s.C",    name, dataSet));
-  can[1]->SaveAs(Form("results/%s/root/can_NetCharge_Ratio_snn_14GeV_%s.root", name, dataSet));
-
-  can[2]->SaveAs(Form("results/%s/png/can_NetCharge_Ratio_mub.png",   name));
-  can[2]->SaveAs(Form("results/%s/pdf/can_NetCharge_Ratio_mub.pdf",   name));
-  can[2]->SaveAs(Form("results/%s/root/can_NetCharge_Ratio_mub.C",    name));
-  can[2]->SaveAs(Form("results/%s/root/can_NetCharge_Ratio_mub.root", name));
-  
-  can[3]->SaveAs(Form("results/%s/png/can_NetCharge_Ratio_mub_14GeV_%s.png",   name, dataSet));
-  can[3]->SaveAs(Form("results/%s/pdf/can_NetCharge_Ratio_mub_14GeV_%s.pdf",   name, dataSet));
-  can[3]->SaveAs(Form("results/%s/root/can_NetCharge_Ratio_mub_14GeV_%s.C",    name, dataSet));
-  can[3]->SaveAs(Form("results/%s/root/can_NetCharge_Ratio_mub_14GeV_%s.root", name, dataSet));
 }
 
-
-
-#endif

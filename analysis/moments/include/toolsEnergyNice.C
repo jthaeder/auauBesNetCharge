@@ -14,10 +14,17 @@
 #include "TColor.h"
 #include "TMath.h"
 #include "TLatex.h"
+#include "TGAxis.h"
 #include "TLine.h"
 #include "TGraphErrors.h"
 
 TObjArray canA;
+
+TCanvas *can;
+TPad *pad;
+
+TLegend *legExp;
+TLegend *legTheo;
 
 // -----------------------------------------------------------
 
@@ -52,18 +59,18 @@ const Double_t tc[]            = {140,  152,  156,  160, 163, 164,  165, 166};
 
 // -----------------------------------------------------------
 
-      Color_t aColors[]        = {kRed+2, kOrange+9, kOrange+9, kYellow, kAzure, kAzure, kCyan+2, kBlue+1, kBlack, kRed+2};
+      Color_t aColors[]        = {kRed+2, kGreen+2, kOrange+9, kYellow, kAzure, kAzure, kCyan+2, kBlue+1, kBlack, kRed+2};
 
-      Int_t   aMarkers[]       = {30, 32, 25, 25, 26, 28, 27, 30, 24, 24};
+      Int_t   aMarkers[]       = {29, 25, 25, 25, 26, 28, 27, 30, 24, 24};
 
       Float_t aMinY[7]         = { 0, 0, -10, -2300, -10, -9, -20};
-      Float_t aMaxY[7]         = { 40, 250, 90, 900, 120, 11,  12};
+      Float_t aMaxY[7]         = { 40, 250, 90, 900, 160, 11,  12};
 
       // Float_t aMinY[7]         = { 0, 0, -10, -2300, 5.5, -0.02, -12 };
       // Float_t aMaxY[7]         = { 40, 250, 90, 900, 9.8, 0.48, 6};
 
       Float_t aMinX            = 6;
-      Float_t aMaxX            = 300;
+      Float_t aMaxX            = 250;
 
 // -----------------------------------------------------------
 
@@ -76,8 +83,10 @@ void PrepareGraph(TGraphErrors* g) {
   g->GetYaxis()->SetTitle("");
   g->GetXaxis()->SetNdivisions(6, 5, 0);
   g->GetYaxis()->SetNdivisions(6, 5, 0);
-  g->GetXaxis()->SetLabelSize(0.07);
-  g->GetYaxis()->SetLabelSize(0.07);
+  g->GetXaxis()->SetLabelSize(0.08);
+  g->GetYaxis()->SetLabelSize(0.08);
+  g->GetXaxis()->SetLabelOffset(0.008);
+  g->GetXaxis()->SetNoExponent(kTRUE);
 }
 
 // ______________________________________________________________________________________
@@ -86,13 +95,32 @@ void ConfigGraph(TGraphErrors* g, Int_t yLimitIdx, Int_t idxMarker, Int_t is = 0
   g->SetMinimum(aMinY[yLimitIdx]);
   g->SetMaximum(aMaxY[yLimitIdx]);
   g->GetXaxis()->SetLimits(aMinX, aMaxX);  
-  g->SetMarkerSize(1.4);
+  g->GetXaxis()->SetMoreLogLabels(kTRUE);
+
   g->SetMarkerStyle(aMarkers[idxMarker]);
   g->SetMarkerColor(aColors[idxMarker]);
+  g->SetMarkerSize(1.4);
+  if (aMarkers[idxMarker] == 29 || aMarkers[idxMarker] == 30)
+    g->SetMarkerSize(1.8);
+
   g->SetLineColor(aColors[idxMarker]);
   if (is == 1) {
     g->SetLineStyle(2);
     g->SetLineWidth(2);
+  }
+  if (is == 2) {
+    g->SetFillColorAlpha(aColors[idxMarker], 0.35);
+    g->SetFillColor(aColors[idxMarker]);
+    g->SetFillStyle(3444);
+  }
+  if (is == 3) {
+    g->SetLineColor(kAzure);
+    g->SetLineWidth(2);
+    g->SetLineStyle(2);
+
+    g->SetFillColorAlpha(kAzure, 0.35);
+    g->SetFillColor(kAzure);
+    g->SetFillStyle(3444);
   }
 }
 
@@ -109,12 +137,65 @@ void ShiftGraphX(TGraphErrors* g, Double_t shift) {
   PrepareGraph(g);
 }
 
+
+// ______________________________________________________________________________________
+void DrawSet(TGraphErrors *gStat, TGraphErrors *gSys, TGraphErrors *gPoisson, TGraphErrors *gUrqmd,
+	     Int_t idxMoment, Int_t idxCent) {
+  // -- Draw Set 
+
+  PrepareGraph(gStat);
+  PrepareGraph(gSys);
+  PrepareGraph(gPoisson);
+  PrepareGraph(gUrqmd);
+  
+  ConfigGraph(gStat,    idxMoment, idxCent);
+  ConfigGraph(gSys,     idxMoment, idxCent, 2);
+  ConfigGraph(gPoisson, idxMoment, idxCent, 1);
+  
+  if (idxCent == 0) 
+    ConfigGraph(gUrqmd, idxMoment, idxCent, 3);
+  
+  // -- draw box
+  if (idxCent == 0) 
+    gStat->Draw("AP");
+
+  // -- draw urqmd
+  if (idxCent == 0) {
+    if (idxMoment == 4)
+      gUrqmd->Draw("L,same");
+    gUrqmd->Draw("E3,same");
+  }
+  
+  // -- draw poisson 
+  if (idxMoment == 5 || idxMoment == 6) {
+    if (idxCent == 0) {
+      TLine *line1 = new TLine(aMinX, 1, aMaxX, 1);
+      line1->SetLineColor(kBlack);
+      line1->SetLineStyle(2);
+      line1->SetLineWidth(2);
+      line1->Draw();
+    }
+  }
+  else if (idxMoment == 4)
+    gPoisson->Draw("L,SAME");
+  
+  // -- draw datapoints
+  //gSys->Draw("B2,SAME");
+  gStat->Draw("P,SAME");
+  gSys->Draw("[],SAME");
+  
+    if (idxMoment == 4) {
+    legExp->AddEntry(gStat, Form("%s", cent1[idxCent]), "pl");
+    legTheo->AddEntry(gPoisson, Form("%s Poisson", cent1[idxCent]), "l");
+  }
+}
+
 // ______________________________________________________________________________________
 TPad* SetupCanvas(const Char_t* canName, const Char_t *canTitle) {
   // -- setup canvas and pad
   
   canA.Add(new TCanvas(canName, canTitle, 0, 0 , 600, 1000));
-  TCanvas *can = static_cast<TCanvas*>(canA.Last());
+  can = static_cast<TCanvas*>(canA.Last());
   can->SetFillColor(0);
   can->SetBorderMode(0);
   can->SetBorderSize(0.0);
@@ -122,7 +203,7 @@ TPad* SetupCanvas(const Char_t* canName, const Char_t *canTitle) {
   can->SetFrameBorderMode(0);
   can->cd();
   
-  TPad* pad = new TPad("pad", "pad",0.05, 0.06, 0.99, 0.98);
+  pad = new TPad("pad", "pad",0.05, 0.06, 0.99, 0.98);
   pad->SetBorderMode(0);
   pad->SetFillColor(0);
   pad->Draw();
@@ -154,6 +235,69 @@ TPad* SetupCanvas(const Char_t* canName, const Char_t *canTitle) {
 }
 
 // ______________________________________________________________________________________
+void LabelCanvas(const Char_t* analysisTitle, const Char_t *analysisDetails) {
+  // -- add Labels to canvas
+ 
+  pad->Modified();
+  pad->cd();
+
+  TPad *pad2 = new TPad("pad2", "pad2",0.05, 0.06, 0.99, 0.98);
+  pad2->SetBorderMode(0);
+  pad2->SetFillColor(1182);
+  pad2->Draw();
+  pad2->cd();
+
+  TLatex *texb_3b = new TLatex(0.08, 0.94, analysisTitle);
+  texb_3b->SetTextSize(0.04);
+  texb_3b->Draw("same");
+
+  TLatex *texb_3 = new TLatex(0.08, 0.90, "Au+Au collisions at RHIC");
+  texb_3->SetTextSize(0.035);
+  texb_3->Draw("same");
+  
+  TLatex *texb_3a = new TLatex(0.08, 0.86, analysisDetails);
+  texb_3a->SetTextSize(0.035);
+  texb_3a->Draw("same");
+  
+  TLatex *texb_4 = new TLatex(0.08, 0.60, "STAR Preliminary");
+  texb_4->SetTextSize(0.04);
+  texb_4->Draw("same");
+
+
+  legExp->Draw("lt");
+  legTheo->Draw("lt");
+
+  pad->Modified();
+  can->Modified();
+}
+
+// ______________________________________________________________________________________
+void CreateLegends(Int_t linesExp, Int_t linesTheo, Float_t leftX, Float_t topY) {
+  // -- Create legends
+
+  float widthX = 0.19;
+  float widthY = 0.03;
+  float spacer = 0.02;
+  float textSize = 0.03;
+
+  legExp = new TLegend(leftX, topY-(linesExp*widthY), leftX+widthX, topY);
+  legExp->SetTextAlign(12);
+  legExp->SetTextSize(textSize);
+  legExp->SetTextFont(42);
+  legExp->SetFillColor(0);
+  legExp->SetLineColor(0);
+  legExp->SetBorderSize(0);
+
+  legTheo = new TLegend(leftX+widthX+spacer, topY-(linesTheo*widthY), leftX+(2*widthX+0.04)+spacer, topY);
+  legTheo->SetTextAlign(12);
+  legTheo->SetTextSize(textSize);
+  legTheo->SetTextFont(42);
+  legTheo->SetFillColor(0);
+  legTheo->SetLineColor(0);
+  legTheo->SetBorderSize(0);
+}
+
+// ______________________________________________________________________________________
 void SaveCanvas(const Char_t* name) {
   // -- Write out canvas
   
@@ -162,6 +306,7 @@ void SaveCanvas(const Char_t* name) {
   gSystem->Exec(Form("mkdir -p results/nice/%s/eps",  name));
   gSystem->Exec(Form("mkdir -p results/nice/%s/gif",  name));
   gSystem->Exec(Form("mkdir -p results/nice/%s/root", name));
+  gSystem->Exec(Form("mkdir -p results/nice/pdf"));
   
   // -----------------------------------------------------
   
@@ -170,12 +315,13 @@ void SaveCanvas(const Char_t* name) {
     if (!c)
       continue;
     
-    c->SaveAs(Form("results/nice/%s/png/%s_14GeV.png",   name, c->GetName()));
-    c->SaveAs(Form("results/nice/%s/eps/%s_14GeV.eps",   name, c->GetName()));
-    c->SaveAs(Form("results/nice/%s/gif/%s_14GeV.gif",   name, c->GetName()));
-    c->SaveAs(Form("results/nice/%s/pdf/%s_14GeV.pdf",   name, c->GetName()));
-    c->SaveAs(Form("results/nice/%s/root/%s_14GeV.C",    name, c->GetName()));
-    c->SaveAs(Form("results/nice/%s/root/%s_14GeV.root", name, c->GetName()));
+    c->SaveAs(Form("results/nice/%s/png/%s.png",   name, c->GetName()));
+    c->SaveAs(Form("results/nice/%s/eps/%s.eps",   name, c->GetName()));
+    c->SaveAs(Form("results/nice/%s/gif/%s.gif",   name, c->GetName()));
+    c->SaveAs(Form("results/nice/%s/pdf/%s.pdf",   name, c->GetName()));
+    c->SaveAs(Form("results/nice/pdf/%s.pdf",  c->GetName()));
+    c->SaveAs(Form("results/nice/%s/root/%s.C",    name, c->GetName()));
+    c->SaveAs(Form("results/nice/%s/root/%s.root", name, c->GetName()));
   }
 }
 
@@ -227,6 +373,8 @@ void SetupStyle() {
   gStyle->SetLabelFont(font,"xyz"); 
   gStyle->SetLabelOffset(0.009,"xyz");
 
+  TGaxis::SetMaxDigits(3);
+
   gStyle->SetTitleSize(0.06);  
   gStyle->SetTitleFont(font,"xyz");  
   gStyle->SetTitleOffset(1.12,"x"); 
@@ -244,8 +392,9 @@ void SetupStyle() {
 
   gStyle->SetLineWidth(1);
 
-  // -- Set plot styles for 2D colz
+  gStyle->SetEndErrorSize(4);
 
+  // -- Set plot styles for 2D colz
   const Int_t nRGBs = 5;
   const Int_t nCont = 255;
   
@@ -258,6 +407,7 @@ void SetupStyle() {
 
   TColor *color = new TColor(1182, 1, 0, 0, " ", 0);
 }
+
 
 // ______________________________________________________________________________________
 void toolsEnergyNice(){;}

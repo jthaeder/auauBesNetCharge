@@ -1,0 +1,150 @@
+#include "include/toolsEnergyNice.C"
+#include "include/getPublished.C"
+
+// ______________________________________________________________________________________
+void SetGlobals() {
+  // -- set globals
+
+  Float_t aMinYtmp[7] = { -5, -5, -5, -2300, -2, -0.3, -3.5};
+  Float_t aMaxYtmp[7] = { 40, 250, 100, 900, 45, 2.3, 2.8};
+
+  for (Int_t ii = 0; ii<7; ++ii) {
+    aMinY[ii] = aMinYtmp[ii];
+    aMaxY[ii] = aMaxYtmp[ii];
+  }
+}
+
+// ______________________________________________________________________________________
+void plotEnergyKaon(const Char_t* name = "ratioNetKaonVsEnergy") {
+
+  gROOT->LoadMacro("include/toolsEnergyNice.C++");
+  gROOT->LoadMacro("include/getPublished.C++");
+
+  SetupStyle();
+
+  SetGlobals();
+
+  getPublished();
+
+  // -----------------------------------------------------
+  // [VM, SD/Poisson, KV][0-5%,70-80%]
+  Double_t sysErrors[3][2][nEnergies] = { { {0.135211,  0.299483,  0.436907,  0.688795,  1.35531,   3.48311,   2.29633,   15.1155},
+					    {0.164429,  0.388758,  0.618195,  1.0021,    2.04463,   4.35289,   3.10226,   15.0901} },
+					  { {0.154145,  0.280511,  0.201866,  0.329286,  0.238951,  0.216248,  0.289369,   0.755731},
+					    {0.0601124, 0.0399167, 0.0502897, 0.0287023, 0.0577656, 0.0792049, 0.177793,   0.130068} },
+					  { {0.87460,   1.23869,   0.9768,    1.37336,   0.802529,  0.430441,  0.811369,   0.363706},
+					    {0.0565077, 0.0314867, 0.0490301, 0.0138856, 0.016217,  0.0146979, 0.0141348,  0.00900933} } };
+    // -----------------------------------------------------
+
+
+  TFile *inFiles[nEnergies][nMoments];
+  TFile *inFilesUrqmd[nEnergies];
+
+  TGraphErrors *inGraphsStat[nEnergies][nMoments];
+  TGraphErrors *inGraphsPoisson[nEnergies][nMoments];
+  TGraphErrors *inGraphsUrqmd[nEnergies][nMoments];
+
+  for (int idxEnergy = 0 ; idxEnergy < nEnergies; ++idxEnergy) { 
+
+    if (idxEnergy != 2)
+      inFilesUrqmd[idxEnergy]= TFile::Open(Form("URQMD/urqmd_kaon/AuAu%sGeV_Vz30_kpi1.root", exactEnergies[idxEnergy]));
+
+    for (int idxMoment = 0 ; idxMoment < nMoments; ++idxMoment) { 
+      // -- value and stat errors
+      inFiles[idxEnergy][idxMoment] = TFile::Open(Form("Net-Kaon/%sGeV/moments_ana/Moments_%s.root", 
+						       exactEnergies[idxEnergy], aMoments[idxMoment]));
+
+      inGraphsStat[idxEnergy][idxMoment] = (idxMoment != 5) ? static_cast<TGraphErrors*>((inFiles[idxEnergy][idxMoment]->Get(aMoments[idxMoment]))->Clone()) :
+      	static_cast<TGraphErrors*>((inFiles[idxEnergy][idxMoment]->Get(Form("%s_Poisson_ratio", aMoments[idxMoment])))->Clone());
+      
+      // -- poisson
+      inGraphsPoisson[idxEnergy][idxMoment] = static_cast<TGraphErrors*>((inFiles[idxEnergy][idxMoment]->Get(Form("%s_Poisson_base", aMoments[idxMoment])))->Clone());
+      
+      if (inFiles[idxEnergy][idxMoment])
+       	inFiles[idxEnergy][idxMoment]->Close();
+      
+      // -- urqmd
+      if (idxEnergy !=2) {
+       	if (idxMoment == 4) 
+       	  inGraphsUrqmd[idxEnergy][idxMoment] = static_cast<TGraphErrors*>((inFilesUrqmd[idxEnergy]->Get(Form("R21")))->Clone());
+	else if (idxMoment == 5) 
+       	  inGraphsUrqmd[idxEnergy][idxMoment] = static_cast<TGraphErrors*>((inFilesUrqmd[idxEnergy]->Get(Form("%s_Pos_ratio", aMoments[idxMoment])))->Clone());
+       	else if (idxMoment == 6) 
+       	  inGraphsUrqmd[idxEnergy][idxMoment] = static_cast<TGraphErrors*>((inFilesUrqmd[idxEnergy]->Get(aMoments[idxMoment]))->Clone());
+      }
+    }
+  }
+
+  // -----------------------------------------------------
+
+  for (int idxEnergy = 0 ; idxEnergy < nEnergies; ++idxEnergy) { 
+    for (int idxMoment = 4 ; idxMoment < nMoments; ++idxMoment) {   
+      for (int idxCent = 0; idxCent < nCent; ++idxCent) {
+	if (idxCent != 0 && idxCent != 8)
+	  continue;
+	
+	Double_t xIn, yIn;
+	inGraphsStat[idxEnergy][idxMoment]->GetPoint(idxCent, xIn, yIn);
+	Double_t yErrorStatIn = inGraphsStat[idxEnergy][idxMoment]->GetErrorY(idxCent);
+
+	Int_t accessCent = (idxCent == 0) ? 0 : 1;
+	Int_t accessMoment = idxMoment - 4;
+	Double_t yErrorSysIn  = sysErrors[accessMoment][accessCent][idxEnergy];
+
+	for (Int_t idx = 0; idx < 2; ++idx) {
+	  Double_t xBin = (idx == 0) ? snn[idxEnergy] : mub[idxEnergy];
+	  graphStat[idx][idxMoment][idxCent]->SetPoint(idxEnergy, xBin, yIn);
+	  graphStat[idx][idxMoment][idxCent]->SetPointError(idxEnergy, 0, yErrorStatIn);
+	  
+	  graphSys[idx][idxMoment][idxCent]->SetPoint(idxEnergy, xBin, yIn);
+	  graphSys[idx][idxMoment][idxCent]->SetPointError(idxEnergy, 0, yErrorSysIn);
+	}
+	
+	inGraphsPoisson[idxEnergy][idxMoment]->GetPoint(idxCent, xIn, yIn);    
+	for (Int_t idx = 0; idx < 2; ++idx) {
+	  Double_t xBin = (idx == 0) ? snn[idxEnergy] : mub[idxEnergy];
+	  graphPoisson[idx][idxMoment][idxCent]->SetPoint(idxEnergy, xBin, yIn);
+	}
+
+	if (idxCent == 0 && idxEnergy != 2) {
+	  Double_t yErrorUrqmdIn = inGraphsUrqmd[idxEnergy][idxMoment]->GetErrorY(idxCent);	
+
+	  inGraphsUrqmd[idxEnergy][idxMoment]->GetPoint(idxCent, xIn, yIn);    
+	  for (Int_t idx = 0; idx < 2; ++idx) {
+	    Double_t xBin = (idx == 0) ? snn[idxEnergy] : mub[idxEnergy];
+	    Int_t energyArrayAccess = (idxEnergy >= 2) ? idxEnergy-1 : idxEnergy;
+	    graphUrqmd[idx][idxMoment][idxCent]->SetPoint(energyArrayAccess, xBin, yIn);
+	    graphUrqmd[idx][idxMoment][idxCent]->SetPointError(energyArrayAccess, 0, yErrorUrqmdIn);
+	  }
+	}
+
+      } // for (int idxCent = 0; idxCent < nCent; ++idxCent) {
+    } // for (int idxMoment = 0 ; idxMoment < nMoments; ++idxMoment) {   
+  } // for (int idxEnergy = 0 ; idxEnergy < nEnergies; ++idxEnergy) { 
+
+  // -----------------------------------------------------
+
+  SetupCanvas("canNetKaonRatioEnergy", "Net-Kaon Ratio energy dependence");
+  CreateLegends(2, 3, 0.4, 0.09);
+
+  for (int idxMoment = 4; idxMoment < nMoments; ++idxMoment) {
+    pad->cd(idxMoment-3);
+    gPad->SetLogx();
+
+    for (int idxCent = 0; idxCent < nCent; ++idxCent) {
+      if (idxCent != 0 && idxCent != 8)
+	continue;
+
+      DrawSet(graphStat[0][idxMoment][idxCent],    graphSys[0][idxMoment][idxCent],
+	      graphPoisson[0][idxMoment][idxCent], graphUrqmd[0][idxMoment][idxCent],
+	      idxMoment, idxCent);
+    } // for (int idxCent = 0; idxCent < nCent; ++idxCent) {
+  } // for (int idxMoment = 4; idxMoment < nMoments; ++idxMoment) {
+
+  legTheo->AddEntry(graphUrqmd[0][4][0], Form("%s UrQMD", cent1[0]), "f");
+      
+  // -----------------------------------------------------
+
+  LabelCanvas("Net-Kaon", "0.2 < #it{p}_{T} (GeV/#it{c}) < 1.6, |#it{y}| < 0.5");  
+  SaveCanvas(name);
+}
