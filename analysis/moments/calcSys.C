@@ -41,6 +41,7 @@ const Char_t* aDataSetsTitle[] = {"corrected - #epsilon_{1} , #epsilon_{2}"};
 const Char_t* aSysTitle[] = {"default", "eff (+5% && +5%)", "eff (-5% && -5%)", "eff (+2% && -2%)", "eff (-2% && +2%)"};
 
 Bool_t useRatioSDSkellam = kTRUE;
+//Bool_t useRatioSDSkellam = kFALSE;
 
 TObjArray canA;
 TObjArray sysErrorA;
@@ -51,41 +52,48 @@ void calcSys(const Char_t* name = "jobs_14.5") {
   // -- get systematic errors
 
   TFile *inFiles[nSysNames][nDataSets][nMoments];
+  TGraphErrors *graphs[nSysNames][nDataSets][nMoments];
 
-  for (int idxEta = 0 ; idxEta < nSysNames; ++idxEta) 
-    for (int idxDataSet = 0 ; idxDataSet < nDataSets; ++idxDataSet) 
-      for (int idxMoment = 0 ; idxMoment < nMoments; ++idxMoment) 
-	inFiles[idxEta][idxDataSet][idxMoment] = TFile::Open(Form("output/%s_%s/%s/Moments_%s.root", name, aSysNames[idxEta],
+  for (int idxSys = 0; idxSys < nSysNames; ++idxSys) 
+    for (int idxDataSet = 0; idxDataSet < nDataSets; ++idxDataSet) 
+      for (int idxMoment = 0; idxMoment < nMoments; ++idxMoment) {
+	inFiles[idxSys][idxDataSet][idxMoment] = TFile::Open(Form("output/%s_%s/%s/Moments_%s.root", name, aSysNames[idxSys],
 								  aDataSets[idxDataSet], aMoments[idxMoment]));
+
+	 graphs[idxSys][idxDataSet][idxMoment] = (useRatioSDSkellam && idxMoment == 5) ?
+	   static_cast<TGraphErrors*>(inFiles[idxSys][idxDataSet][idxMoment]->Get(Form("%s_Poisson_ratio",aMoments[idxMoment]))->Clone()) :	   
+	   static_cast<TGraphErrors*>(inFiles[idxSys][idxDataSet][idxMoment]->Get(aMoments[idxMoment])->Clone()) ;
+	   
+	 if (useRatioSDSkellam && idxMoment == 5) {
+	   if (idxSys == 0)
+	     graphs[idxSys][idxDataSet][idxMoment]->SetName(Form("%s_Poisson_ratio_stat", aMoments[idxMoment]));
+	   else
+	     graphs[idxSys][idxDataSet][idxMoment]->SetName(Form("%s_Poisson_ratio_sys_%d", aMoments[idxMoment], idxSys));
+	 }
+	 else {
+	   if (idxSys == 0)
+	     graphs[idxSys][idxDataSet][idxMoment]->SetName(Form("%s_stat", aMoments[idxMoment]));
+	   else
+	     graphs[idxSys][idxDataSet][idxMoment]->SetName(Form("%s_sys_%d", aMoments[idxMoment], idxSys));
+	 }
+
+	 
+	 inFiles[idxSys][idxDataSet][idxMoment]->Close();
+      }
+
   // -----------------------------------------------------
 
-  TGraphErrors *graphs[nSysNames][nDataSets][nMoments];
   TGraphErrors *graphsSysError[nDataSets][nMoments];
 
   for (int idxDataSet = 0 ; idxDataSet < nDataSets; ++idxDataSet) {
     for (int idxMoment = 0 ; idxMoment < nMoments; ++idxMoment) {
-
-      if (useRatioSDSkellam && idxMoment == 5) {
-	graphs[0][idxDataSet][idxMoment] = static_cast<TGraphErrors*>(inFiles[0][idxDataSet][idxMoment]->Get(Form("%s_Poisson_ratio",aMoments[idxMoment])));
-	graphs[0][idxDataSet][idxMoment]->SetName(Form("%s_Poisson_ratio_stat", aMoments[idxMoment]));
-      }
-      else {
-	graphs[0][idxDataSet][idxMoment] = static_cast<TGraphErrors*>(inFiles[0][idxDataSet][idxMoment]->Get(aMoments[idxMoment]));
-	graphs[0][idxDataSet][idxMoment]->SetName(Form("%s_stat", aMoments[idxMoment]));
-      }
 
       statErrorA.Add(graphs[0][idxDataSet][idxMoment]);
 
       Double_t* defaultX  = graphs[0][idxDataSet][idxMoment]->GetX(); 
       Double_t* defaultY  = graphs[0][idxDataSet][idxMoment]->GetY(); 
       Double_t* defaultEY = graphs[0][idxDataSet][idxMoment]->GetEY(); 
-      
-      for (int idxSys = 1 ; idxSys < nSysNames; ++idxSys) {
-	graphs[idxSys][idxDataSet][idxMoment] = (useRatioSDSkellam && idxMoment == 5) ?
-	  static_cast<TGraphErrors*>(inFiles[idxSys][idxDataSet][idxMoment]->Get(aMoments[idxMoment])) :
-	  static_cast<TGraphErrors*>(inFiles[idxSys][idxDataSet][idxMoment]->Get(Form("%s_Poisson_ratio",aMoments[idxMoment])));
-      }
-      
+            
       // "sys_1_0", "sys_1_1", "sys_1_2", "sys_1_3",
       // "sys_0_0", "sys_0_1", "sys_0_2", "sys_0_3",
       // "base_plus5", "base_minus5", 
@@ -162,11 +170,12 @@ void calcSys(const Char_t* name = "jobs_14.5") {
       }
 
       // --------------------------------------------
+
       ++idxSet;
       n = 2;
       for (Int_t bin = 0; bin < 9; bin++) {
 	for (Int_t ii = 11; ii < 13; ++ii) {
-	  Int_t idx = ii-13;
+	  Int_t idx = ii-11;
 	  sum[idxSet][bin] += (values[idxSet][idx][bin]-defaultY[bin])*(values[idxSet][idx][bin]-defaultY[bin]);
 	}
 	rms[idxSet][bin] = TMath::Sqrt(sum[idxSet][bin]/n);
@@ -182,12 +191,21 @@ void calcSys(const Char_t* name = "jobs_14.5") {
       }
 
       for (Int_t bin = 0; bin <9; bin++) {
-	for (Int_t idx = 0 ; idx< idxSet; ++idx)
+	for (Int_t idx = 0 ; idx< 4; ++idx)
 	  sysSum[bin] += rms[idx][bin]*rms[idx][bin];
 	sysErr[bin] = TMath::Sqrt(sysSum[bin]);
       }
 
       // --------------------------------------------
+      
+      cout << "MOM: " << idxMoment << endl;
+      for (Int_t idx = 0 ; idx < 4; ++idx) {
+	cout << "    Set " << idx << " : " << rms[idx][0] << endl;
+      }
+      cout << "    SYS " << " : " << sysErr[0] << endl;
+      
+      cout << "--------------------------------------------" << endl;
+      
 
       graphsSysError[idxDataSet][idxMoment] = new TGraphErrors(9, defaultX, defaultY, 0, sysErr);
 
