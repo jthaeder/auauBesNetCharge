@@ -42,7 +42,7 @@ void plotEnergyProtonOverview(const Char_t* name = "ratioNetProtonVsEnergyOvervi
     inFiles[idxEnergy] = TFile::Open(Form("Net-Proton/moments_%sGeV_preli.root", energies[idxEnergy]));
 
     if (idxEnergy != 2)
-      inFilesUrqmd[idxEnergy]= TFile::Open(Form("URQMD/urqmd_proton/AuAu%sGeV_Vz30_kpi_eta1.root", exactEnergies[idxEnergy]));
+      inFilesUrqmd[idxEnergy]= TFile::Open(Form("URQMD/urqmd_proton/AuAu%sGeV_netp_refmult3_y0.5.root", exactEnergies[idxEnergy]));
     
     for (int idxMoment = 4 ; idxMoment < nMoments; ++idxMoment) { 
 
@@ -140,8 +140,11 @@ void plotEnergyProtonOverview(const Char_t* name = "ratioNetProtonVsEnergyOvervi
 	      graphPoisson[0][idxMoment][idxCent], graphUrqmd[0][idxMoment][idxCent],
 	      idxMoment, idxCent);
     } // for (int idxCent = 0; idxCent < nCent; ++idxCent) {
+ 
+    graphStat[0][idxMoment][0]->Draw("ZP,SAME");
+    graphSys[0][idxMoment][0]->Draw("[],SAME");
   } // for (int idxMoment = 4; idxMoment < nMoments; ++idxMoment) {
-
+  
   legTheo->AddEntry(graphUrqmd[0][4][0], Form("%s UrQMD", cent1[0]), "f");
         
   // -----------------------------------------------------

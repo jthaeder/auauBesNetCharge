@@ -139,6 +139,9 @@ void plotEnergyKaon(const Char_t* name = "ratioNetKaonVsEnergy") {
 	      graphPoisson[0][idxMoment][idxCent], graphUrqmd[0][idxMoment][idxCent],
 	      idxMoment, idxCent);
     } // for (int idxCent = 0; idxCent < nCent; ++idxCent) {
+
+    graphStat[0][idxMoment][0]->Draw("ZP,SAME");
+    graphSys[0][idxMoment][0]->Draw("P,SAME");
   } // for (int idxMoment = 4; idxMoment < nMoments; ++idxMoment) {
 
   legTheo->AddEntry(graphUrqmd[0][4][0], Form("%s UrQMD", cent1[0]), "f");
@@ -147,4 +150,24 @@ void plotEnergyKaon(const Char_t* name = "ratioNetKaonVsEnergy") {
 
   LabelCanvas("Net-Kaon", "0.2 < #it{p}_{T} (GeV/#it{c}) < 1.6, |#it{y}| < 0.5");  
   SaveCanvas(name);
+TFile *fOut = TFile::Open("STAR_QM2015_Preliminary.root", "UPDATE");
+  fOut->cd();
+
+  TList* list = new TList;
+
+  for (int idxMoment = 4; idxMoment < nMoments; ++idxMoment) {
+    for (int idxCent = 0; idxCent < nCent; ++idxCent) {
+      if (idxCent != 0) 
+	continue;
+
+      graphStat[0][idxMoment][idxCent]->SetName(Form("Net-Kaon_%s_sNN_%s_stat", aMoments2[idxMoment], cent[idxCent]));
+      graphSys[0][idxMoment][idxCent]->SetName(Form("Net-Kaon_%s_sNN_%s_sys",  aMoments2[idxMoment], cent[idxCent]));
+
+      list->Add(graphStat[0][idxMoment][idxCent]);
+      list->Add(graphSys[0][idxMoment][idxCent]);
+    }
+  }
+  list->Write("Net-Kaon", TObject::kSingleKey);
+  fOut->Close();
+
 }

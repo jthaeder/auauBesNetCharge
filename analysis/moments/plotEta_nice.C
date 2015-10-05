@@ -45,6 +45,11 @@ void SetGlobals() {
     aMaxY[ii] = aMaxYtmp[ii];
   }
 
+  aColors[0]   = kGray+1; 
+
+  aMarkers[0] = 20;
+  aMarkers[9] = 29;
+
   aMinX = 0;
   aMaxX = 375;
 }
@@ -100,7 +105,7 @@ void plotEta_nice(const Char_t* name = "ratioEtaVsNpart") {
     int idxEta = -1;
     for (int idxEtaSuper = 2 ; idxEtaSuper < nEtaSuperSets; ++idxEtaSuper) {   
       
-      TPad *pad = SetupCanvas(Form("canEta_Ratio_%s_%d", aDataSets[idxDataSet], idxEtaSuper), aDataSetsTitle[idxDataSet], "<N_{part}>", 0.45);
+      TPad *pad = SetupCanvas(Form("canEta_Ratio_%s_%d", aDataSets[idxDataSet], idxEtaSuper), aDataSetsTitle[idxDataSet], "#LT#it{N}_{part}#GT", 0.48);
 
       for (int idxMoment = 4 ; idxMoment < nMoments; ++idxMoment) {
 	pad->cd(idxMoment-3);
@@ -185,4 +190,40 @@ void plotEta_nice(const Char_t* name = "ratioEtaVsNpart") {
   // -----------------------------------------------------
 
   SaveCanvas(name);
+
+  // -----------------------------------------------------
+
+  TFile *fOut = TFile::Open("STAR_QM2015_Preliminary.root", "UPDATE");
+  fOut->cd();
+  
+  TList* list = new TList;
+  
+  for (int idxEtaSuper = 2 ; idxEtaSuper < nEtaSuperSets; ++idxEtaSuper) {   
+    for (int idxMoment = 4 ; idxMoment < nMoments; ++idxMoment) {
+      Int_t idxEta = aEtaSuperSets[0]+aEtaSuperSets[1]-1;
+      for (int idxEtaSub = 0 ; idxEtaSub < aEtaSuperSets[idxEtaSuper]; ++idxEtaSub) {
+	++idxEta;
+	if (idxEtaSub == 1 || idxEtaSub == 3 || idxEtaSub == 5 || idxEtaSub == 7 || idxEtaSub == 8)
+	  continue;
+
+	  if (idxEtaSub == 0) 
+	    ShiftGraphX(graphs[idxEta][0][idxMoment], +10);
+	  else if (idxEtaSub == 2) 
+	    ShiftGraphX(graphs[idxEta][0][idxMoment], +5);
+	  else if (idxEtaSub == 4) 
+	    ShiftGraphX(graphs[idxEta][0][idxMoment], 0);
+	  else if (idxEtaSub == 6) 
+	    ShiftGraphX(graphs[idxEta][0][idxMoment], -5 );
+	  else if (idxEtaSub == 9) 
+	    ShiftGraphX(graphs[idxEta][0][idxMoment], -10 );
+
+	graphs[idxEta][0][idxMoment]->SetName(Form("Net-Charge_%s_Npart_14.5GeV_eta_%.1f_stat", aMoments[idxMoment], aEtaSetBinWidth[idxEta]));
+	
+	list->Add(graphs[idxEta][0][idxMoment]);
+      }
+    }
+  }
+
+  list->Write("Net-Charge_VsNpart", TObject::kSingleKey);
+  fOut->Close();
 }

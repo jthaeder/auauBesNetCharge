@@ -14,6 +14,7 @@
 #include "TColor.h"
 #include "TMath.h"
 #include "TLatex.h"
+#include "TGAxis.h"
 #include "TLine.h"
 #include "TGraphErrors.h"
 
@@ -24,6 +25,7 @@ TObjArray canA;
 const Char_t* aMomentsTitle[]  = {"c_{1}","c_{2}","c_{3}","c_{4}","#sigma^{2}/M","S #sigma", "#kappa #sigma^{2}"};
 
 const Char_t* aMoments[]       = {"C1","C2","C3","C4","VM","SD","KV"};
+const Char_t* aMoments2[]      = {"C1","C2","C3","C4","VM","SDSk","KV"};
 const Int_t   nMoments         = 7;
 
 const Char_t* aDataSetsTitle[] = {"corrected - 11.5 GeV #epsilon_{1} , #epsilon_{2}"};
@@ -68,6 +70,8 @@ void ConfigGraph(TGraphErrors* g, Int_t yLimitIdx, Int_t idxMarker) {
   g->SetMaximum(aMaxY[yLimitIdx]);
   g->GetXaxis()->SetLimits(aMinX, aMaxX);  
   g->SetMarkerSize(1.4);
+  if (aMarkers[idxMarker] == 29 || aMarkers[idxMarker] == 30)
+    g->SetMarkerSize(1.8);
   g->SetMarkerStyle(aMarkers[idxMarker]);
   g->SetMarkerColor(aColors[idxMarker]);
   g->SetLineColor(aColors[idxMarker]);
@@ -90,7 +94,7 @@ void ShiftGraphX(TGraphErrors* g, Double_t shift) {
 TPad* SetupCanvas(const Char_t* canName, const Char_t *canTitle, const Char_t *xTitle, Float_t xPosTitle) {
   // -- setup canvas and pad
   
-  canA.Add(new TCanvas(canName, canTitle, 1200, 0 , 600, 1000));
+  canA.Add(new TCanvas(canName, canTitle, 0, 0 , 420, 700));
   TCanvas *can = static_cast<TCanvas*>(canA.Last());
   can->SetFillColor(0);
   can->SetBorderMode(0);
@@ -136,11 +140,11 @@ void SaveCanvas(const Char_t* name) {
   
   gSystem->Exec(Form("mkdir -p results/nice/%s/png",  name));
   gSystem->Exec(Form("mkdir -p results/nice/%s/pdf",  name));
-  gSystem->Exec(Form("mkdir -p results/nice/pdf"));
-  gSystem->Exec(Form("mkdir -p results/nice/png"));
   gSystem->Exec(Form("mkdir -p results/nice/%s/eps",  name));
   gSystem->Exec(Form("mkdir -p results/nice/%s/gif",  name));
   gSystem->Exec(Form("mkdir -p results/nice/%s/root", name));
+  gSystem->Exec(Form("mkdir -p results/nice/pdf"));
+  gSystem->Exec(Form("mkdir -p results/nice/png"));
   
   // -----------------------------------------------------
   
@@ -208,6 +212,8 @@ void SetupStyle() {
   gStyle->SetLabelFont(font,"xyz"); 
   gStyle->SetLabelOffset(0.009,"xyz");
 
+  TGaxis::SetMaxDigits(3);
+
   gStyle->SetTitleSize(0.06);  
   gStyle->SetTitleFont(font,"xyz");  
   gStyle->SetTitleOffset(1.12,"x"); 
@@ -223,10 +229,11 @@ void SetupStyle() {
   gStyle->SetPadTickX(1);
   gStyle->SetPadTickY(1);
 
-  gStyle->SetLineWidth(1);
+  gStyle->SetLineWidth(2);
+
+  gStyle->SetEndErrorSize(4);
 
   // -- Set plot styles for 2D colz
-
   const Int_t nRGBs = 5;
   const Int_t nCont = 255;
   

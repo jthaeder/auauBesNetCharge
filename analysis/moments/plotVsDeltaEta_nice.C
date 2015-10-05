@@ -102,7 +102,7 @@ void plotVsDeltaEta_nice(const Char_t* name = "ratioVsDeltaEta") {
   // -----------------------------------------------------
 
   for (int idxDataSet = 0 ; idxDataSet < nDataSets; ++idxDataSet) {
-    TPad *pad = SetupCanvas(Form("canDeltaEta_Ratio_%s", aDataSets[idxDataSet]), aDataSetsTitle[idxDataSet], "#Delta#eta", 0.45);
+    TPad *pad = SetupCanvas(Form("canDeltaEta_Ratio_%s", aDataSets[idxDataSet]), aDataSetsTitle[idxDataSet], "#Delta#eta", 0.48);
     
     for (int idxMoment = 4 ; idxMoment < nMoments; ++idxMoment) {
       pad->cd(idxMoment-3);
@@ -179,4 +179,33 @@ void plotVsDeltaEta_nice(const Char_t* name = "ratioVsDeltaEta") {
   // -----------------------------------------------------
 
   SaveCanvas(name);
+
+  // -----------------------------------------------------
+  
+  TFile *fOut = TFile::Open("STAR_QM2015_Preliminary.root", "UPDATE");
+  fOut->cd();
+  
+  TList* list = new TList;
+
+  for (int idxMoment = 4; idxMoment < nMoments; ++idxMoment) {
+    for (int idxCent = 0; idxCent < nCent; ++idxCent) {
+      if (idxCent > 1) 
+	continue;
+
+      if (idxCent == 0) 
+	ShiftGraphX(etaGraphs[idxCent][0][idxMoment], 0.015);
+      else if (idxCent == 1) 
+	ShiftGraphX(etaGraphs[idxCent][0][idxMoment], 0.005);
+      else if (idxCent == 4) 
+	ShiftGraphX(etaGraphs[idxCent][0][idxMoment], -0.005);
+      else if (idxCent == 8) 
+	ShiftGraphX(etaGraphs[idxCent][0][idxMoment], -0.015);
+      
+      etaGraphs[idxCent][0][idxMoment]->SetName(Form("Net-Charge_%s_DeltaEta_14.5GeV_%s_stat", aMoments[idxMoment], cent[idxCent]));
+      list->Add(etaGraphs[idxCent][0][idxMoment]);
+    }
+  }
+
+  list->Write("Net-Charge_VsDeltaEta", TObject::kSingleKey);
+  fOut->Close();
 }

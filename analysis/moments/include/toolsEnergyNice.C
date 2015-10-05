@@ -11,6 +11,7 @@
 #include "TSystem.h"
 #include "TF1.h"
 #include "TPad.h"
+#include "TDirectory.h"
 #include "TColor.h"
 #include "TMath.h"
 #include "TLatex.h"
@@ -29,9 +30,10 @@ TLegend *legTheo;
 // -----------------------------------------------------------
 
 const Char_t* aMomentsTitle[]  = {"c_{1}","c_{2}","c_{3}","c_{4}","#sigma^{2}/M","S #sigma", "#kappa #sigma^{2}"};
-const Char_t* aMomentsTitle2[]  = {"c_{1}","c_{2}","c_{3}","c_{4}","#sigma^{2}/M","S #sigma/Skellam", "#kappa #sigma^{2}"};
+const Char_t* aMomentsTitle2[] = {"c_{1}","c_{2}","c_{3}","c_{4}","#sigma^{2}/M","S #sigma/Skellam", "#kappa #sigma^{2}"};
 
 const Char_t* aMoments[]       = {"C1","C2","C3","C4","VM","SD","KV"};
+const Char_t* aMoments2[]      = {"C1","C2","C3","C4","VM","SDSk","KV"};
 const Int_t   nMoments         = 7;
 
 const Char_t* aDataSetsTitle[] = {"corrected - 11.5 GeV #epsilon_{1} , #epsilon_{2}"};
@@ -63,14 +65,17 @@ const Double_t tc[]            = {140,  152,  156,  160, 163, 164,  165, 166};
 
       Int_t   aMarkers[]       = {29, 25, 25, 25, 26, 28, 27, 30, 24, 24};
 
-      Float_t aMinY[7]         = { 0, 0, -10, -2300, -10, -9, -20};
-      Float_t aMaxY[7]         = { 40, 250, 90, 900, 160, 11,  12};
+      Float_t aMinY[7]         = { -1,  -7, -3, -2200, -10, -9, -20};
+      Float_t aMaxY[7]         = {  40, 250, 110, 800, 160, 11,  12};
 
       // Float_t aMinY[7]         = { 0, 0, -10, -2300, 5.5, -0.02, -12 };
       // Float_t aMaxY[7]         = { 40, 250, 90, 900, 9.8, 0.48, 6};
 
       Float_t aMinX            = 6;
       Float_t aMaxX            = 250;
+
+      Float_t aMinRatioY[]     = {0.27, 0.27, 0.27, -1.8};
+      Float_t aMaxRatioY[]     = {0.9, 0.9, 0.9,  2.6};
 
 // -----------------------------------------------------------
 
@@ -88,6 +93,21 @@ void PrepareGraph(TGraphErrors* g) {
   g->GetXaxis()->SetLabelOffset(0.008);
   g->GetXaxis()->SetNoExponent(kTRUE);
 }
+
+// ______________________________________________________________________________________
+void PrepareGraphCumulants(TGraphErrors* g) {
+  // -- Prepare Graph
+  g->SetTitle("");
+  g->GetXaxis()->SetTitle("");
+  g->GetYaxis()->SetTitle("");
+  g->GetXaxis()->SetNdivisions(6, 5, 0);
+  g->GetYaxis()->SetNdivisions(6, 5, 0);
+  g->GetXaxis()->SetLabelSize(0.062);
+  g->GetYaxis()->SetLabelSize(0.062);
+  g->GetXaxis()->SetLabelOffset(0.008);
+  g->GetXaxis()->SetNoExponent(kTRUE);
+}
+
 
 // ______________________________________________________________________________________
 void ConfigGraph(TGraphErrors* g, Int_t yLimitIdx, Int_t idxMarker, Int_t is = 0) {
@@ -111,7 +131,7 @@ void ConfigGraph(TGraphErrors* g, Int_t yLimitIdx, Int_t idxMarker, Int_t is = 0
   if (is == 2) {
     g->SetFillColorAlpha(aColors[idxMarker], 0.35);
     g->SetFillColor(aColors[idxMarker]);
-    g->SetFillStyle(3444);
+    g->SetFillStyle(3344);
   }
   if (is == 3) {
     g->SetLineColor(kAzure);
@@ -120,8 +140,13 @@ void ConfigGraph(TGraphErrors* g, Int_t yLimitIdx, Int_t idxMarker, Int_t is = 0
 
     g->SetFillColorAlpha(kAzure, 0.35);
     g->SetFillColor(kAzure);
-    g->SetFillStyle(3444);
+    g->SetFillStyle(3344);
   }
+  if (is == 4) {
+    g->SetMinimum(aMinRatioY[yLimitIdx]);
+    g->SetMaximum(aMaxRatioY[yLimitIdx]);
+  }
+
 }
 
 // ______________________________________________________________________________________
@@ -137,26 +162,34 @@ void ShiftGraphX(TGraphErrors* g, Double_t shift) {
   PrepareGraph(g);
 }
 
-
 // ______________________________________________________________________________________
 void DrawSet(TGraphErrors *gStat, TGraphErrors *gSys, TGraphErrors *gPoisson, TGraphErrors *gUrqmd,
-	     Int_t idxMoment, Int_t idxCent) {
+	     Int_t idxMoment, Int_t idxCent, TGraphErrors* g14 = NULL) {
   // -- Draw Set 
 
   PrepareGraph(gStat);
   PrepareGraph(gSys);
   PrepareGraph(gPoisson);
   PrepareGraph(gUrqmd);
-  
+
   ConfigGraph(gStat,    idxMoment, idxCent);
   ConfigGraph(gSys,     idxMoment, idxCent, 2);
   ConfigGraph(gPoisson, idxMoment, idxCent, 1);
-    if (idxCent == 0) 
+  if (idxCent == 0) 
     ConfigGraph(gUrqmd, idxMoment, idxCent, 3);
   
+  if (g14) {
+    PrepareGraph(gUrqmd);
+    ConfigGraph(g14, idxMoment, idxCent);
+    if (idxCent == 0)
+      g14->SetMarkerStyle(29);
+    else
+      g14->SetMarkerStyle(20);
+  }
+
   // -- draw box
   if (idxCent == 0) 
-    gStat->Draw("AP");
+    gStat->Draw("AZP");
 
   // -- draw urqmd
   if (idxCent == 0) {
@@ -180,8 +213,11 @@ void DrawSet(TGraphErrors *gStat, TGraphErrors *gSys, TGraphErrors *gPoisson, TG
   
   // -- draw datapoints
   //gSys->Draw("B2,SAME");
-  gStat->Draw("P,SAME");
+  gStat->Draw("ZP,SAME");
   gSys->Draw("[],SAME");
+
+  if (g14)
+    g14->Draw("ZP,SAME");
 
   if (idxMoment == 4) {
     legExp->AddEntry(gStat, Form("%s", cent1[idxCent]), "pl");
@@ -193,7 +229,7 @@ void DrawSet(TGraphErrors *gStat, TGraphErrors *gSys, TGraphErrors *gPoisson, TG
 TPad* SetupCanvas(const Char_t* canName, const Char_t *canTitle) {
   // -- setup canvas and pad
   
-  canA.Add(new TCanvas(Form("can%s", canName), canTitle, 0, 0 , 600, 1000));
+  canA.Add(new TCanvas(Form("can%s", canName), canTitle, 0, 0 , 420, 700));
   can = static_cast<TCanvas*>(canA.Last());
   can->SetFillColor(0);
   can->SetBorderMode(0);
@@ -391,7 +427,7 @@ void SetupStyle() {
   gStyle->SetPadTickX(1);
   gStyle->SetPadTickY(1);
 
-  gStyle->SetLineWidth(1);
+  gStyle->SetLineWidth(2);
 
   gStyle->SetEndErrorSize(4);
 
@@ -408,7 +444,6 @@ void SetupStyle() {
 
   TColor *color = new TColor(1182, 1, 0, 0, " ", 0);
 }
-
 
 // ______________________________________________________________________________________
 void toolsEnergyNice(){;}

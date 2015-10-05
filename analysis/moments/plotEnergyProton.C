@@ -42,7 +42,7 @@ void plotEnergyProton(const Char_t* name = "ratioNetProtonVsEnergy") {
     inFiles[idxEnergy] = TFile::Open(Form("Net-Proton/moments_%sGeV_preli.root", energies[idxEnergy]));
 
     if (idxEnergy != 2)
-      inFilesUrqmd[idxEnergy]= TFile::Open(Form("URQMD/urqmd_proton/AuAu%sGeV_Vz30_kpi_eta1.root", exactEnergies[idxEnergy]));
+      inFilesUrqmd[idxEnergy]= TFile::Open(Form("URQMD/urqmd_proton/AuAu%sGeV_netp_refmult3_y0.5.root", exactEnergies[idxEnergy]));
     
     for (int idxMoment = 4 ; idxMoment < nMoments; ++idxMoment) { 
 
@@ -140,6 +140,9 @@ void plotEnergyProton(const Char_t* name = "ratioNetProtonVsEnergy") {
 	      graphPoisson[0][idxMoment][idxCent], graphUrqmd[0][idxMoment][idxCent],
 	      idxMoment, idxCent);
     } // for (int idxCent = 0; idxCent < nCent; ++idxCent) {
+
+    graphStat[0][idxMoment][0]->Draw("ZP,SAME");
+    graphSys[0][idxMoment][0]->Draw("[],SAME");
   } // for (int idxMoment = 4; idxMoment < nMoments; ++idxMoment) {
 
   legTheo->AddEntry(graphUrqmd[0][4][0], Form("%s UrQMD", cent1[0]), "f");
@@ -148,4 +151,25 @@ void plotEnergyProton(const Char_t* name = "ratioNetProtonVsEnergy") {
   
   LabelCanvas("Net-Proton", "0.4 < #it{p}_{T} (GeV/#it{c}) < 2.0, |#it{y}| < 0.5");  
   SaveCanvas(name);
+
+  TFile *fOut = TFile::Open("STAR_QM2015_Preliminary.root", "UPDATE");
+  fOut->cd();
+
+  TList* list = new TList;
+
+  for (int idxMoment = 4; idxMoment < nMoments; ++idxMoment) {
+    for (int idxCent = 0; idxCent < nCent; ++idxCent) {
+      if (idxCent > 1) 
+	continue;
+
+      graphStat[0][idxMoment][idxCent]->SetName(Form("Net-Proton_%s_sNN_%s_stat", aMoments2[idxMoment], cent[idxCent]));
+      graphSys[0][idxMoment][idxCent]->SetName(Form("Net-Proton_%s_sNN_%s_sys",  aMoments2[idxMoment], cent[idxCent]));
+
+      list->Add(graphStat[0][idxMoment][idxCent]);
+      list->Add(graphSys[0][idxMoment][idxCent]);
+    }
+  }
+  list->Write("Net-Proton", TObject::kSingleKey);
+  fOut->Close();
+
 }

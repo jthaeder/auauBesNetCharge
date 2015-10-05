@@ -4,6 +4,9 @@
 // ______________________________________________________________________________________
 void SetGlobals() {
   // -- set globals
+
+  aMarkers[0] = 30;
+
 }
 
 // ______________________________________________________________________________________
@@ -84,6 +87,7 @@ void plotEnergyCharge(const Char_t* name = "ratioNetChargeVsEnergy") {
 	    Double_t xOut, yOut;
 	    graphStat[idx][idxMoment][idxCent]->GetPoint(idxEnergy, xOut, yOut);
 	    graphStat[idx][idxMoment][idxCent]->SetPoint(idxEnergy, xOut, yIn);
+	    graph14[idx][idxMoment][idxCent]->SetPoint(0, xOut, yIn);
 	    graphStat[idx][idxMoment][idxCent]->SetPointError(idxEnergy, 0, yErrorStatIn);
 	    
 	    graphSys[idx][idxMoment][idxCent]->SetPoint(idxEnergy, xOut, yIn);
@@ -129,8 +133,12 @@ void plotEnergyCharge(const Char_t* name = "ratioNetChargeVsEnergy") {
 
       DrawSet(graphStat[0][idxMoment][idxCent],    graphSys[0][idxMoment][idxCent],
 	      graphPoisson[0][idxMoment][idxCent], graphUrqmd[0][idxMoment][idxCent],
-	      idxMoment, idxCent);
+	      idxMoment, idxCent, graph14[0][idxMoment][idxCent]);
     } // for (int idxCent = 0; idxCent < nCent; ++idxCent) {
+
+    graphStat[0][idxMoment][0]->Draw("ZP,SAME");
+    graphSys[0][idxMoment][0]->Draw("[],SAME");
+    graph14[0][idxMoment][0]->Draw("ZP,SAME");
   } // for (int idxMoment = 4; idxMoment < nMoments; ++idxMoment) {
 
   legTheo->AddEntry(graphUrqmd[0][4][0], Form("%s UrQMD", cent1[0]), "f");
@@ -139,4 +147,24 @@ void plotEnergyCharge(const Char_t* name = "ratioNetChargeVsEnergy") {
 
   LabelCanvas("Net-Charge", "0.2 < #it{p}_{T} (GeV/#it{c}) < 2.0, |#eta| < 0.5");
   SaveCanvas(name);
+
+  TFile *fOut = TFile::Open("STAR_QM2015_Preliminary.root", "UPDATE");
+  fOut->cd();
+
+  TList* list = new TList;
+
+  for (int idxMoment = 4; idxMoment < nMoments; ++idxMoment) {
+    for (int idxCent = 0; idxCent < nCent; ++idxCent) {
+      if (idxCent != 0) 
+	continue;
+
+      graphStat[0][idxMoment][idxCent]->SetName(Form("Net-Charge_%s_sNN_%s_stat", aMoments2[idxMoment], cent[idxCent]));
+      graphSys[0][idxMoment][idxCent]->SetName(Form("Net-Charge_%s_sNN_%s_sys",  aMoments2[idxMoment], cent[idxCent]));
+
+      list->Add(graphStat[0][idxMoment][idxCent]);
+      list->Add(graphSys[0][idxMoment][idxCent]);
+    }
+  }
+  list->Write("Net-Charge", TObject::kSingleKey);
+  fOut->Close();
 }

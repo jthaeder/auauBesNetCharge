@@ -24,6 +24,7 @@ TGraphErrors *graphStat[2][7][9];
 TGraphErrors *graphSys[2][7][9];
 TGraphErrors *graphPoisson[2][7][9];
 TGraphErrors *graphUrqmd[2][7][9];
+TGraphErrors *graph14[2][7][9];
 
 void getPublished() {
 
@@ -117,6 +118,8 @@ void getPublished() {
   Double_t snnRed[] = {7.7, 11.5, 19.6,  27,  39, 62.4, 200};
   Double_t mubRed[] = {422,  316,  206, 156, 112,   73,  24};
 
+  Double_t snn14[] = {14.5};
+  Double_t mub14[] = {266};
 
   // ---------------------------------------------------------------------------------
   
@@ -153,7 +156,7 @@ void getPublished() {
       }
     } // for (Int_t idxEnergy = 0; idxEnergy < nEnergyMax; ++idxEnergy) {
     
-    graphStat[0][idxMoment][idxCent]    = new TGraphErrors(nEnergyMax, snn, y[ii], 0, eyStat[ii]);    
+    graphStat[0][idxMoment][idxCent]    = new TGraphErrors(nEnergyMax, snn, y[ii], 0, eyStat[ii]);
     graphStat[1][idxMoment][idxCent]    = new TGraphErrors(nEnergyMax, mub, y[ii], 0, eyStat[ii]);    
 
     // graphSys[0][idxMoment][idxCent]     = new TGraphErrors(nEnergyMax, snn, y[ii], exSys, eySys[ii]);    
@@ -246,21 +249,42 @@ void getPublished() {
 	graphStat[0][idxMoment][idxCent]    = new TGraphErrors(nEnergyMax, snn, 0, 0, 0);    
 	graphStat[1][idxMoment][idxCent]    = new TGraphErrors(nEnergyMax, mub, 0, 0, 0);    
       }
+      graphStat[0][idxMoment][idxCent]->SetName(Form("stat_snn_%d_%d", idxMoment, idxCent));
+      graphStat[1][idxMoment][idxCent]->SetName(Form("stat_mub_%d_%d", idxMoment, idxCent));
+
       if (!graphSys[0][idxMoment][idxCent]) {
 	graphSys[0][idxMoment][idxCent]     = new TGraphErrors(nEnergyMax, snn, 0, 0, 0);    
 	graphSys[1][idxMoment][idxCent]     = new TGraphErrors(nEnergyMax, mub, 0, 0, 0);    
       }
+      graphSys[0][idxMoment][idxCent]->SetName(Form("sys_snn_%d_%d", idxMoment, idxCent));
+      graphSys[1][idxMoment][idxCent]->SetName(Form("sys_mub_%d_%d", idxMoment, idxCent));
+
       if (!graphPoisson[0][idxMoment][idxCent]) {
 	graphPoisson[0][idxMoment][idxCent] = new TGraphErrors(nEnergyMax, snn, 0, 0, 0);    
 	graphPoisson[1][idxMoment][idxCent] = new TGraphErrors(nEnergyMax, mub, 0, 0, 0);    
       }
+      graphPoisson[0][idxMoment][idxCent]->SetName(Form("poisson_snn_%d_%d", idxMoment, idxCent));
+      graphPoisson[1][idxMoment][idxCent]->SetName(Form("poisson_mub_%d_%d", idxMoment, idxCent));
+
       if (!graphUrqmd[0][idxMoment][idxCent]) {
 	graphUrqmd[0][idxMoment][idxCent]   = new TGraphErrors(nEnergyMax-1, snnRed, 0, 0, 0);    
 	graphUrqmd[1][idxMoment][idxCent]   = new TGraphErrors(nEnergyMax-1, mubRed, 0, 0, 0);    
       }
+      graphUrqmd[0][idxMoment][idxCent]->SetName(Form("urqmd_snn_%d_%d", idxMoment, idxCent));
+      graphUrqmd[1][idxMoment][idxCent]->SetName(Form("urqmd_mub_%d_%d", idxMoment, idxCent));
+
+      if (!graph14[0][idxMoment][idxCent]) {
+	graph14[0][idxMoment][idxCent]   = new TGraphErrors(1, snn14, 0, 0, 0);    
+	graph14[1][idxMoment][idxCent]   = new TGraphErrors(1, mub14, 0, 0, 0);    
+      }
+      graph14[0][idxMoment][idxCent]->SetName(Form("14_snn_%d_%d", idxMoment, idxCent));
+      graph14[1][idxMoment][idxCent]->SetName(Form("14_mub_%d_%d", idxMoment, idxCent));
+
     }
   }
   
+
+
   // -----------------------------------------------------------------------
 
 }
