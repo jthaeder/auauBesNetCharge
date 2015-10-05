@@ -52,6 +52,8 @@ analysis/moments/Net-Proton
 analysis/moments/Net-Kaon
 analysis/moments/URQMD
 analysis/moments/sysError
+analysis/moments/data
+analysis/moments/STAR_QM2015_Preliminary.*
 
 temp_gccflags.c
 .sl64_gcc482/
