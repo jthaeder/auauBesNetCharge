@@ -52,6 +52,7 @@ using namespace std;
 #define TRACK_THN 0
 #define EVENT_THN 0
 #define USE_RANDOM_EFF 0
+#define DEBUG 0
 
 void   AddHistSetCent(const Char_t *name, const Char_t *title);
 void   FillHistSetCent(const Char_t *name, Int_t idx, Int_t cent);
@@ -78,7 +79,7 @@ Double_t NN(Double_t, Int_t);
 
 // ----------------------------------------------------------------------------  
 
-Int_t    binHnEvent[11] = {  10,   21,   21,    201,   21,   601,   601,   3001,    2,    201,   21};
+Int_t    binHnEvent[11] = {  10,   41,   41,    401,   21,   601,   601,   3001,    2,    201,   21};
 Double_t minHnEvent[11] = {-0.5, -2.0, -3.0, -100.0,  0.0,   0.0,   0.0,    0.0, -0.5, -100.0,  0.0};
 Double_t maxHnEvent[11] = { 9.5,  2.0,  1.0,  100.0,  2.0, 600.0, 600.0, 3000.0,  1.5,  100.0, 20.0};
 
@@ -123,20 +124,23 @@ double randomEff[2][9];
 // -- Globals
 // ----------------------------------------------------------------------------  
 
-TList                *fOutList;               //! Output data container
+TList                *fOutList;                     //! Output data container
 // =======================================================================
-Int_t                 fOrder = 8;             //  Max order of higher order distributions
+Int_t                 fOrder = 8;                   //  Max order of higher order distributions
 // -----------------------------------------------------------------------
-Int_t                 fNNp   = 3;             //  N sets of arrays of particle/anti-particle counts
-                                              //   0 is all 
-                                              //   1,2 for arbitrary subset
-Int_t               **fNp;                    //  Array of particle/anti-particle counts
+Int_t                 fNNp   = 3;                   //  N sets of arrays of particle/anti-particle counts
+                                                    //   0 is all 
+                                                    //   1,2 for arbitrary subset
+Int_t               **fNp;                          //  Array of particle/anti-particle counts
 // =======================================================================
-THnSparseD           *fHnTrackUnCorr;         //  THnSparseD : uncorrected probe particles
-THnSparseD           *fHnEvent;               //  THnSparseD : event
+THnSparseD           *fHnTrackUnCorr;               //  THnSparseD : uncorrected probe particles
+THnSparseD           *fHnEvent;                     //  THnSparseD : event
 // =======================================================================
-
-Int_t                 energyIdx = -1;         // energyIdx
+Int_t                 energyIdx = -1;               // energyIdx
+// =======================================================================
+Int_t                 useModeChargeSeparation = 0;  // 0 - off
+                                                    // 1 - positive charge -> positive eta
+                                                    // 2 - positive charge -> negative eta
 
 // ----------------------------------------------------------------------------  
 // -- 
@@ -154,7 +158,7 @@ Int_t main(int argc, char** argv) {
       TString argument(argv[idx]);
 
       if (argument.BeginsWith("--energy=")) {
-	TString parameter=argument.ReplaceAll("--energy=", "");
+	TString parameter = argument.ReplaceAll("--energy=", "");
 	parameter.Remove(TString::kLeading, ' '); 
 	
 	for (int enerIdx = 0; enerIdx < nEnergies; ++enerIdx) {
@@ -166,6 +170,25 @@ Int_t main(int argc, char** argv) {
 	  }
 	}
       } // if (argument.BeginsWith("--energy=")){
+
+      else if (argument.BeginsWith("--chargeSeparation=")) {
+	TString parameter = argument.ReplaceAll("--chargeSeparation=", "");
+	parameter.Remove(TString::kLeading, ' '); 
+	useModeChargeSeparation = parameter.Atoi();
+      } // else if (argument.BeginsWith("--chargeSeparation=")) {
+
+      else if (argument.BeginsWith("--etaMin=")) {
+	TString parameter = argument.ReplaceAll("--etaMin=", "");
+	parameter.Remove(TString::kLeading, ' '); 
+	etaAbsRange[0] = parameter.Atof();
+      } // else if (argument.BeginsWith("--etaMin=")) {
+
+      else if (argument.BeginsWith("--etaMax=")) {
+	TString parameter = argument.ReplaceAll("--etaMax=", "");
+	parameter.Remove(TString::kLeading, ' '); 
+	etaAbsRange[1] = parameter.Atof();
+      } // else if (argument.BeginsWith("--etaMax=")) {
+
     } // for (Int_t idx = 1; idx < argc; ++idx) {
   } // if (argc > 1) {
 
@@ -220,9 +243,10 @@ Int_t main(int argc, char** argv) {
 
     randomEff[0][idxCent] = prNegSub->GetMean()/ prNegAll->GetMean();
     randomEff[1][idxCent] = prPosSub->GetMean()/ prPosAll->GetMean();
-
+#if DEBUG
     cout << "neg " <<  idxCent << "  " << randomEff[0][idxCent] << " -> " << prNegSub->GetMean() << " / " << prNegAll->GetMean() <<  endl;
     cout << "pos " <<  idxCent << "  " << randomEff[1][idxCent] << " -> " << prPosSub->GetMean() << " / " << prPosAll->GetMean() <<  endl;
+#endif
   } // for (int idxCent = 0; idxCent <9 ; ++idxCent) {
 #endif
   // ------------------------------------------------------------------
@@ -329,9 +353,8 @@ Int_t main(int argc, char** argv) {
   InitializeEventHists();
   InitializeTrackHists();
 
-  //  TString sTitle(Form("|#eta|<%.1f #it{p}_{T} [%.1f,%.1f]", etaAbsRange[1], ptRange[0], ptRange[1]));
-  TString sTitle(Form("%.1f<#eta<%.1f #it{p}_{T} [%.1f,%.1f]", etaAbsRange[0], etaAbsRange[1], ptRange[0], ptRange[1]));
-  printf ("TITLE : .... %s", sTitle.Data());
+  TString sTitle(Form("%.2f<#eta<%.2f #it{p}_{T} [%.1f,%.1f]", etaAbsRange[0], etaAbsRange[1], ptRange[0], ptRange[1]));
+  cout << "TITLE : .... " << sTitle << " useChargeSeparation "<<  useModeChargeSeparation << endl;
   AddHistSetCent("Dist",       sTitle.Data());
   AddHistSetCent("Dist_lower", sTitle.Data());
   AddHistSetCent("Dist_upper", sTitle.Data());
@@ -390,12 +413,16 @@ Int_t main(int argc, char** argv) {
     
     Int_t nRefMultTracksPico  = pico->Event_mRefMultNeg[0] + pico->Event_mRefMultPos[0];
     Int_t nRefMultTracksMuDst = refMultMap[std::make_pair(runId, eventId)];
-    Int_t nRefMultTracks  = (energyIdx == 2) ? nRefMultTracksPico : nRefMultTracksMuDst;
 
-    Int_t nRefMult2TracksPico = pico->Event_mRefMult2NegEast[0] + pico->Event_mRefMult2PosEast[0] +
+    Int_t nRefMultTracks      = (energyIdx == 2) ? nRefMultTracksPico : nRefMultTracksMuDst;
+#if DEBUG
+    // --- this will be used in after picoDST reproduction 
+    Int_t nRefMult2TracksPico  = pico->Event_mRefMult2NegEast[0] + pico->Event_mRefMult2PosEast[0] +
       pico->Event_mRefMult2NegWest[0] +  pico->Event_mRefMult2PosWest[0];
+#endif
     Int_t nRefMult2TracksMuDst = refMult2Map[std::make_pair(runId, eventId)];
-    Int_t nRefMult2Tracks = (energyIdx == 2) ? 0 : nRefMult2TracksMuDst;
+
+    Int_t nRefMult2Tracks      = (energyIdx == 2) ? 0 : nRefMult2TracksMuDst;
 
     Int_t nTOFMatch = 0;
     
@@ -433,10 +460,11 @@ Int_t main(int argc, char** argv) {
 	++nPrimaryTracks;
     }
     
+#if DEBUG
     if (nRefMultTracksPico - nRefMultTracksMuDst != 0)
       cout << "  DELTA REFMULT " << nRefMultTracks  << " || Pico:" << nRefMultTracksPico  << " <> MuDst:" << nRefMultTracksMuDst  << endl;
     cout << "  REFMULT2      " << nRefMult2Tracks << " || Pico:" << nRefMult2TracksPico << " <> MuDst:" << nRefMult2TracksMuDst << endl;
-
+#endif 
     // ------------------------------------------------------------------
     // -- Event Cuts
     // ------------------------------------------------------------------
@@ -513,11 +541,12 @@ Int_t main(int argc, char** argv) {
     // -- 4 - vpd vertex cut
     ++iCut;  
     Double_t deltaVzMax = 3;
-    Float_t  vpdVz      = Float_t(pico->Event_mVzVpd[0]);
+    Float_t  vpdVz      = Float_t(pico->Event_mVzVpd[0])/100;
     Double_t deltaVz    = TMath::Abs(vpdVz-vz);
+
     if (energyIdx > 4 && deltaVz > deltaVzMax)
       aEventCuts[iCut] = 1;
-  
+
     // -- 5 - shifted vertex cut
     ++iCut;
     Double_t shiftedVtx = TMath::Sqrt(vx*vx + (vy+0.89)*(vy+0.89));
@@ -611,10 +640,10 @@ Int_t main(int argc, char** argv) {
       FillMultiplicityStats(aMult, 3);
       continue;
     }
-
-    // if ( nRefMult2Tracks != nRefMult2TracksPico && TMath::Abs(nRefMult2Tracks - nRefMult2TracksPico) > 1)
-    //   cout << " nRefMult2Tracks " << nRefMult2Tracks << " -> (pico) " << nRefMult2TracksPico << endl;
-    // continue;
+#if DEBUG
+    if ( nRefMult2Tracks != nRefMult2TracksPico && TMath::Abs(nRefMult2Tracks - nRefMult2TracksPico) > 1)
+      cout << " nRefMult2Tracks " << nRefMult2Tracks << " -> (pico) " << nRefMult2TracksPico << endl;
+#endif 
 
     // -- Fill multiplicty stats
     FillMultiplicityStats(aMult, 4);
@@ -700,7 +729,8 @@ Int_t main(int argc, char** argv) {
       // ------------------------------------------------------------------
       //  idxPart = 0 -> anti particle
       //  idxPart = 1 -> particle
-      Int_t idxPart = (sign < 0) ? 0 : 1;
+      Int_t idxPart    = (sign < 0) ? 0 : 1;
+      Int_t idxEtaSign = (eta  < 0) ? 0 : 1;
 
 #if USE_RANDOM_EFF      
       // -- discard a random amount of tracks
@@ -708,14 +738,27 @@ Int_t main(int argc, char** argv) {
 	continue;
 #endif
  
-     // -- in full pt Range
-      fNp[0][idxPart] += 1;
+      // -- Apply Charge separation 
+      //    -> default: off  => 0  
+      //    -> positive particles from postive eta / negative particles from negative eta => 1
+      //    -> positive particles from negative eta / negative particles from postive eta => 2
+
+      Int_t count = 0;
+      if (useModeChargeSeparation == 0) 
+	++count;
+      else if ( (useModeChargeSeparation == 1) && (idxPart == idxEtaSign) ) 
+	++count;
+      else if ( (useModeChargeSeparation == 2) && (idxPart != idxEtaSign) ) 
+	++count;
+
+      // -- in full pt Range
+      fNp[0][idxPart] += count;
       
       // -- divide in 2 parts
       if (pt < ptMidPoint)
-	fNp[1][idxPart] += 1;
+	fNp[1][idxPart] += count;
       else
-	fNp[2][idxPart] += 1;
+	fNp[2][idxPart] += count;
     } // for (Int_t idxTrack = 0; idxTrack < nTracks; idxTrack++)  {
     
     // -- Fill histograms
@@ -752,7 +795,7 @@ Int_t main(int argc, char** argv) {
   outFile->Close();
   
   return 0;
- }
+}
 
 //________________________________________________________________________
 Int_t RefMult2Correction(Double_t vz, Int_t refmult2) {

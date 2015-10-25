@@ -7,7 +7,6 @@ Double_t centBinRange[2]           = {0, 9};
 Double_t ptRange[2]                = {0.2, 2.0};
 Double_t ptMidPoint                = 1.0;    // -- pseudo to get 2 region pt for f(i,j,k,l)
 
-//Double_t etaAbsRange[2]            = {-0.45, 0.45};
 Double_t etaAbsRange[2]            = {-0.5, 0.5};
 Double_t dcaMax                    = 1.0;
 
