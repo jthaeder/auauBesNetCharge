@@ -38,9 +38,9 @@ const Char_t* cent1[9]         = {"0-5%", "5-10%", "10-20%", "20-30%", "30-40%",
 
 // -----------------------------------------------------------
 
-      Color_t aColors[]        = {kBlack, kOrange+9, kOrange+9, kYellow, kAzure, kAzure, kCyan+2, kBlue+1, kRed+2, kRed+2};
+      Color_t aColors[]        = {kBlack, kOrange+9, kOrange+9, kYellow, kAzure, kAzure, kCyan+2, kBlue+1, kRed+2, kRed+2, kRed+2, kRed+2};
 
-      Int_t   aMarkers[]       = {24, 32, 25, 25, 26, 28, 27, 30, 32, 30};
+      Int_t   aMarkers[]       = {24, 32, 25, 25, 26, 28, 27, 30, 32, 30, 31, 32};
 
       Float_t aMinY[7]         = { 0, 0, -10, -2300, 5.5, -0.02, -12 };
       Float_t aMaxY[7]         = { 40, 250, 90, 900, 9.8, 0.48, 6};
@@ -135,17 +135,67 @@ TPad* SetupCanvas(const Char_t* canName, const Char_t *canTitle, const Char_t *x
 }
 
 // ______________________________________________________________________________________
-void SaveCanvas(const Char_t* name) {
-  // -- Write out canvas
+TPad* SetupCanvasCum(const Char_t* canName, const Char_t *canTitle, const Char_t *xTitle, Float_t xPosTitle) {
+  // -- setup canvas and pad
   
+  canA.Add(new TCanvas(canName, canTitle, 420, 0 , 420, 800));
+  TCanvas *can = static_cast<TCanvas*>(canA.Last());
+  can->SetFillColor(0);
+  can->SetBorderMode(0);
+  can->SetBorderSize(0.0);
+  can->SetFrameFillColor(0);
+  can->SetFrameBorderMode(0);
+  can->cd();
+  
+  TPad* pad = new TPad("pad", "pad",0.05, 0.06, 0.99, 0.98);
+  pad->SetBorderMode(0);
+  pad->SetFillColor(0);
+  pad->Draw();
+  pad->cd();
+  pad->Divide(1, 4, 0., 0., 0);
+
+  can->cd();
+
+  TLatex *texb_5 = new TLatex(xPosTitle, 0.03, xTitle);
+  texb_5->SetTextSize(0.04);
+  texb_5->Draw("same");
+
+  TLatex *texb_6 = new TLatex(0.035,0.85, aMomentsTitle[0]);
+  texb_6->SetTextSize(0.04);
+  texb_6->SetTextAngle(90);
+  texb_6->Draw("same");
+  
+  TLatex *texb_6a = new TLatex(0.035,0.62, aMomentsTitle[1]);
+  texb_6a->SetTextSize(0.04);
+  texb_6a->SetTextAngle(90);
+  texb_6a->Draw("same");
+  
+  TLatex *texb_6b = new TLatex(0.035,0.38, aMomentsTitle[2]);
+  texb_6b->SetTextSize(0.04);
+  texb_6b->SetTextAngle(90);
+  texb_6b->Draw("same");
+  
+  TLatex *texb_6c = new TLatex(0.035,0.18, aMomentsTitle[3]);
+  texb_6c->SetTextSize(0.04);
+  texb_6c->SetTextAngle(90);
+  texb_6c->Draw("same");
+
+  return pad;
+}
+
+// ______________________________________________________________________________________
+void SaveCanvas(const Char_t* name, Bool_t isNice = kTRUE) {
+  // -- Write out canvas
+
   gSystem->Exec(Form("mkdir -p results/nice/%s/png",  name));
   gSystem->Exec(Form("mkdir -p results/nice/%s/pdf",  name));
   gSystem->Exec(Form("mkdir -p results/nice/%s/eps",  name));
   gSystem->Exec(Form("mkdir -p results/nice/%s/gif",  name));
   gSystem->Exec(Form("mkdir -p results/nice/%s/root", name));
-  gSystem->Exec(Form("mkdir -p results/nice/pdf"));
-  gSystem->Exec(Form("mkdir -p results/nice/png"));
-  
+  if (isNice) {
+    gSystem->Exec(Form("mkdir -p results/nice/pdf"));
+    gSystem->Exec(Form("mkdir -p results/nice/png"));
+  }
   // -----------------------------------------------------
   
   for (Int_t idx = 0; idx < canA.GetEntriesFast() ; ++idx) {
@@ -157,10 +207,12 @@ void SaveCanvas(const Char_t* name) {
     c->SaveAs(Form("results/nice/%s/eps/%s_14GeV.eps",   name, c->GetName()));
     c->SaveAs(Form("results/nice/%s/gif/%s_14GeV.gif",   name, c->GetName()));
     c->SaveAs(Form("results/nice/%s/pdf/%s_14GeV.pdf",   name, c->GetName()));
-    c->SaveAs(Form("results/nice/pdf/%s_14GeV.pdf",            c->GetName()));
-    c->SaveAs(Form("results/nice/png/%s_14GeV.png",            c->GetName()));
     c->SaveAs(Form("results/nice/%s/root/%s_14GeV.C",    name, c->GetName()));
     c->SaveAs(Form("results/nice/%s/root/%s_14GeV.root", name, c->GetName()));
+    if (isNice) {
+      c->SaveAs(Form("results/nice/pdf/%s_14GeV.pdf",          c->GetName()));
+      c->SaveAs(Form("results/nice/png/%s_14GeV.png",          c->GetName()));
+    }
   }
 }
 
