@@ -18,7 +18,7 @@
 #include "TLine.h"
 #include "TArrow.h"
 #include "TGraphErrors.h"
-#include "data/BESIIerror.h"
+#include "dataBESII/BESIIerror.h"
 
 TObjArray canA;
 
