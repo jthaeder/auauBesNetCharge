@@ -51,18 +51,18 @@ analysis/makeRefMultList.sh
 analysis/Split.C
 analysis/file.list.*.test
 
-analysis/moments/Net-Proton
-analysis/moments/Net-Kaon
-analysis/moments/URQMD
-analysis/moments/sysError
-analysis/moments/dataBESII
-analysis/moments/output
-analysis/moments/STAR_QM2015_Preliminary.*
-
 analysis/moments/Convert2FF*
 analysis/moments/moments_ana*
 analysis/moments/archive/Convert2FF*
 analysis/moments/archive/moments_ana*
+analysis/moments/output
+
+analysis/plots/Net-Proton
+analysis/plots/Net-Kaon
+analysis/plots/URQMD
+analysis/plots/sysError
+analysis/plots/dataBESII
+analysis/plots/STAR_QM2015_Preliminary.*
 
 temp_gccflags.c
 .sl64_gcc482/
