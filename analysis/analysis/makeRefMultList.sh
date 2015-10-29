@@ -1,1 +1,1 @@
-/project/projectdirs/starprod/rnc/jthaeder/NetCharge/makeRefMultList.sh
+../tools/makeRefMultList.sh

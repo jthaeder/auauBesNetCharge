@@ -1142,16 +1142,18 @@ void InitializeTrackHists() {
     list->SetOwner(kTRUE);
 
     // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
- 
-    list->Add(new TH1F(Form("pt_%s", trackNames[ii]),                Form("#it{p}_{T}%s;#it{p}_{T} (GeV/#it{c});Tracks", trackTitles[ii]),  binHnUnCorr[1], minHnUnCorr[1], maxHnUnCorr[1]));
-    list->Add(new TH1F(Form("eta_%s", trackNames[ii]),               Form("#eta%s;#eta;Tracks", trackTitles[ii]),  binHnUnCorr[2], minHnUnCorr[2], maxHnUnCorr[2]));
-    list->Add(new TH1F(Form("dca_%s", trackNames[ii]),               Form("DCA%s;DCA (cm);Tracks", trackTitles[ii]),  binHnUnCorr[4], minHnUnCorr[4], maxHnUnCorr[4]));
-    list->Add(new TH1F(Form("nHitsDedx_%s", trackNames[ii]),         Form("nHitsDedx%s;nHitsDedx;Tracks", trackTitles[ii]),  binHnUnCorr[5], minHnUnCorr[5], maxHnUnCorr[5]));
-    list->Add(new TH1F(Form("nHitsFit_%s", trackNames[ii]),          Form("nHitsFit%s;nHitsFit;Tracks", trackTitles[ii]),  binHnUnCorr[6], minHnUnCorr[6], maxHnUnCorr[6]));
-    list->Add(new TH1F(Form("nHitsFit_nFitPoss_%s", trackNames[ii]), Form("nHitsFit/nFitPoss%s;nHitsFit/nFitPoss;Tracks", trackTitles[ii]),  binHnUnCorr[8], minHnUnCorr[8], maxHnUnCorr[8]));
-    list->Add(new TH1F(Form("nSigmaP_%s", trackNames[ii]),           Form("nSigmaProton%s;n#Sigma_{proton};Tracks", trackTitles[ii]),  binHnUnCorr[11], minHnUnCorr[11], maxHnUnCorr[11]));
-    list->Add(new TH2F(Form("nSigmaP_pt_%s", trackNames[ii]),        Form("nSigmaProton vs #it{p}_{T}%s;n#sigma_{proton};#it{p}_{T} (GeV/#it{c})", trackTitles[ii]),  
-		       binHnUnCorr[11], minHnUnCorr[11], maxHnUnCorr[11], binHnUnCorr[1], minHnUnCorr[1], maxHnUnCorr[1]));
+
+    for (Int_t idxSign = 0 ; idxSign < 2; ++idxSign) { 
+      list->Add(new TH1F(Form("pt_%s_%d", trackNames[ii], idxSign),                Form("#it{p}_{T}%s;#it{p}_{T} (GeV/#it{c});Tracks", trackTitles[ii]),  binHnUnCorr[1], minHnUnCorr[1], maxHnUnCorr[1]));
+      list->Add(new TH1F(Form("eta_%s_%d", trackNames[ii], idxSign),               Form("#eta%s;#eta;Tracks", trackTitles[ii]),  binHnUnCorr[2], minHnUnCorr[2], maxHnUnCorr[2]));
+      list->Add(new TH1F(Form("dca_%s_%d", trackNames[ii], idxSign),               Form("DCA%s;DCA (cm);Tracks", trackTitles[ii]),  binHnUnCorr[4], minHnUnCorr[4], maxHnUnCorr[4]));
+      list->Add(new TH1F(Form("nHitsDedx_%s_%d", trackNames[ii], idxSign),         Form("nHitsDedx%s;nHitsDedx;Tracks", trackTitles[ii]),  binHnUnCorr[5], minHnUnCorr[5], maxHnUnCorr[5]));
+      list->Add(new TH1F(Form("nHitsFit_%s_%d", trackNames[ii], idxSign),          Form("nHitsFit%s;nHitsFit;Tracks", trackTitles[ii]),  binHnUnCorr[6], minHnUnCorr[6], maxHnUnCorr[6]));
+      list->Add(new TH1F(Form("nHitsFit_nFitPoss_%s_%d", trackNames[ii], idxSign), Form("nHitsFit/nFitPoss%s;nHitsFit/nFitPoss;Tracks", trackTitles[ii]),  binHnUnCorr[8], minHnUnCorr[8], maxHnUnCorr[8]));
+      list->Add(new TH1F(Form("nSigmaP_%s_%d", trackNames[ii], idxSign),           Form("nSigmaProton%s;n#Sigma_{proton};Tracks", trackTitles[ii]),  binHnUnCorr[11], minHnUnCorr[11], maxHnUnCorr[11]));
+      list->Add(new TH2F(Form("nSigmaP_pt_%s_%d", trackNames[ii], idxSign),        Form("nSigmaProton vs #it{p}_{T}%s;n#sigma_{proton};#it{p}_{T} (GeV/#it{c})", trackTitles[ii]),  
+			 binHnUnCorr[11], minHnUnCorr[11], maxHnUnCorr[11], binHnUnCorr[1], minHnUnCorr[1], maxHnUnCorr[1]));
+    }
   }
 }
 
@@ -1162,12 +1164,14 @@ void FillTrackHists(Double_t *aTrack, Int_t mode) {
 
   TList* list = static_cast<TList*>(fOutList->FindObject(Form("f%s_trackHists_%s", name, trackNames[mode])));
 
-  (static_cast<TH1F*>(list->FindObject(Form("pt_%s", trackNames[mode]))))->Fill(aTrack[1]);
-  (static_cast<TH1F*>(list->FindObject(Form("eta_%s", trackNames[mode]))))->Fill(aTrack[2]);
-  (static_cast<TH1F*>(list->FindObject(Form("dca_%s", trackNames[mode]))))->Fill(aTrack[4]);
-  (static_cast<TH1F*>(list->FindObject(Form("nHitsDedx_%s", trackNames[mode]))))->Fill(aTrack[5]);
-  (static_cast<TH1F*>(list->FindObject(Form("nHitsFit_%s", trackNames[mode]))))->Fill(aTrack[6]);
-  (static_cast<TH1F*>(list->FindObject(Form("nHitsFit_nFitPoss_%s", trackNames[mode]))))->Fill(aTrack[8]);
-  (static_cast<TH1F*>(list->FindObject(Form("nSigmaP_%s", trackNames[mode]))))->Fill(aTrack[11]);
-  (static_cast<TH2F*>(list->FindObject(Form("nSigmaP_pt_%s", trackNames[mode]))))->Fill(aTrack[11], aTrack[1]);
+  Int_t idxSign = (aTrack[3] < 0) ? 0 : 1;
+
+  (static_cast<TH1F*>(list->FindObject(Form("pt_%s_%d", trackNames[mode], idxSign))))->Fill(aTrack[1]);
+  (static_cast<TH1F*>(list->FindObject(Form("eta_%s_%d", trackNames[mode], idxSign))))->Fill(aTrack[2]);
+  (static_cast<TH1F*>(list->FindObject(Form("dca_%s_%d", trackNames[mode], idxSign))))->Fill(aTrack[4]);
+  (static_cast<TH1F*>(list->FindObject(Form("nHitsDedx_%s_%d", trackNames[mode], idxSign))))->Fill(aTrack[5]);
+  (static_cast<TH1F*>(list->FindObject(Form("nHitsFit_%s_%d", trackNames[mode], idxSign))))->Fill(aTrack[6]);
+  (static_cast<TH1F*>(list->FindObject(Form("nHitsFit_nFitPoss_%s_%d", trackNames[mode], idxSign))))->Fill(aTrack[8]);
+  (static_cast<TH1F*>(list->FindObject(Form("nSigmaP_%s_%d", trackNames[mode], idxSign))))->Fill(aTrack[11]);
+  (static_cast<TH2F*>(list->FindObject(Form("nSigmaP_pt_%s_%d", trackNames[mode], idxSign))))->Fill(aTrack[11], aTrack[1]);
 }
