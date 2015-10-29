@@ -38,10 +38,13 @@ effQA_dedx*/
 badFiles.list
 
 analysis/filelist/
+analysis/distributions
+
 
 analysis/datalist
 analysis/jobs/
 analysis/data/
+analysis/dataBESII
 analysis/cleanFileList.sh
 analysis/getFileList.sh
 analysis/makeRefMultList.sh
@@ -52,8 +55,14 @@ analysis/moments/Net-Proton
 analysis/moments/Net-Kaon
 analysis/moments/URQMD
 analysis/moments/sysError
-analysis/moments/data
+analysis/moments/dataBESII
+analysis/moments/output
 analysis/moments/STAR_QM2015_Preliminary.*
+
+analysis/moments/Convert2FF*
+analysis/moments/moments_ana*
+analysis/moments/archive/Convert2FF*
+analysis/moments/archive/moments_ana*
 
 temp_gccflags.c
 .sl64_gcc482/
