@@ -17,7 +17,55 @@
 #include "TLine.h"
 #include "TGraphErrors.h"
 
-void plotPublished(const Char_t* name = "2015-05-20_0.5", const Char_t* dataSet = "twoeff_19") {
+
+void SetGraphStyle(TGraphErrors* g, int color, int style) {
+  g->SetMarkerColor(color);
+  g->SetMarkerStyle(style);
+}
+
+void SetGraph(TGraphErrors* g, const char* title, const char* titleX, const char* titleY, int color, int style, float min, float max) {
+  g->SetTitle(title);
+  g->GetXaxis()->SetTitle(titleX);
+  g->GetYaxis()->SetTitle(titleY);
+  g->SetMaximum(max);
+  g->SetMinimum(min);
+
+  SetGraphStyle(g, color, style);
+}
+
+void Draw(TCanvas** can, TGraphErrors** graph, TGraphErrors** graph14, int idxPad) {
+ 
+  graph[2]->GetXaxis()->SetNdivisions(9,5,0);
+
+  for (Int_t jj = 0; jj < 2; ++jj) {
+    can[jj]->cd(idxPad);
+    gPad->SetLogx();
+    if (idxPad == 1)
+    gPad->SetLogy();
+    
+    graph[0]->Draw("AP");
+    graph[1]->Draw("PSAME");
+    if (jj == 1) {
+      graph14[0]->Draw("PSAME");
+      graph14[1]->Draw("PSAME");
+    }
+    
+    can[jj+2]->cd(idxPad);
+    if (idxPad == 1)
+      gPad->SetLogy();
+    
+    graph[2]->Draw("AP");
+    graph[3]->Draw("PSAME");
+    if (jj == 1) {
+      graph14[2]->Draw("PSAME");
+      graph14[3]->Draw("PSAME");
+    }
+  }
+}
+
+
+
+void plotPublished(const Char_t* name = "2015-05-20_0.5", const Char_t* dataSet = "twoeff_11") {
 
   gROOT->SetStyle("Plain");
   
@@ -59,17 +107,18 @@ void plotPublished(const Char_t* name = "2015-05-20_0.5", const Char_t* dataSet 
   gStyle->SetTickLength(0.02,"xy");
   gStyle->SetEndErrorSize(3);
   
-  gStyle->SetLabelSize(0.04,"xyz");
+  gStyle->SetLabelSize(0.05,"xyz");
   gStyle->SetLabelFont(font,"xyz"); 
-  gStyle->SetLabelOffset(0.01,"xyz");
+  gStyle->SetLabelOffset(0.009,"xyz");
 
+  gStyle->SetTitleSize(0.06);  
   gStyle->SetTitleFont(font,"xyz");  
-  gStyle->SetTitleOffset(1.1,"x");   // JMT 1.15	
-  gStyle->SetTitleOffset(1.1,"yz");   // JMT 1.15	
-  gStyle->SetTitleSize(0.04,"xyz");  
-  gStyle->SetTitleSize(0.04);  
+  gStyle->SetTitleOffset(1.11,"x");   // JMT 1.15	
+  gStyle->SetTitleOffset(1.13,"yz");   // JMT 1.15	
+  gStyle->SetTitleSize(0.044,"xyz");  
 
-  gStyle->SetMarkerSize(1.2);  // JMT 1.1
+
+  gStyle->SetMarkerSize(1.4);  // JMT 1.1
   gStyle->SetPalette(1,0); 
 
   gStyle->SetOptDate(20);
@@ -134,7 +183,7 @@ void plotPublished(const Char_t* name = "2015-05-20_0.5", const Char_t* dataSet 
     70-80% Centrality   
   */
   
-  // ENG (GeV)  sigma^2/M  Stat.Error  Sys.Error  NBD  Skellam
+  // ENG (GeV)  S*sigma  Stat.Error  Sys.Error  NBD  Skellam
   Double_t publishedSD[2][7][6] = { 
     { {7.7, 0.443332, 0.237605, 0.215502, 0.476933, 0.184454},
       {11.5, 0.503508, 0.208217, 0.174109, 0.290953, 0.121136},
@@ -158,7 +207,7 @@ void plotPublished(const Char_t* name = "2015-05-20_0.5", const Char_t* dataSet 
     70-80% Centrality       
   */ 
   
-  // ENG (GeV)  sigma^2/M  Stat.Error  Sys.Error  NBD  Skellam
+  // ENG (GeV)  kppa*sigma^2  Stat.Error  Sys.Error  NBD  Skellam
   Double_t publishedKV[2][7][6] = { 
     { {7.7, -10.6236, 7.47779, 5.2201, 3.02669, 1},
       {11.5, 1.90761, 7.09204, 1.30255, 2.51506, 1},
@@ -175,14 +224,39 @@ void plotPublished(const Char_t* name = "2015-05-20_0.5", const Char_t* dataSet 
       {62.4, 2.71035, 0.0964119, 0.316314, 5.06482, 1},
       {200, 2.33482, 0.0692845, 0.244065, 4.90635, 1} }};
   
-  TCanvas *can2 = new TCanvas("can2", "", 0, 0 , 1200, 400);
-  can2->Divide(3,1, 0.002, 0.002);
-  
-  TCanvas *can4 = new TCanvas("can4", "", 0, 0 , 1200, 400);
-  can4->Divide(3,1, 0.002, 0.002);
+  /*
+    float snn[] = {  5, 7.7, 11.5, 14.5, 19.6,  27,  39, 62.4, 200,  2760};
+    float mub[] = {553, 422,  316,  266,  206, 156, 112,   73,  24, 1.772};
+    float  tc[] = {119, 140,  152,  156,  160, 163, 164,  165, 166,   166};
+  */
+  Double_t snn[] = { 7.7, 11.5, 19.6,  27,  39, 62.4, 200};
+  Double_t mub[] = { 422,  316,  206, 156, 112,   73,  24};
+  Double_t  tc[] = { 140,  152,  160, 163, 164,  165, 166};
 
+  Double_t snn14[] = { 14.5};
+  Double_t mub14[] = {  266};
+  Double_t  tc14[] = {  156};
+  
+  
+  
+  // J. Cleymans et al., PRC 73, 034905 (2006).
+  //    mub(sqrt(s)) = 1.308 /￼(1+0.27× sqrt(s))
+  //    Tc(sqrt(s))  = 0.166−0.139 × mub^2 −0.053 mub^4
+  // !  Unit : √s, μB, T (GeV)
+  
+  // -----------------------------------------------------------------------  
+
+  TCanvas *can[4];
+  for (int ii = 0; ii < 4; ++ii) {
+    can[ii] = new TCanvas(Form("can_%d", ii), "", 0, 0 , 600, 1000);
+    can[ii]->Divide(1,3, 0, 0.);
+  }
+  
   Int_t n = 7;
-  Double_t x[7],y[7],ey[7];
+  Double_t y[2][7], ey[2][7];
+
+  Int_t n14 = 1;
+  Double_t y14[2][1], ey14[2][1];
   
   // -----------------------------------------------------------------------
 
@@ -198,189 +272,108 @@ void plotPublished(const Char_t* name = "2015-05-20_0.5", const Char_t* dataSet 
 
   int idxLow = 8;
   int idxHigh = 0;
-  
+  int aIdx14[2] = {0, 8};
+
   // -------------------------------------------------
   //  VM
   // -------------------------------------------------
-  can2->cd(1);
-  gPad->SetLogx();
-  gPad->SetLogy();
+  TGraphErrors *graphVM[4];
+  TGraphErrors *graphVM14[4];
+  
+  for (Int_t jj = 0; jj < 2; ++jj) {
+    for (Int_t ii = 0; ii < n; ++ii) {
+      y[jj][ii]  = publishedVM[jj][ii][1];
+      ey[jj][ii] = publishedVM[jj][ii][2];
+    }
+
+    graphVM[jj]   = new TGraphErrors(n, snn, y[jj], 0, ey[jj]);
+    graphVM[jj+2] = new TGraphErrors(n, mub, y[jj], 0, ey[jj]);
+
+    y14[jj][0]  = kVM->GetY()[aIdx14[jj]];
+    ey14[jj][0] = kVM->GetEY()[aIdx14[jj]];
     
-  n =7;
-  for (Int_t ii = 0; ii < n; ++ii) {
-    x[ii]  =  publishedVM[0][ii][0];
-    y[ii]  =  publishedVM[0][ii][1];
-    ey[ii] = publishedVM[0][ii][2];
+    graphVM14[jj]   = new TGraphErrors(n14, snn14, y14[jj], 0, ey14[jj]);
+    graphVM14[jj+2] = new TGraphErrors(n14, mub14, y14[jj], 0, ey14[jj]);
   }
-  
-  TGraphErrors *graphVM = new TGraphErrors(n,x,y,0,ey);
-  graphVM->SetTitle("#sigma^{2}/M - Net-Charge , 0.2 < #it{p}_{T} < 2.0 , |#eta| < 0.5");
-  graphVM->GetXaxis()->SetTitle("#sqrt{s_{NN}}");
-  graphVM->GetYaxis()->SetTitle("#sigma^{2}/M");
-  graphVM->SetMarkerColor(kRed+1);
-  graphVM->SetMarkerStyle(24);
-  graphVM->SetMaximum(250);
-  graphVM->SetMinimum(2);
-  graphVM->Draw("AP");
 
-  n = 7;
-  for (Int_t ii = 0; ii < n; ++ii) {
-    x[ii]  =  publishedVM[1][ii][0];
-    y[ii]  =  publishedVM[1][ii][1];
-    ey[ii] = publishedVM[1][ii][2];
-  }
-  
-  TGraphErrors *graphVMx = new TGraphErrors(n,x,y,0,ey);
-  graphVMx->SetMarkerColor(kAzure);
-  graphVMx->SetMarkerStyle(25);
-  graphVMx->Draw("PSAME");
+  SetGraph(graphVM[0], "#sigma^{2}/M - Net-Charge , 0.2 < #it{p}_{T} < 2.0 , |#eta| < 0.5", "#sqrt{s_{NN}} (GeV)", "#sigma^{2}/M", kRed+1, 24, 2, 250);
+  SetGraphStyle(graphVM[1], kAzure, 25);
+  SetGraph(graphVM[2], "#sigma^{2}/M - Net-Charge , 0.2 < #it{p}_{T} < 2.0 , |#eta| < 0.5", "#mu_{B} (MeV)",      "#sigma^{2}/M", kRed+1, 24, 2, 250);
+  SetGraphStyle(graphVM[3], kAzure, 25);
 
-  can4->cd(1);
-  gPad->SetLogx();
-  gPad->SetLogy();
-  
-  graphVM->Draw("AP");
-  graphVMx->Draw("PSAME");
+  SetGraph(graphVM14[0], "#sigma^{2}/M - Net-Charge , 0.2 < #it{p}_{T} < 2.0 , |#eta| < 0.5", "#sqrt{s_{NN}} (GeV)", "#sigma^{2}/M", kRed+1, 20, 2, 250);
+  SetGraphStyle(graphVM14[1], kAzure, 21);
+  SetGraph(graphVM14[2], "#sigma^{2}/M - Net-Charge , 0.2 < #it{p}_{T} < 2.0 , |#eta| < 0.5", "#mu_{B} (MeV)",      "#sigma^{2}/M", kRed+1, 20, 2, 250);
+  SetGraphStyle(graphVM14[3], kAzure, 21);
 
-
-  n = 1;
-  x[0]  = 14.5;
-  y[0]  = kVM->GetY()[idxHigh];
-  ey[0] = kVM->GetEY()[idxHigh];
-
-  TGraphErrors *graphVM14 = new TGraphErrors(n,x,y,0,ey);
-  graphVM14->SetMarkerColor(kRed+1);
-  graphVM14->SetMarkerStyle(20);
-  graphVM14->Draw("PSAME");
-
-
-  y[0]  = kVM->GetY()[idxLow];
-  ey[0] = kVM->GetEY()[idxLow];
-
-    
-  TGraphErrors *graphVM14x = new TGraphErrors(n,x,y,0,ey);
-  graphVM14x->SetMarkerColor(kAzure);
-  graphVM14x->SetMarkerStyle(21);
-  graphVM14x->Draw("PSAME");
+  Draw(can, graphVM, graphVM14, 1);
 
   // -------------------------------------------------
   //  SD
   // -------------------------------------------------
-  can2->cd(2);
-  gPad->SetLogx();
+  TGraphErrors *graphSD[4];
+  TGraphErrors *graphSD14[4];
+  
+  for (Int_t jj = 0; jj < 2; ++jj) {
+    for (Int_t ii = 0; ii < n; ++ii) {
+      y[jj][ii]  = publishedSD[jj][ii][1];
+      ey[jj][ii] = publishedSD[jj][ii][2];
+    }
+    graphSD[jj]   = new TGraphErrors(n, snn, y[jj], 0, ey[jj]);
+    graphSD[jj+2] = new TGraphErrors(n, mub, y[jj], 0, ey[jj]);
+
+    y14[jj][0]  = kSD->GetY()[aIdx14[jj]];
+    ey14[jj][0] = kSD->GetEY()[aIdx14[jj]];
     
-  n =7;
-  for (Int_t ii = 0; ii < n; ++ii) {
-    x[ii]  =  publishedSD[0][ii][0];
-    y[ii]  =  publishedSD[0][ii][1];
-    ey[ii] = publishedSD[0][ii][2];
+    graphSD14[jj]   = new TGraphErrors(n14, snn14, y14[jj], 0, ey14[jj]);
+    graphSD14[jj+2] = new TGraphErrors(n14, mub14, y14[jj], 0, ey14[jj]);
   }
-  
-  TGraphErrors *graphSD = new TGraphErrors(n,x,y,0,ey);
-  graphSD->SetTitle("S #sigma - Net-Charge , 0.2 < #it{p}_{T} < 2.0 , |#eta| < 0.5");
-  graphSD->GetXaxis()->SetTitle("#sqrt{s_{NN}}");
-  graphSD->GetYaxis()->SetTitle("S #sigma");
-  graphSD->SetMarkerColor(kRed+1);
-  graphSD->SetMarkerStyle(24);
-  graphSD->SetMaximum(1);
-  graphSD->SetMinimum(-0.1);
-  graphSD->Draw("AP");
 
-  n = 7;
-  for (Int_t ii = 0; ii < n; ++ii) {
-    x[ii]  =  publishedSD[1][ii][0];
-    y[ii]  =  publishedSD[1][ii][1];
-    ey[ii] = publishedSD[1][ii][2];
-  }
-  
-  TGraphErrors *graphSDx = new TGraphErrors(n,x,y,0,ey);
-  graphSDx->SetMarkerColor(kAzure);
-  graphSDx->SetMarkerStyle(25);
-  graphSDx->Draw("PSAME");
+  SetGraph(graphSD[0], "S #sigma - Net-Charge , 0.2 < #it{p}_{T} < 2.0 , |#eta| < 0.5", "#sqrt{s_{NN}} (GeV)", "S #sigma", kRed+2, 24, -0.1, 1);
+  SetGraphStyle(graphSD[1], kAzure, 25);
+  SetGraph(graphSD[2], "S #sigma - Net-Charge , 0.2 < #it{p}_{T} < 2.0 , |#eta| < 0.5", "#mu_{B} (MeV)",       "S #sigma", kRed+2, 24, -0.1, 1);
+  SetGraphStyle(graphSD[3], kAzure, 25);
 
-  can4->cd(2);
-  gPad->SetLogx();
-  
-  graphSD->Draw("AP");
-  graphSDx->Draw("PSAME");
+  SetGraph(graphSD14[0], "S #sigma - Net-Charge , 0.2 < #it{p}_{T} < 2.0 , |#eta| < 0.5", "#sqrt{s_{NN}} (GeV)", "S #sigma", kRed+2, 20, -0.1, 1);
+  SetGraphStyle(graphSD14[1], kAzure, 21);
+  SetGraph(graphSD14[2], "S #sigma - Net-Charge , 0.2 < #it{p}_{T} < 2.0 , |#eta| < 0.5", "#mu_{B} (MeV)",       "S #sigma", kRed+2, 20, -0.1, 1);
+  SetGraphStyle(graphSD14[3], kAzure, 21);
 
-  n = 1;
-  x[0]  = 14.5;
-  y[0]  = kSD->GetY()[idxHigh];
-  ey[0] = kSD->GetEY()[idxHigh];
-
-  TGraphErrors *graphSD14 = new TGraphErrors(n,x,y,0,ey);
-  graphSD14->SetMarkerColor(kRed+1);
-  graphSD14->SetMarkerStyle(20);
-  graphSD14->Draw("PSAME");
-
-  y[0]  = kSD->GetY()[idxLow];
-  ey[0] = kSD->GetEY()[idxLow];
-
-  TGraphErrors *graphSD14x = new TGraphErrors(n,x,y,0,ey);
-  graphSD14x->SetMarkerColor(kAzure);
-  graphSD14x->SetMarkerStyle(21);
-  graphSD14x->Draw("PSAME");
+  Draw(can, graphSD, graphSD14, 2);
 
   // -------------------------------------------------
   //  KV
   // -------------------------------------------------
-  can2->cd(3);
-  gPad->SetLogx();
+  TGraphErrors *graphKV[4];
+  TGraphErrors *graphKV14[4];
+  
+  for (Int_t jj = 0; jj < 2; ++jj) {
+    for (Int_t ii = 0; ii < n; ++ii) {
+      y[jj][ii]  = publishedKV[jj][ii][1];
+      ey[jj][ii] = publishedKV[jj][ii][2];
+    }
+    graphKV[jj]   = new TGraphErrors(n, snn, y[jj], 0, ey[jj]);
+    graphKV[jj+2] = new TGraphErrors(n, mub, y[jj], 0, ey[jj]);
     
-  n =7;
-  for (Int_t ii = 0; ii < n; ++ii) {
-    x[ii]  = publishedKV[0][ii][0];
-    y[ii]  = publishedKV[0][ii][1];
-    ey[ii] = publishedKV[0][ii][2];
-  }
-  
-  TGraphErrors *graphKV = new TGraphErrors(n,x,y,0,ey);
-  graphKV->SetTitle("#kappa #sigma^{2} - Net-Charge , 0.2 < #it{p}_{T} < 2.0 , |#eta| < 0.5");
-  graphKV->GetXaxis()->SetTitle("#sqrt{s_{NN}}");
-  graphKV->GetYaxis()->SetTitle("#kappa #sigma^{2}");
-  graphKV->SetMarkerColor(kRed+1);
-  graphKV->SetMarkerStyle(24);
-  graphKV->SetMaximum(10);
-  graphKV->SetMinimum(-15);
-  graphKV->Draw("AP");
-
-  n = 7;
-  for (Int_t ii = 0; ii < n; ++ii) {
-    x[ii]  = publishedKV[1][ii][0];
-    y[ii]  = publishedKV[1][ii][1];
-    ey[ii] = publishedKV[1][ii][2];
-  }
-  
-  TGraphErrors *graphKVx = new TGraphErrors(n,x,y,0,ey);
-  graphKVx->SetMarkerColor(kAzure);
-  graphKVx->SetMarkerStyle(25);
-  graphKVx->Draw("PSAME");
-
-  can4->cd(3);
-  gPad->SetLogx();
-  
-  graphKV->Draw("AP");
-  graphKVx->Draw("PSAME");
-
-  n = 1;
-  x[0]  = 14.5;
-  y[0]  = kKV->GetY()[idxHigh];
-  ey[0] = kKV->GetEY()[idxHigh];
-  
-  TGraphErrors *graphKV14 = new TGraphErrors(n,x,y,0,ey);
-  graphKV14->SetMarkerColor(kRed+1);
-  graphKV14->SetMarkerStyle(20);
-  graphKV14->Draw("PSAME");
-
-  y[0]  = kKV->GetY()[idxLow];
-  ey[0] = kKV->GetEY()[idxLow];
+    y14[jj][0]  = kKV->GetY()[aIdx14[jj]];
+    ey14[jj][0] = kKV->GetEY()[aIdx14[jj]];
     
-  TGraphErrors *graphKV14x = new TGraphErrors(n,x,y,0,ey);
-  graphKV14x->SetMarkerColor(kAzure);
-  graphKV14x->SetMarkerStyle(21);
-  graphKV14x->Draw("PSAME");
+    graphKV14[jj]   = new TGraphErrors(n14, snn14, y14[jj], 0, ey14[jj]);
+    graphKV14[jj+2] = new TGraphErrors(n14, mub14, y14[jj], 0, ey14[jj]);
+  }
 
+  SetGraph(graphKV[0], "#kappa #sigma^{2} - Net-Charge , 0.2 < #it{p}_{T} < 2.0 , |#eta| < 0.5", "#sqrt{s_{NN}} (GeV)", "#kappa #sigma^{2}", kRed+1, 24, -15, 10);
+  SetGraphStyle(graphKV[1], kAzure, 25);
+  SetGraph(graphKV[2], "#kappa #sigma^{2} - Net-Charge , 0.2 < #it{p}_{T} < 2.0 , |#eta| < 0.5", "#mu_{B} (MeV)",      "#kappa #sigma^{2}", kRed+1, 24, -15, 10);
+  SetGraphStyle(graphKV[3], kAzure, 25);
+
+  SetGraph(graphKV14[0], "#kappa #sigma^{2} - Net-Charge , 0.2 < #it{p}_{T} < 2.0 , |#eta| < 0.5", "#sqrt{s_{NN}} (GeV)", "#kappa #sigma^{2}", kRed+1, 20, -15, 10);
+  SetGraphStyle(graphKV14[1], kAzure, 21);
+  SetGraph(graphKV14[2], "#kappa #sigma^{2} - Net-Charge , 0.2 < #it{p}_{T} < 2.0 , |#eta| < 0.5", "#mu_{B} (MeV)",      "#kappa #sigma^{2}", kRed+1, 20, -15, 10);
+  SetGraphStyle(graphKV14[3], kAzure, 21);
+
+  Draw(can, graphKV, graphKV14, 3);
+  
   TLegend * leg2 = new TLegend(0.13, 0.79, 0.75, 0.88);
   leg2->SetTextAlign(12);
   leg2->SetTextSize(0.035);
@@ -389,13 +382,15 @@ void plotPublished(const Char_t* name = "2015-05-20_0.5", const Char_t* dataSet 
   leg2->SetLineColor(0);
   leg2->SetBorderSize(0);
 
-  leg2->AddEntry(graphKV, "0-5% - published", "p");
-  leg2->AddEntry(graphKVx, "70-80% - published", "p");
+  leg2->AddEntry(graphKV[0], "0-5% - published", "p");
+  leg2->AddEntry(graphKV[1], "70-80% - published", "p");
 
-
-  can2->cd(2);
+  can[0]->cd(2);
   leg2->Draw();
-  
+  can[2]->cd(2);
+  leg2->Draw();
+
+
   TLegend * leg4 = new TLegend(0.13, 0.70, 0.75, 0.88);
   leg4->SetTextAlign(12);
   leg4->SetTextSize(0.035);
@@ -404,23 +399,35 @@ void plotPublished(const Char_t* name = "2015-05-20_0.5", const Char_t* dataSet 
   leg4->SetLineColor(0);
   leg4->SetBorderSize(0);
 
-  leg4->AddEntry(graphKV, "0-5% - published", "p");
-  leg4->AddEntry(graphKVx, "70-80% - published", "p");
-  leg4->AddEntry(graphKV14, "0-5% - corrected - 11.5 GeV (#epsilon_{1} + #epsilon_{2}) / 2", "p");
-  leg4->AddEntry(graphKV14x, "70-80% - corrected - 11.5 GeV (#epsilon_{1} + #epsilon_{2}) / 2", "p");
+  leg4->AddEntry(graphKV[0],   "0-5% - published", "p");
+  leg4->AddEntry(graphKV[1],   "70-80% - published", "p");
+  leg4->AddEntry(graphKV14[0], "0-5% - corrected - 11.5 GeV #epsilon_{1}, #epsilon_{2}", "p");
+  leg4->AddEntry(graphKV14[1], "70-80% - corrected - 11.5 GeV #epsilon_{1}, #epsilon_{2}", "p");
 
-  can4->cd(2);
+  can[1]->cd(2);
+  leg4->Draw();
+  can[3]->cd(2);
   leg4->Draw();
 
-  can2->SaveAs(Form("results/%s/png/can_NetCharge_Ratio_snn.png",   name));
-  can2->SaveAs(Form("results/%s/pdf/can_NetCharge_Ratio_snn.pdf",   name));
-  can2->SaveAs(Form("results/%s/root/can_NetCharge_Ratio_snn.C",    name));
-  can2->SaveAs(Form("results/%s/root/can_NetCharge_Ratio_snn.root", name));
+  can[0]->SaveAs(Form("results/%s/png/can_NetCharge_Ratio_snn.png",   name));
+  can[0]->SaveAs(Form("results/%s/pdf/can_NetCharge_Ratio_snn.pdf",   name));
+  can[0]->SaveAs(Form("results/%s/root/can_NetCharge_Ratio_snn.C",    name));
+  can[0]->SaveAs(Form("results/%s/root/can_NetCharge_Ratio_snn.root", name));
+  
+  can[1]->SaveAs(Form("results/%s/png/can_NetCharge_Ratio_snn_14GeV_%s.png",   name, dataSet));
+  can[1]->SaveAs(Form("results/%s/pdf/can_NetCharge_Ratio_snn_14GeV_%s.pdf",   name, dataSet));
+  can[1]->SaveAs(Form("results/%s/root/can_NetCharge_Ratio_snn_14GeV_%s.C",    name, dataSet));
+  can[1]->SaveAs(Form("results/%s/root/can_NetCharge_Ratio_snn_14GeV_%s.root", name, dataSet));
 
-  can4->SaveAs(Form("results/%s/png/can_NetCharge_Ratio_snn_14GeV_%s.png",   name, dataSet));
-  can4->SaveAs(Form("results/%s/pdf/can_NetCharge_Ratio_snn_14GeV_%s.pdf",   name, dataSet));
-  can4->SaveAs(Form("results/%s/root/can_NetCharge_Ratio_snn_14GeV_%s.C",    name, dataSet));
-  can4->SaveAs(Form("results/%s/root/can_NetCharge_Ratio_snn_14GeV_%s.root", name, dataSet));
+  can[2]->SaveAs(Form("results/%s/png/can_NetCharge_Ratio_mub.png",   name));
+  can[2]->SaveAs(Form("results/%s/pdf/can_NetCharge_Ratio_mub.pdf",   name));
+  can[2]->SaveAs(Form("results/%s/root/can_NetCharge_Ratio_mub.C",    name));
+  can[2]->SaveAs(Form("results/%s/root/can_NetCharge_Ratio_mub.root", name));
+  
+  can[3]->SaveAs(Form("results/%s/png/can_NetCharge_Ratio_mub_14GeV_%s.png",   name, dataSet));
+  can[3]->SaveAs(Form("results/%s/pdf/can_NetCharge_Ratio_mub_14GeV_%s.pdf",   name, dataSet));
+  can[3]->SaveAs(Form("results/%s/root/can_NetCharge_Ratio_mub_14GeV_%s.C",    name, dataSet));
+  can[3]->SaveAs(Form("results/%s/root/can_NetCharge_Ratio_mub_14GeV_%s.root", name, dataSet));
 }
 
 

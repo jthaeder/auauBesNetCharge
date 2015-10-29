@@ -21,19 +21,26 @@
       float   aEta[]           = {0.1, 0.2, 0.3, 0.4, 0.5};
 const int     nEta             = 1;
 
-const Char_t* aMomentsTitle[]  = {"c_{1}","c_{2}","c_{3}","c_{4}","#sigma^{2}/M","S #sigma", "#kappa #sigma^{2}"};
+const Char_t* aMomentsTitle[]  = {"c_{1}","c_{2}","c_{3}","c_{4}","#sigma^{2}/M","S#sigma", "#kappa#sigma^{2}", "(S#sigma - M/#sigma^{2})"};
 
-const Char_t* aMoments[]       = {"C1","C2","C3","C4","VM","SD","KV"};
-const int     nMoments         = 7;
+const Char_t* aMoments[]       = {"C1","C2","C3","C4","VM","SD","KV", "VM"};
+const int     nMoments         = 8;
+
+// const Char_t* aDataSetsTitle[] = {"uncorrected",
+// 				  "corrected - 11.5 GeV (#epsilon_{1} + #epsilon_{2}) / 2",
+// 				  "corrected - 11.5 GeV #epsilon_{1} , #epsilon_{2}", 
+// 				  "corrected - 19.6 GeV (#epsilon_{1} + #epsilon_{2}) / 2",
+// 				  "corrected - 19.6 GeV #epsilon_{1} , #epsilon_{2}"};
+
+// const Char_t* aDataSets[]      = {"effuncorr", "11", "twoeff_11", "19", "twoeff_19"};
+// const int     nDataSets        = 5;
 
 const Char_t* aDataSetsTitle[] = {"uncorrected",
-				  "corrected - 11.5 GeV (#epsilon_{1} + #epsilon_{2}) / 2",
-				  "corrected - 11.5 GeV #epsilon_{1} , #epsilon_{2}", 
-				  "corrected - 19.6 GeV (#epsilon_{1} + #epsilon_{2}) / 2",
-				  "corrected - 19.6 GeV #epsilon_{1} , #epsilon_{2}"};
+				  "corrected - 11.5 GeV #epsilon_{1} , #epsilon_{2}"};
 
-const Char_t* aDataSets[]      = {"effuncorr", "11", "twoeff_11", "19", "twoeff_19"};
-const int     nDataSets        = 5;
+
+const Char_t* aDataSets[]      = {"effuncorr", "twoeff_11"};
+const int     nDataSets        = 2;
 
 TObjArray canA;
 
@@ -79,17 +86,19 @@ void plotSet(const Char_t* name = "2015-05-20", float etaMax = 0.5) {
   gStyle->SetTickLength(0.02,"xy");
   gStyle->SetEndErrorSize(3);
   
-  gStyle->SetLabelSize(0.04,"xyz");
+  gStyle->SetLabelSize(0.045,"xyz");
   gStyle->SetLabelFont(font,"xyz"); 
-  gStyle->SetLabelOffset(0.01,"xyz");
+  gStyle->SetLabelOffset(0.009,"xyz");
 
+  gStyle->SetTitleSize(0.06);  
   gStyle->SetTitleFont(font,"xyz");  
-  gStyle->SetTitleOffset(1.1,"x");   // JMT 1.15	
-  gStyle->SetTitleOffset(1.1,"yz");   // JMT 1.15	
-  gStyle->SetTitleSize(0.04,"xyz");  
-  gStyle->SetTitleSize(0.04);  
+  gStyle->SetTitleOffset(1.12,"x");   // JMT 1.15	
+  gStyle->SetTitleOffset(1.13,"yz");   // JMT 1.15	
+  gStyle->SetTitleSize(0.045,"yz");  
+  gStyle->SetTitleSize(0.045,"x");  
 
-  gStyle->SetMarkerSize(1.2);  // JMT 1.1
+
+  gStyle->SetMarkerSize(1.4);  // JMT 1.1
   gStyle->SetPalette(1,0); 
 
   gStyle->SetOptDate(20);
@@ -136,21 +145,21 @@ void plotSet(const Char_t* name = "2015-05-20", float etaMax = 0.5) {
   TCanvas *can[2];
   TCanvas *canRat[2];
 
-  canA.Add(new TCanvas(Form("can_Cumulants_eff_11"), "Efficiency 11.5 GeV", 0, 0 , 800, 600));
+  canA.Add(new TCanvas(Form("can_Cumulants_eff_11"), "Efficiency 11.5 GeV", 0, 0 , 1100, 600));
   can[0] = static_cast<TCanvas*>(canA.Last());
   can[0]->Divide(2,2, 0.002, 0.002);
 
-  canA.Add(new TCanvas(Form("can_Cumulants_eff_11_19"), "Efficiency 11.5 and 19.6 GeV", 0, 0 , 800, 600));
+  canA.Add(new TCanvas(Form("can_Cumulants_eff_11_19"), "Efficiency 11.5 and 19.6 GeV", 0, 0 ,1100, 600));
   can[1] = static_cast<TCanvas*>(canA.Last());
   can[1]->Divide(2,2, 0.002, 0.002);
 
-  canA.Add(new TCanvas(Form("can_Ratio_eff_11"), "Efficiency 11.5 GeV", 0, 0 , 1200, 400));
+  canA.Add(new TCanvas(Form("can_Ratio_eff_11"), "Efficiency 11.5 GeV", 0, 0 , 1100, 600));
   canRat[0] = static_cast<TCanvas*>(canA.Last());
-  canRat[0]->Divide(3,1, 0.002, 0.002);
+  canRat[0]->Divide(2,2, 0.002, 0.002);
 
-  canA.Add(new TCanvas(Form("can_Ratio_eff_11_19"), "Efficiency 11.5 and 19.6 GeV", 0, 0 , 1200, 400));
+  canA.Add(new TCanvas(Form("can_Ratio_eff_11_19"), "Efficiency 11.5 and 19.6 GeV", 0, 0 , 1100, 600));
   canRat[1] = static_cast<TCanvas*>(canA.Last());
-  canRat[1]->Divide(3,1, 0.002, 0.002);
+  canRat[1]->Divide(2,2, 0.002, 0.002);
 
   // -----------------------------------------------------
 
@@ -158,7 +167,7 @@ void plotSet(const Char_t* name = "2015-05-20", float etaMax = 0.5) {
   TLegend *legRat[2];
 
   for (int idx = 0 ; idx < 2; ++idx) {
-    leg[idx] = new TLegend(0.12, 0.12, 0.68, 0.50);
+    leg[idx] = new TLegend(0.12, 0.12, 0.68, 0.30);
     leg[idx]->SetTextAlign(12);
     leg[idx]->SetTextSize(0.04);
     leg[idx]->SetTextFont(42);
@@ -167,7 +176,7 @@ void plotSet(const Char_t* name = "2015-05-20", float etaMax = 0.5) {
     leg[idx]->SetBorderSize(0);
     leg[idx]->SetHeader(Form("Net-Charge, 0.2 #it{p}_{T}<2.0, |#eta|<%.1f", aEta[0]));
     
-    legRat[idx] = new TLegend(0.12, 0.58, 0.70, 0.88);
+    legRat[idx] = new TLegend(0.12, 0.70, 0.70, 0.88);
     legRat[idx]->SetTextAlign(12);
     legRat[idx]->SetTextSize(0.04);
     legRat[idx]->SetTextFont(42);
@@ -182,16 +191,48 @@ void plotSet(const Char_t* name = "2015-05-20", float etaMax = 0.5) {
   TGraphErrors *graphs[nEta][nDataSets][nMoments];
 
   for (int idxEta = 0 ; idxEta < nEta; ++idxEta) 
-    for (int idxDataSet = 0 ; idxDataSet < nDataSets; ++idxDataSet) 
+    for (int idxDataSet = 0 ; idxDataSet < nDataSets; ++idxDataSet) {
       for (int idxMoment = 0 ; idxMoment < nMoments; ++idxMoment) {
-	graphs[idxEta][idxDataSet][idxMoment] = static_cast<TGraphErrors*>(inFiles[idxEta][idxDataSet][idxMoment]->Get(aMoments[idxMoment]));
+	
+	if (idxMoment == nMoments -1) {
+	  
+	  TGraphErrors *g1 = graphs[idxEta][idxDataSet][4];
+	  Double_t* aX   = g1->GetX(); 
+	  Double_t* g1Y  = g1->GetY(); 
+	  Double_t* g1EY = g1->GetEY(); 
+	  TGraphErrors *g2 = graphs[idxEta][idxDataSet][5];
+      	  Double_t* g2Y  = g2->GetY(); 
+      	  Double_t* g2EY = g2->GetEY(); 
+	  
+	  Double_t g1REY[9];
+	  Double_t g2REY[9];
+
+	  Double_t aY[9];
+	  Double_t aREY[9];
+	  Double_t aEY[9];
+
+	  for (int bin = 0; bin <9; bin++) {
+	    aY[bin]  = g2Y[bin] - (1./g1Y[bin]);
+	    
+	    g1REY[bin] = g1EY[bin]/g1Y[bin];
+	    g2REY[bin] = g2EY[bin]/g2Y[bin];
+
+	    //aREY[bin] = sqrt( (g1REY[bin]*g1REY[bin])+(g2REY[bin]*g2REY[bin]));
+	    aEY[bin]  = sqrt( (g1REY[bin]/g1Y[bin])*(g1REY[bin]/g1Y[bin]) + g2EY[bin]*g2EY[bin]);
+	  }
+	  graphs[idxEta][idxDataSet][idxMoment] = new TGraphErrors(9, aX, aY, 0, aEY);
+	}
+	else {
+	  graphs[idxEta][idxDataSet][idxMoment] = static_cast<TGraphErrors*>(inFiles[idxEta][idxDataSet][idxMoment]->Get(aMoments[idxMoment]));
+	}
 
 	TGraphErrors *g = graphs[idxEta][idxDataSet][idxMoment];
 	g->SetTitle(Form("%s - Net-Charge, 0.2 < #it{p}_{T} < 2.0, |#eta|<%.1f", aMomentsTitle[idxMoment], aEta[idxEta]));
 	g->GetXaxis()->SetTitle("<N_{part}>");
 	g->GetYaxis()->SetTitle(aMomentsTitle[idxMoment]);
-	
       }
+    }  
+  
   
   // -----------------------------------------------------
   
@@ -211,31 +252,39 @@ void plotSet(const Char_t* name = "2015-05-20", float etaMax = 0.5) {
 	  g->SetMaximum(900);
 	  g->SetMinimum(-2300);
 	} else if (idxMoment == 4) {
-	  g->SetMaximum(25);
-	  g->SetMinimum(0);
+	  g->SetMaximum(20);
+	  g->SetMinimum(4);
 	} else if (idxMoment == 5) {
-	  g->SetMaximum(1);
-	  g->SetMinimum(-0.1);
+	  g->SetMaximum(0.8);
+	  g->SetMinimum(0.1);
 	} else if (idxMoment == 6) {
-	  g->SetMaximum(10);
-	  g->SetMinimum(-10);
+	  g->SetMaximum(5);
+	  g->SetMinimum(-8);
+	} else if (idxMoment == 7) {
+	  g->SetMaximum(0.6);
+	  g->SetMinimum(-0.2);
 	}
 
 	if (idxDataSet == 0) {
-	  g->SetMarkerColor(kSpring);
-	  g->SetMarkerStyle(28);
+	  g->SetMarkerColor(kBlack);
+	  g->SetMarkerStyle(24);
+	  g->SetMarkerSize(1.4);
 	} else if (idxDataSet == 1) {
-	  g->SetMarkerColor(kOrange);
-	  g->SetMarkerStyle(27);
+	  g->SetMarkerColor(kRed+2);
+	  g->SetMarkerStyle(20);
+	  g->SetMarkerSize(1.4);
 	} else if (idxDataSet == 2) {
 	  g->SetMarkerColor(kBlack);
 	  g->SetMarkerStyle(26);
+	  g->SetMarkerSize(1.4);
 	} else if (idxDataSet == 3) {
 	  g->SetMarkerColor(kAzure);
 	  g->SetMarkerStyle(25);
+	  g->SetMarkerSize(1.4);
 	} else if (idxDataSet == 4) {
 	  g->SetMarkerColor(kRed+1);
 	  g->SetMarkerStyle(24);
+	  g->SetMarkerSize(1.4);
 	}
 
 	// -- plot 11 GeV only
@@ -251,11 +300,11 @@ void plotSet(const Char_t* name = "2015-05-20", float etaMax = 0.5) {
 	    g->Draw("PSAME");
 	}
 
-	// -- plot 11 and 19 GeV
-	if (idxMoment < 4) 
-	  can[1]->cd(idxMoment+1);
+	// // -- plot 11 and 19 GeV
+        if (idxMoment < 4) 
+          can[1]->cd(idxMoment+1);
 	else 
-	  canRat[1]->cd(idxMoment-3);
+          canRat[1]->cd(idxMoment-3);
 
 	if (idxDataSet == 0)
 	  g->Draw("AP");
