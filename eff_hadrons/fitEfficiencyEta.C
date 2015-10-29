@@ -47,21 +47,19 @@
 
 using namespace std;
 
-const int   nCent    = 10;
-const char *cent[9]  = {"0005","0510","1020","2030","3040","4050","5060","6070","7080"};
-const char *cent1[9] = {"0-5%","5-10%","10-20%","20-30%","30-40%","40-50%","50-60%","60-70%","70-80%"};
+const int   nCent   = 10;
+const char* cent[]  = {"0005","0510","1020","2030","3040","4050","5060","6070","7080"};
+const char* cent1[] = {"0-5%","5-10%","10-20%","20-30%","30-40%","40-50%","50-60%","60-70%","70-80%"};
 
-const int   nNames    = 3; 
-const char* names[3]  = {"pion", "kaon", "proton"};
-const char* names2[3] = {"#pi^{+}", "K^{+}", "p"};
-const char* names3[3] = {"#pi^{-}", "K^{-}", "#bar{p}"};
+const int   nNames   = 3; 
+const char* names[]  = {"pion", "kaon", "proton"};
+const char* names2[] = {"#pi^{+}", "K^{+}", "p"};
+const char* names3[] = {"#pi^{-}", "K^{-}", "#bar{p}"};
 
-const int   nEnergies       = 7;
-// const char* energies[3]      = {"11",   "14",   "19"};
-// const char* exactEnergies[3] = {"11.5", "14.5", "19.6"};
-const float xPosLabel[]     =  {0.08,   0.20,   0.32,   0.45,  0.57,    0.69,  0.82,    0.92};
-const char *energies[]      = {  "7",   "11",   "14",   "19",   "27",   "39",   "62",  "200"};
-const char *exactEnergies[] = {"7.7", "11.5", "11.5", "19.6", "27.0", "39.0", "62.4", "62.4"};
+const int   nEnergies       = 8;
+const float xPosLabel[]     = { 0.08,   0.19,   0.30,   0.40,  0.51,    0.62,  0.73,   0.84};
+const char *energies[]      = {  "7",   "11",   "14",   "19",   "27",   "39",   "62", "200"};
+const char *exactEnergies[] = {"7.7", "11.5", "14.5", "19.6", "27.0", "39.0", "62.4", "200"};
 
 const double fitRanges[2]    = {-0.5, 0.5}; 
 
@@ -75,8 +73,8 @@ void fitEfficiencyEta() {
   setupStyle();
 
   gSystem->Exec("mkdir -p ./results/fits");
-  gSystem->Exec("mkdir -p ./results/particles_eta/png ./results/particles_eta/pdf ./results/particles_eta/root ./results/particles_eta/root_macro");
-  gSystem->Exec("mkdir -p ./results/energy_cmp_eta/png ./results/energy_cmp_eta/pdf ./results/energy_cmp_eta/root ./results/energy_cmp_eta/root_macro");
+  gSystem->Exec("mkdir -p ./results/particles_eta/png ./results/particles_eta/pdf ./results/particles_eta/eps ./results/particles_eta/root ./results/particles_eta/root_macro");
+  gSystem->Exec("mkdir -p ./results/energy_cmp_eta/png ./results/energy_cmp_eta/pdf ./results/energy_cmp_eta/eps ./results/energy_cmp_eta/root ./results/energy_cmp_eta/root_macro");
 
   TColor *color = new TColor(1182, 1, 0, 0, " ", 0);
 
@@ -181,7 +179,7 @@ void fitEfficiencyEta() {
 
       TPad* pad = new TPad("pad", "pad",0.05,0.1,0.99,0.99);
       pad->SetBorderMode(0);
-      pad->SetFillColor(1182);
+      pad->SetFillColor(0);
       pad->Draw();
       pad->cd();
       pad->Divide(5,2,0.,0.,0.);
@@ -287,9 +285,8 @@ void fitEfficiencyEta() {
   // ----------------------------------------------------------
   // -- Get Canvas
   // ----------------------------------------------------------
-
   for (int centIdx = 1; centIdx < nCent; centIdx++) {
-    canCent[centIdx] = new TCanvas(Form("canCent_%d", centIdx), Form("canCent_eta_%d", centIdx),0,0,1200,900);
+    canCent[centIdx] = new TCanvas(Form("canCent_%d", centIdx), Form("canCent_eta_%d", centIdx),0,0,1400,800);
     canCent[centIdx]->SetFillColor(0);
     canCent[centIdx]->SetBorderMode(0);
     canCent[centIdx]->SetBorderSize(0.0);
@@ -309,7 +306,7 @@ void fitEfficiencyEta() {
 
     TPad* pad = new TPad("pad", "pad",0.05,0.08,0.94,0.94);
     pad->SetBorderMode(0);
-    pad->SetFillColor(1182);
+    pad->SetFillColor(0);
     pad->Draw();
     pad->cd();
     pad->Divide(nEnergies, nNames, 0.,0.,0.);
@@ -419,6 +416,7 @@ void fitEfficiencyEta() {
       can[idx][energyIdx]->SaveAs(Form("./results/particles_eta/root_macro/eta_%s_%sGeV.C", names[idx], energies[energyIdx]));
       can[idx][energyIdx]->SaveAs(Form("./results/particles_eta/png/eta_%s_%sGeV.png",      names[idx], energies[energyIdx]));
       can[idx][energyIdx]->SaveAs(Form("./results/particles_eta/pdf/eta_%s_%sGeV.pdf",      names[idx], energies[energyIdx]));
+      can[idx][energyIdx]->SaveAs(Form("./results/particles_eta/eps/eta_%s_%sGeV.eps",      names[idx], energies[energyIdx]));
     }
   }
 
@@ -427,6 +425,7 @@ void fitEfficiencyEta() {
     canCent[centIdx]->SaveAs(Form("./results/energy_cmp_eta/root_macro/eta_cmp_%d.C", centIdx));
     canCent[centIdx]->SaveAs(Form("./results/energy_cmp_eta/png/eta_cmp_%d.png",      centIdx));
     canCent[centIdx]->SaveAs(Form("./results/energy_cmp_eta/pdf/eta_cmp_%d.pdf",      centIdx));
+    canCent[centIdx]->SaveAs(Form("./results/energy_cmp_eta/eps/eta_cmp_%d.eps",      centIdx));
   }
 }
 

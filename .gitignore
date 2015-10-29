@@ -30,22 +30,39 @@
 *.out
 *.app
 
-eff_hadrons/efficiency*
+*~
+
 eff_hadrons/spectra/
 results*/
 effQA_dedx*/
 badFiles.list
 
 analysis/filelist/
+analysis/distributions
+
 
 analysis/datalist
 analysis/jobs/
 analysis/data/
+analysis/dataBESII
 analysis/cleanFileList.sh
 analysis/getFileList.sh
 analysis/makeRefMultList.sh
 analysis/Split.C
 analysis/file.list.*.test
+
+analysis/moments/Convert2FF*
+analysis/moments/moments_ana*
+analysis/moments/archive/Convert2FF*
+analysis/moments/archive/moments_ana*
+analysis/moments/output
+
+analysis/plots/Net-Proton
+analysis/plots/Net-Kaon
+analysis/plots/URQMD
+analysis/plots/sysError
+analysis/plots/dataBESII
+analysis/plots/STAR_QM2015_Preliminary.*
 
 temp_gccflags.c
 .sl64_gcc482/
