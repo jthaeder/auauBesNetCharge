@@ -42,6 +42,8 @@ void study_efficiencies(const char* particle, int energy = 14) {
   
   int   max_events       = 100;
   double smearBin        = 0.3;
+  int idxPart = 0;
+  
   // --------------------------------------------------------------------------------
   // -- vertex cuts
   // --------------------------------------------------------------------------------
@@ -104,31 +106,37 @@ void study_efficiencies(const char* particle, int energy = 14) {
     in_file = prefix + TString("/SinglePiPlusNT_Embed_") + NRG + TString("GeV.root");
     out_file = postfix + TString("/piplus") + NRG + TString("GeV.root");
     PID = 8;
+    idxPart = 0;
   }
   else if(TString(particle) == TString("piminus")){
     in_file = prefix + TString("/SinglePiMinusNT_Embed_") + NRG + TString("GeV.root");
     out_file = postfix + TString("/piminus") + NRG + TString("GeV.root");
     PID = 9;
+    idxPart = 0;
   }
   else if(TString(particle) == TString("kaonplus")){
     in_file = prefix + TString("/SingleKPlusNT_Embed_") + NRG + TString("GeV.root");
     out_file = postfix + TString("/kplus") + NRG + TString("GeV.root");
     PID = 11;
+    idxPart = 1;
   }
   else if(TString(particle) == TString("kaonminus")){
     in_file = prefix + TString("/SingleKMinusNT_Embed_") + NRG + TString("GeV.root");
     out_file = postfix + TString("/kminus") + NRG + TString("GeV.root");
     PID = 12;
+    idxPart = 1;
   }
   else if(TString(particle) == TString("protonplus")){
     in_file = prefix + TString("/SingleProtonNT_Embed_") + NRG + TString("GeV.root");
     out_file = postfix + TString("/pplus") + NRG + TString("GeV.root");
     PID = 14;
+    idxPart = 2;
   }
   else if(TString(particle) == TString("protonminus")){
     in_file = prefix + TString("/SinglePbarNT_Embed_") + NRG + TString("GeV.root");
     out_file = postfix + TString("/pminus") + NRG + TString("GeV.root");
     PID = 15;
+    idxPart = 2;
   }
 
   // --------------------------------------------------------------------------------
@@ -212,10 +220,18 @@ void study_efficiencies(const char* particle, int energy = 14) {
   const int    Nbins      = 20;
   const double pt_bin[21] = {0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.4,1.7,2.0,2.3,2.7,3.5,4.0,4.5,5.0};
 
+  const int    NbinsRed     = 4;
+  const double pt_binRed[3][5] = { {0.0, 0.5, 0.7, 2.3, 5.0},
+				   {0.0, 0.5, 1.0, 2.3, 5.0},
+				   {0.0, 0.5, 0.8, 2.3, 5.0} };
+
   // --------------------------------------------------------------------------------
   // -- Initialize pt hists
   TProfile *effProfile[nCent];
   TProfile *effProfileSmeared[nCent];
+
+  TProfile *effProfileRed[nCent];
+  TProfile *effProfileSmearedRed[nCent];
 
   TH1D* hpt_mc[nCent];
   TH1D* hpt_rec[nCent];
@@ -234,6 +250,15 @@ void study_efficiencies(const char* particle, int energy = 14) {
     effProfileSmeared[idxCent] = new TProfile(Form("effProfileSmeared_%s", cent[idxCent]), 
 				       Form("effProfileSmeared_%s;#it{p}_{T} (GeV/#it{c});efficiency", cent[idxCent]), Nbins, 0., 5.);
     effProfileSmeared[idxCent]->GetXaxis()->Set(Nbins,pt_bin);
+
+    effProfileRed[idxCent] = new TProfile(Form("effProfileRed_%s", cent[idxCent]), 
+					  Form("effProfileRed_%s;#it{p}_{T} (GeV/#it{c});efficiency", cent[idxCent]), NbinsRed, 0., 5.);
+    effProfileRed[idxCent]->GetXaxis()->Set(NbinsRed,pt_binRed[idxPart]);
+
+    effProfileSmearedRed[idxCent] = new TProfile(Form("effProfileSmearedRed_%s", cent[idxCent]), 
+						 Form("effProfileSmearedRed_%s;#it{p}_{T} (GeV/#it{c});efficiency", cent[idxCent]), NbinsRed, 0., 5.);
+    effProfileSmearedRed[idxCent]->GetXaxis()->Set(NbinsRed,pt_binRed[idxPart]);
+
 
     hpt_mc[idxCent] = new TH1D(Form("hpt_mc_%s",  cent[idxCent]), "", Nbins, 0., 5.);
     hpt_mc[idxCent]->GetXaxis()->Set(Nbins, pt_bin);
@@ -493,11 +518,13 @@ void study_efficiencies(const char* particle, int energy = 14) {
 
 	double ratio = binRec / binMC;
 	effProfile[idxCent]->Fill(hpt_mc[idxCent]->GetBinCenter(idx), ratio);
+	effProfileRed[idxCent]->Fill(hpt_mc[idxCent]->GetBinCenter(idx), ratio);
 
 	binMC  += ((2*smearBin*gRandom->Rndm()) - smearBin);
 	binRec += ((2*smearBin*gRandom->Rndm()) - smearBin);
 	ratio = binRec / binMC;
 	effProfileSmeared[idxCent]->Fill(hpt_mc[idxCent]->GetBinCenter(idx), ratio);
+	effProfileSmearedRed[idxCent]->Fill(hpt_mc[idxCent]->GetBinCenter(idx), ratio);
 	
 	hpt_2D[idxCent]->Fill(           hpt_mc[idxCent]->GetBinCenter(idx), ratio);
       }
@@ -515,6 +542,13 @@ void study_efficiencies(const char* particle, int energy = 14) {
       effProfile[idxCent]->SetBinError(idx, effProfile[idxCent]->GetRMS(idx));
       effProfileSmeared[idxCent]->SetBinError(idx, effProfileSmeared[idxCent]->GetRMS(idx));
     }
+
+  for (int idxCent = 0; idxCent < nCent; ++idxCent) 
+    for (int idx = 1; idx <= effProfileRed[idxCent]->GetXaxis()->GetNbins(); idx++) {
+      effProfileRed[idxCent]->SetBinError(idx, effProfileRed[idxCent]->GetRMS(idx));
+      effProfileSmearedRed[idxCent]->SetBinError(idx, effProfileSmearedRed[idxCent]->GetRMS(idx));
+    }
+
 
   // --------------------------------------------------------------------------------
 
@@ -546,6 +580,15 @@ void study_efficiencies(const char* particle, int energy = 14) {
     effProfileSmeared[idxCent]->SetMarkerColor(kRed+2);
     effProfileSmeared[idxCent]->SetMarkerColor(kRed+2);
 
+    effProfileRed[idxCent]->GetYaxis()->SetRangeUser(0., 1.0);
+    effProfileRed[idxCent]->SetMarkerStyle(21);
+    effProfileRed[idxCent]->SetMarkerColor(kRed+2);
+    effProfileRed[idxCent]->SetMarkerColor(kRed+2);
+
+    effProfileSmearedRed[idxCent]->GetYaxis()->SetRangeUser(0., 1.0);
+    effProfileSmearedRed[idxCent]->SetMarkerStyle(21);
+    effProfileSmearedRed[idxCent]->SetMarkerColor(kRed+2);
+    effProfileSmearedRed[idxCent]->SetMarkerColor(kRed+2);
 
     hpt_width[idxCent]->GetYaxis()->SetRangeUser(0., 0.2);
     hpt_width[idxCent]->SetMarkerStyle(20);
