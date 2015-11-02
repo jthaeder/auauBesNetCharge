@@ -57,12 +57,12 @@ const char* Names[]  = {"Pion", "Kaon", "Proton"};
 const char* names2[] = {"#pi^{+}", "K^{+}", "p"};
 const char* names3[] = {"#pi^{-}", "K^{-}", "#bar{p}"};
 
-#if 0
-const float namesPtMin[]  = {0.6, 0.6, 0.6};
-const float namesPtMax[]  = {2.0, 1.6, 2.0};
+#if 1
+const float namesPtMin[]  = {0.7, 1.0, 0.8};
+const float namesPtMax[]  = {2.3, 2.3, 2.3};
 
-const int namesPtBinMin[]  = {7, 7, 7};
-const int namesPtBinMax[]  = {14, 13, 14};
+const int namesPtBinMin[]  = { 8, 11,  9};
+const int namesPtBinMax[]  = {15, 15, 15};
 #else
 const float namesPtMin[]  = {1.1, 1.1, 1.1};
 const float namesPtMax[]  = {1.4, 1.4, 1.4};
@@ -86,6 +86,11 @@ const int namesPtBinMax[]  = {12, 12, 12};
 // 13 -> 1.4 > 1.55 < 1.7
 // 14 -> 1.7 > 1.85 < 2
 // 15 -> 2   > 2.15 < 2.3
+
+Double_t xbinsProton[4] = {0, 0.2, 0.8, 2.3}; 
+Double_t xbinsPion[4]   = {0, 0.2, 0.7, 2.3}; 
+Double_t xbinsKaon[4]   = {0, 0.2, 1.0, 2.3}; 
+
 
 const int   nEnergies       = 8;
 const char *energies[]      = {  "7",   "11",   "14",   "19", "27", "39",   "62", "200"};
@@ -118,6 +123,10 @@ void makeEfficiencyStudy() {
 
   TProfile* histsPlusEff[nNames][nEnergies][nCent];
   TProfile* histsMinusEff[nNames][nEnergies][nCent];
+
+  TProfile* histsPlusEffRebin[nNames][nEnergies][nCent];
+  TProfile* histsMinusEffRebin[nNames][nEnergies][nCent];
+
 
   TH1D* histsPlus[nNames][nEnergies][nCent];
   TH1D* histsMinus[nNames][nEnergies][nCent];
@@ -175,6 +184,13 @@ void makeEfficiencyStudy() {
 	histsPlusEff[idx][energyIdx][centIdx]->SetMarkerColor(kRed+2);
 	histsPlusEff[idx][energyIdx][centIdx]->SetLineWidth(1);
 	histsPlusEff[idx][energyIdx][centIdx]->SetLineColor(kRed+3);
+       
+	if (idx == 0)
+	  histsPlusEffRebin[idx][energyIdx][centIdx] = static_cast<TProfile*>(histsPlusEff[idx][energyIdx][centIdx]->Rebin(3, Form("effProfileSmearedRebin_%s_plus_%s_%s", names[idx], energies[energyIdx],cent[centIdx-1]), xbinsPion));
+	else if (idx == 1)
+	  histsPlusEffRebin[idx][energyIdx][centIdx] = static_cast<TProfile*>(histsPlusEff[idx][energyIdx][centIdx]->Rebin(3, Form("effProfileSmearedRebin_%s_plus_%s_%s", names[idx], energies[energyIdx],cent[centIdx-1]), xbinsKaon));
+	else if (idx == 2)
+	  histsPlusEffRebin[idx][energyIdx][centIdx] = static_cast<TProfile*>(histsPlusEff[idx][energyIdx][centIdx]->Rebin(3, Form("effProfileSmearedRebin_%s_plus_%s_%s", names[idx], energies[energyIdx],cent[centIdx-1]), xbinsProton));
 
 	histsMinusEff[idx][energyIdx][centIdx] = static_cast<TProfile*>(fminus[idx][energyIdx]->Get(Form("effProfileSmeared_%s",cent[centIdx-1])));
 	histsMinusEff[idx][energyIdx][centIdx]->SetName(Form("effProfileSmeared_%s_minus_%s_%s", names[idx], energies[energyIdx],cent[centIdx-1]));	
@@ -184,6 +200,15 @@ void makeEfficiencyStudy() {
 	histsMinusEff[idx][energyIdx][centIdx]->SetMarkerColor(kAzure);
 	histsMinusEff[idx][energyIdx][centIdx]->SetLineWidth(1);
 	histsMinusEff[idx][energyIdx][centIdx]->SetLineColor(kAzure);
+	histsMinusEff[idx][energyIdx][centIdx]->GetXaxis()->SetRangeUser(0.8, 2.3);
+	histsMinusEff[idx][energyIdx][centIdx]->Sumw2();
+
+	if (idx == 0)
+	  histsMinusEffRebin[idx][energyIdx][centIdx] = static_cast<TProfile*>(histsMinusEff[idx][energyIdx][centIdx]->Rebin(3, Form("effProfileSmearedRebin_%s_minus_%s_%s", names[idx], energies[energyIdx],cent[centIdx-1]), xbinsPion));
+	else if (idx == 1)
+	  histsMinusEffRebin[idx][energyIdx][centIdx] = static_cast<TProfile*>(histsMinusEff[idx][energyIdx][centIdx]->Rebin(3, Form("effProfileSmearedRebin_%s_minus_%s_%s", names[idx], energies[energyIdx],cent[centIdx-1]), xbinsKaon));
+	else if (idx == 2)
+	  histsMinusEffRebin[idx][energyIdx][centIdx] = static_cast<TProfile*>(histsMinusEff[idx][energyIdx][centIdx]->Rebin(3, Form("effProfileSmearedRebin_%s_minus_%s_%s", names[idx], energies[energyIdx],cent[centIdx-1]), xbinsProton));
 
 	hists2DPlus[idx][energyIdx][centIdx] = static_cast<TH2D*>(fplus[idx][energyIdx]->Get(Form("hpt_2D_%s",cent[centIdx-1])));
 	hists2DPlus[idx][energyIdx][centIdx]->SetName(Form("hpt_2D_%s_plus_%s_%s", names[idx], energies[energyIdx],cent[centIdx-1]));			
@@ -194,6 +219,24 @@ void makeEfficiencyStudy() {
     }
   }
 
+  // ----------------------------------------------------------
+  // -- print RMS of TProfile for high pT
+  // ----------------------------------------------------------
+
+  for (int idx = 0; idx < nNames; ++idx) {
+    for (int energyIdx = 0 ; energyIdx < nEnergies; ++energyIdx) {
+      cout << names[idx] << " | " << exactEnergies[energyIdx] << " || ";
+      for (int centIdx = 1; centIdx < nCent; centIdx++) {
+	if (histsMinusEffRebin[idx][energyIdx][centIdx])
+	  printf("%.3f ", histsMinusEffRebin[idx][energyIdx][centIdx]->GetBinError(3));
+
+	  //	  cout << histsMinusEffRebin[idx][energyIdx][centIdx]->GetBinError(3) << " ";
+	//	  cout << histsMinusEffRebin[idx][energyIdx][centIdx]->GetRMS(3) << " ";
+      }
+      cout << endl;
+    }
+  }
+  return;
   // ----------------------------------------------------------
   // -- Make Profiles
   // ----------------------------------------------------------
@@ -506,7 +549,7 @@ void makeEfficiencyStudy() {
       
       for (int centIdx = 1; centIdx < nCent; centIdx++) {
 	pad->cd(centIdx);
-	gPad->SetLogy();
+	//	gPad->SetLogy();
 
 	if (centIdx == 5) {
 	  gPad->SetRightMargin(0.002);
@@ -683,10 +726,10 @@ void makeEfficiencyStudy() {
       padInsetContent->Draw();
       padInsetContent->cd();
 
-      gPad->SetLogy();
+      //      gPad->SetLogy();
 
       histsProfilePlus[idx][energyIdx][centIdx]->GetXaxis()->SetRangeUser(0.15, 1.1);
-      histsProfilePlus[idx][energyIdx][centIdx]->GetYaxis()->SetRangeUser(1, 150);
+      histsProfilePlus[idx][energyIdx][centIdx]->GetYaxis()->SetRangeUser(1, 300);
 
       histsProfilePlus[idx][energyIdx][centIdx]->GetXaxis()->SetLabelSize(0.09);
       histsProfilePlus[idx][energyIdx][centIdx]->GetYaxis()->SetLabelSize(0.09);
@@ -766,6 +809,10 @@ void makeEfficiencyStudy() {
     canInset[energyIdx]->cd();
   } // end energy idx
   
+  
+  
+
+
   // ----------------------------------------------------------
   // -- Write out canvas
   // ----------------------------------------------------------
