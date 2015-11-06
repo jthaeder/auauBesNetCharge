@@ -26,6 +26,12 @@
  *  Run :  root -l -b -q fitEfficiencyPt.C++
  * ***************************************************/
 
+#define WIDTH 0
+#define PROFILE 1
+#define INSET 0
+#define TWOD 0
+
+
 #include <fstream>
 #include "TROOT.h"
 #include "TStyle.h"
@@ -64,11 +70,21 @@ const float namesPtMax[]  = {2.3, 2.3, 2.3};
 const int namesPtBinMin[]  = { 8, 11,  9};
 const int namesPtBinMax[]  = {15, 15, 15};
 #else
-const float namesPtMin[]  = {1.1, 1.1, 1.1};
-const float namesPtMax[]  = {1.4, 1.4, 1.4};
 
-const int namesPtBinMin[]  = {12, 12, 12};
-const int namesPtBinMax[]  = {12, 12, 12};
+const float namesPtMin[]  = {0.8, 0.8, 0.8};
+const float namesPtMax[]  = {0.9, 0.9, 0.9};
+
+
+const int namesPtBinMin[]  = {9, 9, 9};
+const int namesPtBinMax[]  = {9, 9, 9};
+
+// const float namesPtMin[]  = {1.1, 1.1, 1.1};
+// const float namesPtMax[]  = {1.4, 1.4, 1.4};
+
+// const int namesPtBinMin[]  = {12, 12, 12};
+// const int namesPtBinMax[]  = {12, 12, 12};
+
+
 #endif
 
 // 1  -> 0   > 0.05 < 0.1
@@ -80,10 +96,13 @@ const int namesPtBinMax[]  = {12, 12, 12};
 // 7  -> 0.6 > 0.65 < 0.7
 // 8  -> 0.7 > 0.75 < 0.8
 // 9  -> 0.8 > 0.85 < 0.9
+
 // 10 -> 0.9 > 0.95 < 1
 // 11 -> 1   > 1.05 < 1.1
+
 // 12 -> 1.1 > 1.25 < 1.4
 // 13 -> 1.4 > 1.55 < 1.7
+
 // 14 -> 1.7 > 1.85 < 2
 // 15 -> 2   > 2.15 < 2.3
 
@@ -92,12 +111,20 @@ Double_t xbinsPion[4]   = {0, 0.2, 0.7, 2.3};
 Double_t xbinsKaon[4]   = {0, 0.2, 1.0, 2.3}; 
 
 
-const int   nEnergies       = 8;
+const int   nEnergies       = 2;
 const char *energies[]      = {  "7",   "11",   "14",   "19", "27", "39",   "62", "200"};
 const char *exactEnergies[] = {"7.7", "11.5", "14.5", "19.6", "27", "39", "62.4", "200"};
 
 double plateau(double *x,double *par) {
   return par[0]*x[0]+par[1];
+}
+
+double binomial(double *x, double *par) {
+  //  P(k; p,n) -> scale k = nx  -> P (x/n ; p,n) = 
+  //  n = par[0]
+  //  p = par[1]
+  //  return TMath::Binomial(par[0], x[0])*pow(par[1], x[0])*pow(1. - par[1], par[0] - x[0]);
+  return TMath::Binomial(par[0], x[0]*par[0])*pow(par[1], par[0]*x[0])*pow(1. - par[1], par[0]*(1. - x[0]));
 }
 
 // __________________________________________________________________________________
@@ -124,8 +151,8 @@ void makeEfficiencyStudy() {
   TProfile* histsPlusEff[nNames][nEnergies][nCent];
   TProfile* histsMinusEff[nNames][nEnergies][nCent];
 
-  TProfile* histsPlusEffRebin[nNames][nEnergies][nCent];
-  TProfile* histsMinusEffRebin[nNames][nEnergies][nCent];
+  TProfile* histsPlusEffRed[nNames][nEnergies][nCent];
+  TProfile* histsMinusEffRed[nNames][nEnergies][nCent];
 
 
   TH1D* histsPlus[nNames][nEnergies][nCent];
@@ -136,6 +163,10 @@ void makeEfficiencyStudy() {
 
   TH1D* histsProfilePlus[nNames][nEnergies][nCent];
   TH1D* histsProfileMinus[nNames][nEnergies][nCent];
+
+
+  TF1* fitProfilePlus[nNames][nEnergies][nCent];
+  TF1* fitProfileMinus[nNames][nEnergies][nCent];
 
   // ----------------------------------------------------------
   // -- read files
@@ -175,7 +206,6 @@ void makeEfficiencyStudy() {
 	histsMinus[idx][energyIdx][centIdx]->SetLineWidth(1);
 	histsMinus[idx][energyIdx][centIdx]->SetLineColor(kAzure);
 
-
 	histsPlusEff[idx][energyIdx][centIdx] = static_cast<TProfile*>(fplus[idx][energyIdx]->Get(Form("effProfileSmeared_%s",cent[centIdx-1])));
 	histsPlusEff[idx][energyIdx][centIdx]->SetName(Form("effProfileSmeared_%s_plus_%s_%s", names[idx], energies[energyIdx],cent[centIdx-1]));
 	histsPlusEff[idx][energyIdx][centIdx]->SetLineStyle(1);
@@ -184,13 +214,23 @@ void makeEfficiencyStudy() {
 	histsPlusEff[idx][energyIdx][centIdx]->SetMarkerColor(kRed+2);
 	histsPlusEff[idx][energyIdx][centIdx]->SetLineWidth(1);
 	histsPlusEff[idx][energyIdx][centIdx]->SetLineColor(kRed+3);
+
+	histsPlusEffRed[idx][energyIdx][centIdx] = static_cast<TProfile*>(fplus[idx][energyIdx]->Get(Form("effProfileSmearedRed_%s",cent[centIdx-1])));
+	histsPlusEffRed[idx][energyIdx][centIdx]->SetName(Form("effProfileSmearedRed_%s_plus_%s_%s", names[idx], energies[energyIdx],cent[centIdx-1]));
+	histsPlusEffRed[idx][energyIdx][centIdx]->SetLineStyle(1);
+	histsPlusEffRed[idx][energyIdx][centIdx]->SetMarkerStyle(24);
+	histsPlusEffRed[idx][energyIdx][centIdx]->SetMarkerSize(0.5);
+	histsPlusEffRed[idx][energyIdx][centIdx]->SetMarkerColor(kRed+2);
+	histsPlusEffRed[idx][energyIdx][centIdx]->SetLineWidth(1);
+	histsPlusEffRed[idx][energyIdx][centIdx]->SetLineColor(kRed+3);
+
        
-	if (idx == 0)
-	  histsPlusEffRebin[idx][energyIdx][centIdx] = static_cast<TProfile*>(histsPlusEff[idx][energyIdx][centIdx]->Rebin(3, Form("effProfileSmearedRebin_%s_plus_%s_%s", names[idx], energies[energyIdx],cent[centIdx-1]), xbinsPion));
-	else if (idx == 1)
-	  histsPlusEffRebin[idx][energyIdx][centIdx] = static_cast<TProfile*>(histsPlusEff[idx][energyIdx][centIdx]->Rebin(3, Form("effProfileSmearedRebin_%s_plus_%s_%s", names[idx], energies[energyIdx],cent[centIdx-1]), xbinsKaon));
-	else if (idx == 2)
-	  histsPlusEffRebin[idx][energyIdx][centIdx] = static_cast<TProfile*>(histsPlusEff[idx][energyIdx][centIdx]->Rebin(3, Form("effProfileSmearedRebin_%s_plus_%s_%s", names[idx], energies[energyIdx],cent[centIdx-1]), xbinsProton));
+	// if (idx == 0)
+	//   histsPlusEffRebin[idx][energyIdx][centIdx] = static_cast<TProfile*>(histsPlusEff[idx][energyIdx][centIdx]->Rebin(3, Form("effProfileSmearedRebin_%s_plus_%s_%s", names[idx], energies[energyIdx],cent[centIdx-1]), xbinsPion));
+	// else if (idx == 1)
+	//   histsPlusEffRebin[idx][energyIdx][centIdx] = static_cast<TProfile*>(histsPlusEff[idx][energyIdx][centIdx]->Rebin(3, Form("effProfileSmearedRebin_%s_plus_%s_%s", names[idx], energies[energyIdx],cent[centIdx-1]), xbinsKaon));
+	// else if (idx == 2)
+	//   histsPlusEffRebin[idx][energyIdx][centIdx] = static_cast<TProfile*>(histsPlusEff[idx][energyIdx][centIdx]->Rebin(3, Form("effProfileSmearedRebin_%s_plus_%s_%s", names[idx], energies[energyIdx],cent[centIdx-1]), xbinsProton));
 
 	histsMinusEff[idx][energyIdx][centIdx] = static_cast<TProfile*>(fminus[idx][energyIdx]->Get(Form("effProfileSmeared_%s",cent[centIdx-1])));
 	histsMinusEff[idx][energyIdx][centIdx]->SetName(Form("effProfileSmeared_%s_minus_%s_%s", names[idx], energies[energyIdx],cent[centIdx-1]));	
@@ -203,12 +243,25 @@ void makeEfficiencyStudy() {
 	histsMinusEff[idx][energyIdx][centIdx]->GetXaxis()->SetRangeUser(0.8, 2.3);
 	histsMinusEff[idx][energyIdx][centIdx]->Sumw2();
 
-	if (idx == 0)
-	  histsMinusEffRebin[idx][energyIdx][centIdx] = static_cast<TProfile*>(histsMinusEff[idx][energyIdx][centIdx]->Rebin(3, Form("effProfileSmearedRebin_%s_minus_%s_%s", names[idx], energies[energyIdx],cent[centIdx-1]), xbinsPion));
-	else if (idx == 1)
-	  histsMinusEffRebin[idx][energyIdx][centIdx] = static_cast<TProfile*>(histsMinusEff[idx][energyIdx][centIdx]->Rebin(3, Form("effProfileSmearedRebin_%s_minus_%s_%s", names[idx], energies[energyIdx],cent[centIdx-1]), xbinsKaon));
-	else if (idx == 2)
-	  histsMinusEffRebin[idx][energyIdx][centIdx] = static_cast<TProfile*>(histsMinusEff[idx][energyIdx][centIdx]->Rebin(3, Form("effProfileSmearedRebin_%s_minus_%s_%s", names[idx], energies[energyIdx],cent[centIdx-1]), xbinsProton));
+	histsMinusEffRed[idx][energyIdx][centIdx] = static_cast<TProfile*>(fminus[idx][energyIdx]->Get(Form("effProfileSmearedRed_%s",cent[centIdx-1])));
+	histsMinusEffRed[idx][energyIdx][centIdx]->SetName(Form("effProfileSmearedRed_%s_minus_%s_%s", names[idx], energies[energyIdx],cent[centIdx-1]));	
+	histsMinusEffRed[idx][energyIdx][centIdx]->SetLineStyle(1);
+	histsMinusEffRed[idx][energyIdx][centIdx]->SetMarkerStyle(25);
+	histsMinusEffRed[idx][energyIdx][centIdx]->SetMarkerSize(0.5);
+	histsMinusEffRed[idx][energyIdx][centIdx]->SetMarkerColor(kAzure);
+	histsMinusEffRed[idx][energyIdx][centIdx]->SetLineWidth(1);
+	histsMinusEffRed[idx][energyIdx][centIdx]->SetLineColor(kAzure);
+	histsMinusEffRed[idx][energyIdx][centIdx]->GetXaxis()->SetRangeUser(0.8, 2.3);
+	histsMinusEffRed[idx][energyIdx][centIdx]->Sumw2();
+
+
+
+	// if (idx == 0)
+	//   histsMinusEffRebin[idx][energyIdx][centIdx] = static_cast<TProfile*>(histsMinusEff[idx][energyIdx][centIdx]->Rebin(3, Form("effProfileSmearedRebin_%s_minus_%s_%s", names[idx], energies[energyIdx],cent[centIdx-1]), xbinsPion));
+	// else if (idx == 1)
+	//   histsMinusEffRebin[idx][energyIdx][centIdx] = static_cast<TProfile*>(histsMinusEff[idx][energyIdx][centIdx]->Rebin(3, Form("effProfileSmearedRebin_%s_minus_%s_%s", names[idx], energies[energyIdx],cent[centIdx-1]), xbinsKaon));
+	// else if (idx == 2)
+	//   histsMinusEffRebin[idx][energyIdx][centIdx] = static_cast<TProfile*>(histsMinusEff[idx][energyIdx][centIdx]->Rebin(3, Form("effProfileSmearedRebin_%s_minus_%s_%s", names[idx], energies[energyIdx],cent[centIdx-1]), xbinsProton));
 
 	hists2DPlus[idx][energyIdx][centIdx] = static_cast<TH2D*>(fplus[idx][energyIdx]->Get(Form("hpt_2D_%s",cent[centIdx-1])));
 	hists2DPlus[idx][energyIdx][centIdx]->SetName(Form("hpt_2D_%s_plus_%s_%s", names[idx], energies[energyIdx],cent[centIdx-1]));			
@@ -223,20 +276,21 @@ void makeEfficiencyStudy() {
   // -- print RMS of TProfile for high pT
   // ----------------------------------------------------------
 
-  for (int idx = 0; idx < nNames; ++idx) {
-    for (int energyIdx = 0 ; energyIdx < nEnergies; ++energyIdx) {
-      cout << names[idx] << " | " << exactEnergies[energyIdx] << " || ";
-      for (int centIdx = 1; centIdx < nCent; centIdx++) {
-	if (histsMinusEffRebin[idx][energyIdx][centIdx])
-	  printf("%.3f ", histsMinusEffRebin[idx][energyIdx][centIdx]->GetBinError(3));
+  // // for (int idx = 0; idx < nNames; ++idx) {
+  // //   for (int energyIdx = 0 ; energyIdx < nEnergies; ++energyIdx) {
+  // //     cout << names[idx] << " | " << exactEnergies[energyIdx] << " || ";
+  // //     for (int centIdx = 1; centIdx < nCent; centIdx++) {
+  // // 	if (histsMinusEffRed[idx][energyIdx][centIdx])
+  // // 	  printf("%.3f ", histsMinusEffRed[idx][energyIdx][centIdx]->GetRMS(3));
 
-	  //	  cout << histsMinusEffRebin[idx][energyIdx][centIdx]->GetBinError(3) << " ";
-	//	  cout << histsMinusEffRebin[idx][energyIdx][centIdx]->GetRMS(3) << " ";
-      }
-      cout << endl;
-    }
-  }
-  return;
+  // // 	//	  cout << histsMinusEffRebin[idx][energyIdx][centIdx]->GetBinError(3) << " ";
+  // // 	//	  cout << histsMinusEffRebin[idx][energyIdx][centIdx]->GetRMS(3) << " ";
+  // //     }
+  // //     cout << endl;
+  // //   }
+  // // }
+  //  return;
+
   // ----------------------------------------------------------
   // -- Make Profiles
   // ----------------------------------------------------------
@@ -261,6 +315,17 @@ void makeEfficiencyStudy() {
 	histsProfilePlus[idx][energyIdx][centIdx]->GetYaxis()->SetRangeUser(0.4, 2000);
 
 
+	fitProfilePlus[idx][energyIdx][centIdx] = new TF1(Form("%s_fit", histsProfilePlus[idx][energyIdx][centIdx]->GetName()), binomial, 0, 1., 2);
+	//	histsProfilePlus[idx][energyIdx][centIdx]->Fit(fitProfilePlus[idx][energyIdx][centIdx], 0, 10.);
+
+	TF1* fun   = fitProfilePlus[idx][energyIdx][centIdx];
+	TH1D *hist = histsProfilePlus[idx][energyIdx][centIdx];
+
+	int fitFlag = hist->Fit(fun, "QRsame", "", 0.1, 1.0);
+	//	TFitResultPtr fitResult = hist->Fit(fun, "QRSsame", "", 0.10, 1.0);
+
+	cout << fitFlag << "  " <<  fun->GetParameter(0) << "  " <<  fun->GetParameter(1) << endl;
+
 	histsProfileMinus[idx][energyIdx][centIdx] = 
 	  hists2DMinus[idx][energyIdx][centIdx]->ProjectionY(Form("%s_profile", hists2DMinus[idx][energyIdx][centIdx]->GetName()), namesPtBinMin[idx], namesPtBinMax[idx]);
 	histsProfileMinus[idx][energyIdx][centIdx]->SetLineStyle(1);
@@ -282,6 +347,7 @@ void makeEfficiencyStudy() {
   // ----------------------------------------------------------
   // -- Fill canvas by name / energy -- eff width
   // ----------------------------------------------------------
+#if WIDTH
   for (int energyIdx = 0 ; energyIdx <nEnergies; ++energyIdx) {
     for (int idx = 0; idx < nNames; ++idx) {
       can[idx][energyIdx] = new TCanvas(Form("can_%s_%s", names[idx], energies[energyIdx]), names[idx],0,0,1200,600);
@@ -400,10 +466,12 @@ void makeEfficiencyStudy() {
       can[idx][energyIdx]->cd();
     } // end idx
   } // end energy idx
+#endif
 
   // ----------------------------------------------------------
   // -- Fill canvas by name / energy -- 2D eff
   // ----------------------------------------------------------
+#if TWOD
   for (int energyIdx = 0 ; energyIdx <nEnergies; ++energyIdx) {
     for (int idx = 0; idx < 2*nNames; ++idx) {
       int idxName    = idx/2;
@@ -517,10 +585,13 @@ void makeEfficiencyStudy() {
 
     } // end idx
   } // end energy idx
+#endif
+
 
   // ----------------------------------------------------------
   // -- Fill canvas by name / energy -- eff width
   // ----------------------------------------------------------
+#if PROFILE
   for (int energyIdx = 0 ; energyIdx <nEnergies; ++energyIdx) {
     for (int idx = 0; idx < nNames; ++idx) {
       canProfile[idx][energyIdx] = new TCanvas(Form("canProfile_%s_%s", names[idx], energies[energyIdx]), names[idx],0,0,1200,600);
@@ -549,7 +620,7 @@ void makeEfficiencyStudy() {
       
       for (int centIdx = 1; centIdx < nCent; centIdx++) {
 	pad->cd(centIdx);
-	//	gPad->SetLogy();
+	gPad->SetLogy();
 
 	if (centIdx == 5) {
 	  gPad->SetRightMargin(0.002);
@@ -630,10 +701,12 @@ void makeEfficiencyStudy() {
 
     } // end idx
   } // end energy idx
+#endif
 
   // ----------------------------------------------------------
   // -- Fill canvas by name / energy -- eff width
   // ----------------------------------------------------------
+#if INSET
   for (int energyIdx = 0 ; energyIdx <nEnergies; ++energyIdx) {
     canInset[energyIdx] = new TCanvas(Form("canInset_%s", energies[energyIdx]), Form("canInset_%s", energies[energyIdx]), 0, 0, 1400, 700);
     canInset[energyIdx]->SetFillColor(0);
@@ -687,9 +760,7 @@ void makeEfficiencyStudy() {
       line20->SetLineStyle(3);
       line20->Draw();
 
-
       yMax = 1.18;
-
       TLine *line02a = new TLine(namesPtMin[idx], 1.12, namesPtMin[idx], yMax);
       line02a->SetLineColor(kGray+4);
       line02a->SetLineStyle(3);
@@ -699,8 +770,6 @@ void makeEfficiencyStudy() {
       line20a->SetLineColor(kGray+4);
       line20a->SetLineStyle(3);
       line20a->Draw();
-
-
 
       histsPlusEff[idx][energyIdx][centIdx]->SetMarkerStyle(25);
       histsPlusEff[idx][energyIdx][centIdx]->SetMarkerSize(0.7);
@@ -726,7 +795,7 @@ void makeEfficiencyStudy() {
       padInsetContent->Draw();
       padInsetContent->cd();
 
-      //      gPad->SetLogy();
+      gPad->SetLogy();
 
       histsProfilePlus[idx][energyIdx][centIdx]->GetXaxis()->SetRangeUser(0.15, 1.1);
       histsProfilePlus[idx][energyIdx][centIdx]->GetYaxis()->SetRangeUser(1, 300);
@@ -808,35 +877,39 @@ void makeEfficiencyStudy() {
     padContent->Modified();
     canInset[energyIdx]->cd();
   } // end energy idx
-  
-  
-  
-
-
+  #endif
+  return;
   // ----------------------------------------------------------
   // -- Write out canvas
   // ----------------------------------------------------------
   for (int energyIdx = 0 ; energyIdx < nEnergies; ++energyIdx) {
     for (int idx = 0; idx < nNames; ++idx) {
+#if WIDTH
       can[idx][energyIdx]->SaveAs(Form("./results/effStudy/root/effWidth_%s_%sGeV.root",    names[idx], energies[energyIdx]));
       can[idx][energyIdx]->SaveAs(Form("./results/effStudy/root_macro/effWidth_%s_%sGeV.C", names[idx], energies[energyIdx]));
       can[idx][energyIdx]->SaveAs(Form("./results/effStudy/png/effWidth_%s_%sGeV.png",      names[idx], energies[energyIdx]));
       can[idx][energyIdx]->SaveAs(Form("./results/effStudy/pdf/effWidth_%s_%sGeV.pdf",      names[idx], energies[energyIdx]));
       can[idx][energyIdx]->SaveAs(Form("./results/effStudy/eps/effWidth_%s_%sGeV.eps",      names[idx], energies[energyIdx]));
+#endif
 
+#if PROFILE
       canProfile[idx][energyIdx]->SaveAs(Form("./results/effStudy/profile/root/effProfile_%s_%sGeV.root",    names[idx], energies[energyIdx]));
       canProfile[idx][energyIdx]->SaveAs(Form("./results/effStudy/profile/root_macro/effProfile_%s_%sGeV.C", names[idx], energies[energyIdx]));
       canProfile[idx][energyIdx]->SaveAs(Form("./results/effStudy/profile/png/effProfile_%s_%sGeV.png",      names[idx], energies[energyIdx]));
       canProfile[idx][energyIdx]->SaveAs(Form("./results/effStudy/profile/pdf/effProfile_%s_%sGeV.pdf",      names[idx], energies[energyIdx]));
       canProfile[idx][energyIdx]->SaveAs(Form("./results/effStudy/profile/eps/effProfile_%s_%sGeV.eps",      names[idx], energies[energyIdx]));
+#endif
     }
 
+#if INSET
     canInset[energyIdx]->SaveAs(Form("./results/effStudy/inset/root/effInset_%sGeV.root",    energies[energyIdx]));
     canInset[energyIdx]->SaveAs(Form("./results/effStudy/inset/root_macro/effInset_%sGeV.C", energies[energyIdx]));
     canInset[energyIdx]->SaveAs(Form("./results/effStudy/inset/png/effInset_%sGeV.png",      energies[energyIdx]));
     canInset[energyIdx]->SaveAs(Form("./results/effStudy/inset/pdf/effInset_%sGeV.pdf",      energies[energyIdx]));
     canInset[energyIdx]->SaveAs(Form("./results/effStudy/inset/eps/effInset_%sGeV.eps",      energies[energyIdx]));
-    
+#endif
+
+#if TWOD
     for (int idx = 0; idx < 2*nNames; ++idx) {
       int idxName    = idx/2;
       int isNegative = idx%2;
@@ -855,6 +928,7 @@ void makeEfficiencyStudy() {
 	can2D[idx][energyIdx]->SaveAs(Form("./results/effStudy/support/eps/pt_eff_2D_%sPositive_%sGeV.eps",      names[idxName], energies[energyIdx]));
       }
     }
+#endif
   }
 }
 
