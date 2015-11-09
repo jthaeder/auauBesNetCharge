@@ -64,14 +64,14 @@ void   InitializeMultiplicityStats();
 void   InitializeEventHists();
 void   InitializeTrackHists();
 
-Int_t  GetCentrality(Int_t nRefMultTracksCorr);
+Int_t  GetCentrality(Int_t nRefMultTracksCorr, Int_t anaIdx);
 
 Bool_t FillEventStats(Int_t *aEventCuts);
 void   FillMultiplicityStats(Double_t *aMult, Int_t mode);
-void   FillEventHists(Int_t runId, Double_t *aEvent, Int_t mode);
+void   FillEventHists(Double_t *aEvent, Int_t mode);
 void   FillTrackHists(Double_t *aTrack, Int_t mode);
 
-Int_t  RefMult2Correction(Double_t vz, Int_t refmult2);
+Int_t  RefMult2Correction(Double_t vz, Int_t refmult2, Int_t anaIdx);
 
 Double_t NN(Double_t, Int_t);
 
@@ -88,6 +88,9 @@ Double_t minHnUnCorr[12] = {-0.5, 0.1, -1.0, -1.5,   0,  0.0,  0.0,  0.0, 0.0, -
 Double_t maxHnUnCorr[12] = { 9.5, 3.0,  1.0,  1.5,  10, 50.0, 50.0, 50.0, 1.0,  1.5,  1.5,  4};
 
 Int_t nMultSets = 5;
+
+const Char_t *qaNames[]  = { "before", "after"};
+const Char_t *qaTitles[] = { " (before cuts)", " (after cuts)"};
 
 const Char_t* multNames[]  = {
   "_base", 
@@ -106,14 +109,14 @@ const int   nEnergies       = 8;
 const char *energies[]      = {  "7",   "11",   "14",   "19",   "27",   "39",   "62", "200"};
 const char *exactEnergies[] = {"7.7", "11.5", "14.5", "19.6", "27.0", "39.0", "62.4", "200"};
 
-const Char_t* name = "NetCharge";
+const Char_t* name[3] = {"NetCharge", "NetProton", "NetKaon"};
 
 enum particleCharge {kPOS, kNEG, kNET, kParticleCharge};
 
 const Char_t* asParticleName[2]  =  {"neg",  "pos" };
 const Char_t* asParticleTitle[2] =  {"neg.", "pos."};
 
-const Int_t fHEventStatMax   = 10; 
+const Int_t  fHEventStatMax   = 10; 
 const Char_t *aEventCutNames[]   = {"all", "bad run", "trigger", "#it{v}_{z} < #it{v}_{z}^{max}", 
 				    "#it{v}_{z}- #it{v}_{z}^{vpd} < 3cm", "shifted vtx <1", 
 				    "centrality", "nTOFMatch>2","nTOFMatch cut", "accepted"};
@@ -136,7 +139,11 @@ Int_t               **fNp;                          //  Array of particle/anti-p
 THnSparseD           *fHnTrackUnCorr;               //  THnSparseD : uncorrected probe particles
 THnSparseD           *fHnEvent;                     //  THnSparseD : event
 // =======================================================================
-Int_t                 energyIdx = -1;               // energyIdx
+Int_t                 energyIdx   = -1;             // energyIdx
+// =======================================================================
+Int_t                 analysisIdx = -1;             // 0 - net-charge
+                                                    // 1 - net-proton
+                                                    // 2 - net-kaon
 // =======================================================================
 Int_t                 useModeChargeSeparation = 0;  // 0 - off
                                                     // 1 - positive charge -> positive eta
@@ -157,7 +164,19 @@ Int_t main(int argc, char** argv) {
     for (Int_t idx = 1; idx < argc; ++idx) {
       TString argument(argv[idx]);
 
-      if (argument.BeginsWith("--energy=")) {
+      if (argument.BeginsWith("--analysis=")) {
+	TString parameter = argument.ReplaceAll("--analysis=", "");
+	parameter.Remove(TString::kLeading, ' '); 
+	parameter.ToLower();
+	if (parameter.CompareTo("netcharge") || parameter.CompareTo("net-charge") || parameter.CompareTo("charge") )
+	  analysisIdx = 0;
+	else if (parameter.CompareTo("netproton") || parameter.CompareTo("net-proton") || parameter.CompareTo("proton") )
+	  analysisIdx = 1;
+	else if (parameter.CompareTo("netkaon") || parameter.CompareTo("net-kaon") || parameter.CompareTo("kaon") )
+	  analysisIdx = 2;
+      } // if (argument.BeginsWith("--analysis=")) {
+
+      else if (argument.BeginsWith("--energy=")) {
 	TString parameter = argument.ReplaceAll("--energy=", "");
 	parameter.Remove(TString::kLeading, ' '); 
 	
@@ -197,13 +216,18 @@ Int_t main(int argc, char** argv) {
     return 0;
   }
 
+  if (analysisIdx == -1) {
+    cout << "No analysis type selected" << endl;
+    return 0;
+  }
+
   // -----------------------------------------------------------------------
   // -- Set Globals
   // -----------------------------------------------------------------------
 
   // -- Add List
   fOutList = new TList;
-  fOutList->SetName(Form("f%s", name));
+  fOutList->SetName(Form("f%s", name[analysisIdx]));
   fOutList->SetOwner(kTRUE);
  
   // -------------------------------------------
@@ -329,15 +353,15 @@ Int_t main(int argc, char** argv) {
 	refMultFile >> run >> event >> gRefMult >> refMult >> refMult2;
 	
 	// -- break at at of file
-      if (refMultFile.eof())
-	break;
-      
-      // -- break if error occured during reading
-      if (!refMultFile.good()) 
-	break;
-      
-      refMultMap[std::make_pair(run,event)] = refMult;
-      refMult2Map[std::make_pair(run,event)] = refMult2;
+	if (refMultFile.eof())
+	  break;
+	
+	// -- break if error occured during reading
+	if (!refMultFile.good()) 
+	  break;
+	
+	refMultMap[std::make_pair(run,event)]  = refMult;
+	refMult2Map[std::make_pair(run,event)] = refMult2;
       }
       
       refMultFile.close();
@@ -354,7 +378,8 @@ Int_t main(int argc, char** argv) {
   InitializeTrackHists();
 
   TString sTitle(Form("%.2f<#eta<%.2f #it{p}_{T} [%.1f,%.1f]", etaAbsRange[0], etaAbsRange[1], ptRange[0], ptRange[1]));
-  cout << "TITLE : .... " << sTitle << " useChargeSeparation "<<  useModeChargeSeparation << endl;
+
+  cout << name [analysisIdx]" : .... " << sTitle << " useChargeSeparation "<<  useModeChargeSeparation << endl;
   AddHistSetCent("Dist",       sTitle.Data());
   AddHistSetCent("Dist_lower", sTitle.Data());
   AddHistSetCent("Dist_upper", sTitle.Data());
@@ -363,7 +388,7 @@ Int_t main(int argc, char** argv) {
 
   fOutList->Add(new TList);
   TList *fijkhList = static_cast<TList*>(fOutList->Last());
-  fijkhList->SetName(Form("f%sFijkh", name));
+  fijkhList->SetName(Form("f%sFijkh", name[analysisIdx]));
   fijkhList->SetOwner(kTRUE);
 
   TProfile *fact[9][9][9][9][10];
@@ -422,7 +447,10 @@ Int_t main(int argc, char** argv) {
 #endif
     Int_t nRefMult2TracksMuDst = refMult2Map[std::make_pair(runId, eventId)];
 
-    Int_t nRefMult2Tracks      = (energyIdx == 2) ? 0 : nRefMult2TracksMuDst;
+    Int_t nRefMultXTracks[3], nRefMultXTracksCorr[3];
+    nRefMultXTracks[0] = (energyIdx == 2) ? 0 : nRefMult2TracksMuDst;
+    nRefMultXTracks[1] = (energyIdx == 2) ? 0 : nRefMult2TracksMuDst; // read out refMult3 from MUDSTS....
+    nRefMultXTracks[2] = (energyIdx == 2) ? 0 : nRefMult2TracksMuDst; // read out refMult4 from MUDSTS....
 
     Int_t nTOFMatch = 0;
     
@@ -448,11 +476,43 @@ Int_t main(int argc, char** argv) {
       Double_t DCA      = pico->Tracks_mGDca[idxTrack]/1000.;
       Int_t    nHitsFit = pico->Tracks_mNHitsFit[idxTrack];
       
+      Double_t nSigmaProton = pico->Tracks_mNSigmaProton[idxTrack]/100.;
+      Double_t nSigmaKaon   = pico->Tracks_mNSigmaKaon[idxTrack]/100.;
+            
+      Double_t beta         = pico->Tracks_mBTofBeta[idxTrack]/20000.;
+      beta = (beta <= 0) ? -999 : beta;
+            
+      Double_t mSquare = (beta == -999. || beta <= 1.e-5) ? -999. : pow(pcm,2)*(pow(1/beta,2)-1);
+
       // -- count for refMult2 track -- only for 14.5 GeV
       // ------------------------------------------------------------------
-      if (energyIdx == 2 && TMath::Abs(eta) > etaAbsRangeRefMult[0] && TMath::Abs(eta) <= etaAbsRangeRefMult[1]  && 
-	  TMath::Abs(nHitsFit) > nHitsFitRefMult  && DCA < dcaMaxRefMult)
+      if (energyIdx == 2 
+	  && TMath::Abs(eta) > etaAbsRangeRefMult[0][0] 
+	  && TMath::Abs(eta) <= etaAbsRangeRefMult[0][1] 
+	  && TMath::Abs(nHitsFit) > nHitsFitRefMult[0]  
+	  && DCA < dcaMaxRefMult[0])
 	++nRefMult2Tracks;
+
+      // -- count for refMult3 track -- only for 14.5 GeV
+      // ------------------------------------------------------------------
+      if (energyIdx == 2 
+	  && TMath::Abs(eta) > etaAbsRangeRefMult[1][0] 
+	  && TMath::Abs(eta) <= etaAbsRangeRefMult[1][1] 
+	  && TMath::Abs(nHitsFit) > nHitsFitRefMult[1]  
+	  && DCA < dcaMaxRefMult[1]
+	  && nSigmaProton < (-3) 
+	  && mSquare < 0.4)
+	++nRefMult3Tracks;
+
+      // -- count for refMult4 track -- only for 14.5 GeV
+      // ------------------------------------------------------------------
+      if (energyIdx == 2 
+	  && TMath::Abs(eta) > etaAbsRangeRefMult[2][0] 
+	  && TMath::Abs(eta) <= etaAbsRangeRefMult[2][1] 
+	  && TMath::Abs(nHitsFit) > nHitsFitRefMult[2]  
+	  && DCA < dcaMaxRefMult[1]
+	  && ( (mSquare == -999 && fabs(nSigmaKaon) > 3) || (mSquare! = -999 && (mSquare > 0.6 || mSquare < 0.1)) ) )
+	++nRefMult4Tracks;
 
       // -- count for primary track
       // ------------------------------------------------------------------
@@ -461,7 +521,7 @@ Int_t main(int argc, char** argv) {
     }
     
 #if DEBUG
-    if (nRefMultTracksPico - nRefMultTracksMuDst != 0)
+    if (nRefMultTracksPico - nRefMultTracksMuDst != 0) 
       cout << "  DELTA REFMULT " << nRefMultTracks  << " || Pico:" << nRefMultTracksPico  << " <> MuDst:" << nRefMultTracksMuDst  << endl;
     cout << "  REFMULT2      " << nRefMult2Tracks << " || Pico:" << nRefMult2TracksPico << " <> MuDst:" << nRefMult2TracksMuDst << endl;
 #endif 
@@ -561,10 +621,11 @@ Int_t main(int argc, char** argv) {
     // -- 14.5 GeV
     if (energyIdx == 2) {
       // -- Correct refmult vz dependent 
-      nRefMult2TracksCorr = RefMult2Correction(vz, nRefMult2Tracks);
+      for (Int_t ii = 0; ii < 3; ++ii)
+	nRefMultXTracksCorr[ii] = RefMultCorrection(vz, nRefMultXTracks[ii], ii);
       
-      // -- Get centrality and fill stats
-      centrality = GetCentrality(nRefMult2TracksCorr);
+      // -- Get centrality and fill stats - for p
+      centrality = GetCentrality(nRefMultXTracksCorr, analysisIdx);
     }
     // -- other energies
     else {
@@ -619,7 +680,7 @@ Int_t main(int argc, char** argv) {
 #endif
     
     // -- Fill eventHists
-    FillEventHists(runId, aEvent, 0);
+    FillEventHists(aEvent, 0);
     
     // -- Fill multiplicty stats - before event cuts
     FillMultiplicityStats(aMult, 0);
@@ -649,7 +710,7 @@ Int_t main(int argc, char** argv) {
     FillMultiplicityStats(aMult, 4);
 
     // -- Fill eventHists
-    FillEventHists(runId, aEvent, 1);
+    FillEventHists(aEvent, 1);
 
     // ------------------------------------------------------------------
     // -- Track loop - track multiplicity
@@ -677,26 +738,59 @@ Int_t main(int argc, char** argv) {
       Double_t sign   = (nHitsFit > 0) ? +1 : -1;
       
       Float_t nSigmaProton = pico->Tracks_mNSigmaProton[idxTrack]/100.;
-      
+      Float_t nSigmaKaon   = pico->Tracks_mNSigmaKaon[idxTrack]/100.;
+            
+      Double_t beta         = pico->Tracks_mBTofBeta[idxTrack]/20000.;
+      beta = (beta <= 0) ? -999 : beta;
+            
+      Float_t mSquare = (beta == -999. || beta <= 1.e-5) ? -999. : pow(pcm,2)*(pow(1/beta,2)-1);
+
       // -- is in RefMult flag
-      Bool_t isInRefMult = (TMath::Abs(eta) > etaAbsRangeRefMult[0] && TMath::Abs(eta) <= etaAbsRangeRefMult[1]  && 
-			    TMath::Abs(nHitsFit) > nHitsFitRefMult  && DCA < dcaMaxRefMult) ? kTRUE : kFALSE;
+      Bool_t isInRefMult = (TMath::Abs(eta) > etaAbsRangeRefMult[analysIdx][0] 
+			    && TMath::Abs(eta) <= etaAbsRangeRefMult[analysisIdx][1]  
+			    && TMath::Abs(nHitsFit) > nHitsFitRefMult[analysisIdx]  
+			    && DCA < dcaMaxRefMult[analysisIdx]) ? kTRUE : kFALSE;
       
       // -- is track accepted flag - kinematics
-      Bool_t isTrackAcceptedKin = (eta > etaAbsRange[0] && eta < etaAbsRange[1] && 
-				   pt > ptRange[0] && pt < ptRange[1]) ? kTRUE : kFALSE;
-      
-      // -- is track accepted flag - clusters/dca
-      Bool_t isTrackAcceptedCut = (TMath::Abs(nHitsFit) > nHitsFitMin && DCA < dcaMax && 
-				   nHitsDedx > nHitsDedxMin && ratio > ratioNHitsFitNFitPossMin) ? kTRUE : kFALSE;
-      
-      // -->> is track accepted  - clusters/dca && kinematics
-      Bool_t isTrackAccepted = (isTrackAcceptedKin && isTrackAcceptedCut);
+      Bool_t isTrackAcceptedKin = (pt > ptRange[analysIdx][0] && pt < ptRange[analysIdx][1]) ? kTRUE : kFALSE;
+
+      if (isTrackAcceptedKin && analysisIdx == 0) 
+	isTrackAcceptedKin = (eta > etaAbsRange[analysIdx][0] && eta < etaAbsRange[analysIdx][1]) ? kTRUE : kFALSE;
+      else if (isTrackAcceptedKin && analysisIdx > 0) 
+	isTrackAcceptedKin = (y > yAbsRange[analysIdx][0] && y < yAbsRange[analysIdx][1]) ? kTRUE : kFALSE;
 
       
-      // -- is track Spallation proton/anti-proton
-      Bool_t isTrackSpallationProton = (isTrackAccepted && pt > ptRangeSpallation[0] && pt < ptRangeSpallation[1] &&
-					TMath::Abs(nSigmaProton) < nSigmaProtonMaxSpallation)  ? kTRUE : kFALSE;
+      // -- is track accepted flag - clusters/dca
+      Bool_t isTrackAcceptedCut = (TMath::Abs(nHitsFit) > nHitsFitMin[analysIdx] 
+				   && DCA < dcaMax[analysIdx] 
+				   && nHitsDedx > nHitsDedxMin[analysIdx] 
+				   && ratio > ratioNHitsFitNFitPossMin[analysIdx]) ? kTRUE : kFALSE;
+      
+      // -- is track accepted flag - PID
+      Bool_t isTrackAcceptedPid = kTRUE;
+      
+      if (analysisIdx > 0) {
+	// -- PID for net-proton . net-kaon
+	Bool_t isTrackAcceptedPidTPC = (TMath::Abs(nSigmaProton) < nSigmaMax[analysIdx]) ? kTRUE : kFALSE;
+	Bool_t isTrackAcceptedPidTOF = kTRUE;
+
+	if (pt > ptMidPoint[analysisIdx])
+	  isTrackAcceptedPidTOF = (mSquare > mSquareRange[analysIdx][0] 
+				   && mSquare < mSquareRange[analysIdx][1]) ? kTRUE : kFALSE;
+	
+	isTrackAcceptedPid = (isTrackAcceptedPidTPC && isTrackAcceptedPidTOF);
+      }
+      else {
+	// -- is track Spallation proton/anti-proton
+	Bool_t isTrackSpallationProton = (isTrackAccepted && pt > ptRangeSpallation[0] && pt < ptRangeSpallation[1] 
+					  && TMath::Abs(nSigmaProton) < nSigmaProtonMaxSpallation)  ? kTRUE : kFALSE;
+	
+	isTrackAcceptedPid = isTrackSpallationProton;
+      }
+      
+      // -->> is track accepted  - clusters/dca && kinematics && PID
+      Bool_t isTrackAccepted = (isTrackAcceptedKin && isTrackAcceptedCut && isTrackAcceptedPid);
+
       
       // -- fill ThnSparse - tracks
       // ------------------------------------------------------------------
@@ -716,13 +810,6 @@ Int_t main(int argc, char** argv) {
 	continue;
       
       FillTrackHists(aTrack, 1);
-
-      // -- reject spallation proton
-      // ------------------------------------------------------------------
-      if (isTrackSpallationProton)
-	continue;
-      
-      FillTrackHists(aTrack, 2);
 
       // ------------------------------------------------------------------
       // -- Add up for event multiplicity
@@ -798,16 +885,16 @@ Int_t main(int argc, char** argv) {
 }
 
 //________________________________________________________________________
-Int_t RefMult2Correction(Double_t vz, Int_t refmult2) {
+Int_t RefMultCorrection(Double_t vz, Int_t refmultIn, Int_t anaIdx) {
   // -- Correction of refmult2
 
-  Double_t refMultZ = aRefMultCorrPar[0] + 
-    aRefMultCorrPar[1]*vz + aRefMultCorrPar[2]*vz*vz + aRefMultCorrPar[3]*vz*vz*vz + 
-    aRefMultCorrPar[4]*vz*vz*vz*vz + aRefMultCorrPar[5]*vz*vz*vz*vz*vz + aRefMultCorrPar[6]*vz*vz*vz*vz*vz*vz;
+  Double_t refMultZ = aRefMultCorrPar[anaIdx][0] + 
+    aRefMultCorrPar[anaIdx][1]*vz + aRefMultCorrPar[anaIdx][2]*vz*vz + aRefMultCorrPar[anaIdx][3]*vz*vz*vz + 
+    aRefMultCorrPar[anaIdx][4]*vz*vz*vz*vz + aRefMultCorrPar[anaIdx][5]*vz*vz*vz*vz*vz + aRefMultCorrPar[anaIdx][6]*vz*vz*vz*vz*vz*vz;
 
-  Double_t Hovno    = (aRefMultCorrPar[0] + aRefMultCorrPar[7]) / refMultZ;
+  Double_t Hovno    = (aRefMultCorrPar[anaIdx][0] + aRefMultCorrPar[anaIdx][7]) / refMultZ;
 
-  Double_t refMultD = Double_t(refmult2) + gRandom->Rndm(); // random sampling over bin width -> avoid peak structures in corrected distribution
+  Double_t refMultD = Double_t(refmultIn) + gRandom->Rndm(); // random sampling over bin width -> avoid peak structures in corrected distribution
   
   return Int_t(refMultD * Hovno);
 }
@@ -952,21 +1039,21 @@ Bool_t FillEventStats(Int_t *aEventCuts) {
 }
 
 //________________________________________________________________________
-Int_t GetCentrality(Int_t nRefMultTracksCorr) {
+Int_t GetCentrality(Int_t nRefMultTracksCorr, Int_t anaIdx) {
   // -- Fill centrality statistics of accepted events
   //    first bin = 0
   
   Int_t centrality = -1;
   
-  if (nRefMultTracksCorr >= aRefMult2[0])
+  if (nRefMultTracksCorr >= aRefMult[anaIdx][0])
     centrality = 0;   // 0-5
 
-  else if (nRefMultTracksCorr < aRefMult2[fNCentralityBins-1])
+  else if (nRefMultTracksCorr < aRefMult[anaIdx][fNCentralityBins-1])
     centrality = fNCentralityBins;   // 80-100    
 
   else {
     for (Int_t idx = 1; idx < fNCentralityBins; ++idx) {
-      if (nRefMultTracksCorr >= aRefMult2[idx] && nRefMultTracksCorr < aRefMult2[idx-1])
+      if (nRefMultTracksCorr >= aRefMult[anaIdx][idx] && nRefMultTracksCorr < aRefMult[anaIdx][idx-1])
 	centrality = idx;  // 5-10  ... 70-80
     }
   }
@@ -982,43 +1069,57 @@ void InitializeMultiplicityStats() {
 
     fOutList->Add(new TList);
     TList *list = static_cast<TList*>(fOutList->Last());
-    list->SetName(Form("f%s_multHists%s", name, multNames[ii]));
+    list->SetName(Form("f%s_multHists%s", name[analysisIdx], multNames[ii]));
     list->SetOwner(kTRUE);
 
     // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 
-    list->Add(new TH1F(Form("hCentralityStat%s", multNames[ii]),               Form("Centrality statistics%s;Centrality Bins;Events",multTitles[ii]),          fNCentralityBins,-0.5,fNCentralityBins-0.5));
-    TH1F* hCentralityStat = static_cast<TH1F*>(list->Last());
-    
+    list->Add(new TH1F(Form("hCentralityStat%s", multNames[ii]),               Form("Centrality statistics%s;Centrality Bins;Events",multTitles[ii]),      
+		       fNCentralityBins,-0.5,fNCentralityBins-0.5));
+
+    TH1F* hCentralityStat = static_cast<TH1F*>(list->Last());    
     for (Int_t jj = 0; jj < fNCentralityBins; jj++)
       hCentralityStat->GetXaxis()->SetBinLabel(jj+1, aCentralityNames[jj]);
   
     // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
-    list->Add(new TH1F(Form("hRefMultStat%s", multNames[ii]),                    Form("RefMult  Statistics%s;RefMult;Events",multTitles[ii]),                                501, 0., 500.));
-    list->Add(new TH1F(Form("hRefMult2Stat%s", multNames[ii]),                   Form("RefMult2 Statistics%s;RefMult2;Events",multTitles[ii]),                               501, 0., 500.));
+    list->Add(new TH1F(Form("hRefMultStat%s", multNames[ii]),                    Form("RefMult  Statistics%s;RefMult;Events",multTitles[ii]),
+		       501, 0., 500.));
+    list->Add(new TH1F(Form("hRefMult2Stat%s", multNames[ii]),                   Form("RefMult2 Statistics%s;RefMult2;Events",multTitles[ii]),  
+		       501, 0., 500.));
 
     // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 
-    list->Add(new TH2F(Form("hRefMult2_nGlobalTracks%s", multNames[ii]),         Form("RefMult2 vs nGlobalTracks%s;RefMult2;nGlobalTracks",multTitles[ii]),                  501, 0., 500., 2501, 0., 2500.));
-    list->Add(new TH2F(Form("hRefMult2_nPrimaryTracks%s", multNames[ii]),        Form("RefMult2 vs nPrimaryTracks%s;RefMult2;nPrimaryTracks",multTitles[ii]),                501, 0., 500., 1001, 0., 1000.));
-    list->Add(new TH2F(Form("hRefMult2_nTOFMatch%s", multNames[ii]),             Form("RefMult2 vs nTOFMatch%s;RefMult2;nTOFMatch",multTitles[ii]),                          501, 0., 500., 601, 0., 600.));
-
-    // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
-
-    list->Add(new TH2F(Form("hRefMult_nGlobalTracks%s", multNames[ii]),          Form("RefMult vs nGlobalTracks%s;RefMult;nGlobalTracks",multTitles[ii]),                    501, 0., 500., 2501, 0., 2500.));
-    list->Add(new TH2F(Form("hRefMult_nPrimaryTracks%s", multNames[ii]),         Form("RefMult vs nPrimaryTracks%s;RefMult;nPrimaryTracks",multTitles[ii]),                  501, 0., 500., 1001, 0., 1000.));
-    list->Add(new TH2F(Form("hRefMult_nTOFMatch%s", multNames[ii]),              Form("RefMult vs nTOFMatch%s;RefMult;nTOFMatch",multTitles[ii]),                            501, 0., 500., 601, 0., 600.));
+    list->Add(new TH2F(Form("hRefMult2_nGlobalTracks%s", multNames[ii]),         Form("RefMult2 vs nGlobalTracks%s;RefMult2;nGlobalTracks",multTitles[ii]),
+		       501, 0., 500., 2501, 0., 2500.));
+    list->Add(new TH2F(Form("hRefMult2_nPrimaryTracks%s", multNames[ii]),        Form("RefMult2 vs nPrimaryTracks%s;RefMult2;nPrimaryTracks",multTitles[ii]),
+		       501, 0., 500., 1001, 0., 1000.));
+    list->Add(new TH2F(Form("hRefMult2_nTOFMatch%s", multNames[ii]),             Form("RefMult2 vs nTOFMatch%s;RefMult2;nTOFMatch",multTitles[ii]),
+		       501, 0., 500., 601, 0., 600.));
     
     // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
     
-    list->Add(new TH2F(Form("hRefMult2_RefMult2Corr%s", multNames[ii]),          Form("RefMult2 vs RefMult2Corr%s;RefMult2;RefMult2Corr",multTitles[ii]),                    501, 0., 500., 501, 0., 500.));
-    list->Add(new TH2F(Form("hRefMult2_RefMult%s", multNames[ii]),               Form("RefMult2 vs RefMult%s;RefMult2;RefMult",multTitles[ii]),                              501, 0., 500., 501, 0., 500.));
+    list->Add(new TH2F(Form("hRefMult_nGlobalTracks%s", multNames[ii]),          Form("RefMult vs nGlobalTracks%s;RefMult;nGlobalTracks",multTitles[ii]),
+		       501, 0., 500., 2501, 0., 2500.));
+    list->Add(new TH2F(Form("hRefMult_nPrimaryTracks%s", multNames[ii]),         Form("RefMult vs nPrimaryTracks%s;RefMult;nPrimaryTracks",multTitles[ii]),
+		       501, 0., 500., 1001, 0., 1000.));
+    list->Add(new TH2F(Form("hRefMult_nTOFMatch%s", multNames[ii]),              Form("RefMult vs nTOFMatch%s;RefMult;nTOFMatch",multTitles[ii]),
+		       501, 0., 500., 601, 0., 600.));
     
     // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
     
-    list->Add(new TH2F(Form("hnPrimaryTracks_nGlobalTracks%s", multNames[ii]),   Form("nPrimaryTracks vs nGlobalTracks%s;nPrimaryTracks;nGlobalTracks",multTitles[ii]),     1001, 0., 1000., 2501, 0., 2500.));
-    list->Add(new TH2F(Form("hnPrimaryTracks_nTOFMatch%s", multNames[ii]),       Form("nPrimaryTracks vs nTOFMatch%s; nPrimaryTracks;nTOFMatch",multTitles[ii]),            1001, 0., 1000., 601, 0., 600.));    
-    list->Add(new TH2F(Form("hnGlobalTracks_nTOFMatch%s", multNames[ii]),        Form("nGlobalTracks vs nTOFMatch%s;nGlobalTracks;nTOFMatch",multTitles[ii]),               2501, 0., 2500., 601, 0., 600.));
+    list->Add(new TH2F(Form("hRefMult2_RefMult2Corr%s", multNames[ii]),          Form("RefMult2 vs RefMult2Corr%s;RefMult2;RefMult2Corr",multTitles[ii]),
+		       501, 0., 500., 501, 0., 500.));
+    list->Add(new TH2F(Form("hRefMult2_RefMult%s", multNames[ii]),               Form("RefMult2 vs RefMult%s;RefMult2;RefMult",multTitles[ii]),
+		       501, 0., 500., 501, 0., 500.));
+    
+    // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+    
+    list->Add(new TH2F(Form("hnPrimaryTracks_nGlobalTracks%s", multNames[ii]),   Form("nPrimaryTracks vs nGlobalTracks%s;nPrimaryTracks;nGlobalTracks",multTitles[ii]),
+		       1001, 0., 1000., 2501, 0., 2500.));
+    list->Add(new TH2F(Form("hnPrimaryTracks_nTOFMatch%s", multNames[ii]),       Form("nPrimaryTracks vs nTOFMatch%s; nPrimaryTracks;nTOFMatch",multTitles[ii]),
+		       1001, 0., 1000., 601, 0., 600.));    
+    list->Add(new TH2F(Form("hnGlobalTracks_nTOFMatch%s", multNames[ii]),        Form("nGlobalTracks vs nTOFMatch%s;nGlobalTracks;nTOFMatch",multTitles[ii]),
+		       2501, 0., 2500., 601, 0., 600.));
       
     // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 
@@ -1085,73 +1186,82 @@ void InitializeMultiplicityStats() {
 
 //________________________________________________________________________
 void InitializeEventHists() {
-  // -- Initialize trigger statistics histograms
-
-  const Char_t *eventNames[]  = { "before", "after" };
-  const Char_t *eventTitles[] = { " (before cuts)", " (after cuts)" };
+  // -- Initialize event QA histograms
 
   for (Int_t ii = 0 ; ii < 2 ; ++ii) {
 
     fOutList->Add(new TList);
     TList *list = static_cast<TList*>(fOutList->Last());
-    list->SetName(Form("f%s_eventHists_%s", name, eventNames[ii]));
+    list->SetName(Form("f%s_eventHists_%s", name, qaNames[ii]));
     list->SetOwner(kTRUE);
 
     // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 
-    list->Add(new TH1F(Form("vx_%s", eventNames[ii]),        Form("#it{v}_{x}%s;#it{v}_{x} (cm);Events", eventTitles[ii]),               binHnEvent[1], minHnEvent[1], maxHnEvent[1]));
-    list->Add(new TH1F(Form("vy_%s", eventNames[ii]),        Form("#it{v}_{y}%s;#it{v}_{y} (cm);Events", eventTitles[ii]),               binHnEvent[2], minHnEvent[2], maxHnEvent[2]));
-    list->Add(new TH1F(Form("vz_%s", eventNames[ii]),        Form("#it{v}_{z}%s;#it{v}_{z} (cm);Events", eventTitles[ii]),               binHnEvent[3], minHnEvent[3], maxHnEvent[3]));
-    list->Add(new TH1F(Form("shiftedVr_%s", eventNames[ii]), Form("#it{v}_{r}^{shifted}%s;#it{v}_{r}^{shifted} (cm);Events", eventTitles[ii]), binHnEvent[4], minHnEvent[4], maxHnEvent[4]));
-    list->Add(new TH2F(Form("vxvy_%s", eventNames[ii]),      Form("#it{v}_{x} vs #it{v}_{y}%s;#it{v}_{x} (cm); #it{v}_{y} (cm)", eventTitles[ii]), binHnEvent[1], minHnEvent[1], maxHnEvent[1], binHnEvent[2], minHnEvent[2], maxHnEvent[2]));
+    list->Add(new TH1F(Form("vx_%s", qaNames[ii]),        Form("#it{v}_{x}%s;#it{v}_{x} (cm);Events", qaTitles[ii]), 
+		       binHnEvent[1], minHnEvent[1], maxHnEvent[1]));
 
-    list->Add(new TH1F(Form("vzVpd_%s", eventNames[ii]),     Form("#it{v}_{z}^{vpd}%s;#it{v}_{z}^{vpd} (cm);Events", eventTitles[ii]),         binHnEvent[9], minHnEvent[9], maxHnEvent[9]));
+    list->Add(new TH1F(Form("vy_%s", qaNames[ii]),        Form("#it{v}_{y}%s;#it{v}_{y} (cm);Events", qaTitles[ii]),
+		       binHnEvent[2], minHnEvent[2], maxHnEvent[2]));
 
-    list->Add(new TH1F(Form("deltaVz_%s", eventNames[ii]),   Form("#Delta#it{v}_{z}%s;#Delta#it{v}_{z} (cm);Events", eventTitles[ii]),         binHnEvent[10], minHnEvent[10], maxHnEvent[10]));
+    list->Add(new TH1F(Form("vz_%s", qaNames[ii]),        Form("#it{v}_{z}%s;#it{v}_{z} (cm);Events", qaTitles[ii]), 
+		       binHnEvent[3], minHnEvent[3], maxHnEvent[3]));
+
+    list->Add(new TH1F(Form("shiftedVr_%s", qaNames[ii]), Form("#it{v}_{r}^{shifted}%s;#it{v}_{r}^{shifted} (cm);Events", qaTitles[ii]), 
+		       binHnEvent[4], minHnEvent[4], maxHnEvent[4]));
+
+    list->Add(new TH2F(Form("vxvy_%s", qaNames[ii]),      Form("#it{v}_{x} vs #it{v}_{y}%s;#it{v}_{x} (cm); #it{v}_{y} (cm)", qaTitles[ii]), 
+		       binHnEvent[1], minHnEvent[1], maxHnEvent[1], binHnEvent[2], minHnEvent[2], maxHnEvent[2]));
+    
+    list->Add(new TH1F(Form("vzVpd_%s", qaNames[ii]),     Form("#it{v}_{z}^{vpd}%s;#it{v}_{z}^{vpd} (cm);Events", qaTitles[ii]),
+		       binHnEvent[9], minHnEvent[9], maxHnEvent[9]));
+    
+    list->Add(new TH1F(Form("deltaVz_%s", qaNames[ii]),   Form("#Delta#it{v}_{z}%s;#Delta#it{v}_{z} (cm);Events", qaTitles[ii]),
+		       binHnEvent[10], minHnEvent[10], maxHnEvent[10]));
   }
 }
 
 //________________________________________________________________________
-void FillEventHists(Int_t runId, Double_t *aEvent, Int_t mode) {
-      
-  const Char_t *eventNames[] = { "before", "after" };
+void FillEventHists(Double_t *aEvent, Int_t mode) {
+  // -- Fill event QA histograms      
 
-  TList* list = static_cast<TList*>(fOutList->FindObject(Form("f%s_eventHists_%s", name, eventNames[mode])));
-  
-  (static_cast<TH1F*>(list->FindObject(Form("vx_%s",eventNames[mode]))))->Fill(aEvent[1]);
-  (static_cast<TH1F*>(list->FindObject(Form("vy_%s",eventNames[mode]))))->Fill(aEvent[2]);
-  (static_cast<TH1F*>(list->FindObject(Form("vz_%s",eventNames[mode]))))->Fill(aEvent[3]);
-  (static_cast<TH1F*>(list->FindObject(Form("shiftedVr_%s",eventNames[mode]))))->Fill(aEvent[3]);
-  (static_cast<TH2F*>(list->FindObject(Form("vxvy_%s",eventNames[mode]))))->Fill(aEvent[1], aEvent[2]);
-  (static_cast<TH1F*>(list->FindObject(Form("vzVpd_%s",eventNames[mode]))))->Fill(aEvent[9]);
-  (static_cast<TH1F*>(list->FindObject(Form("deltaVz_%s",eventNames[mode]))))->Fill(aEvent[10]);
+  TList* list = static_cast<TList*>(fOutList->FindObject(Form("f%s_eventHists_%s", name, qaNames[mode])));
+  (static_cast<TH1F*>(list->FindObject(Form("vx_%s",qaNames[mode]))))->Fill(aEvent[1]);
+  (static_cast<TH1F*>(list->FindObject(Form("vy_%s",qaNames[mode]))))->Fill(aEvent[2]);
+  (static_cast<TH1F*>(list->FindObject(Form("vz_%s",qaNames[mode]))))->Fill(aEvent[3]);
+  (static_cast<TH1F*>(list->FindObject(Form("shiftedVr_%s",qaNames[mode]))))->Fill(aEvent[3]);
+  (static_cast<TH2F*>(list->FindObject(Form("vxvy_%s",qaNames[mode]))))->Fill(aEvent[1], aEvent[2]);
+  (static_cast<TH1F*>(list->FindObject(Form("vzVpd_%s",qaNames[mode]))))->Fill(aEvent[9]);
+  (static_cast<TH1F*>(list->FindObject(Form("deltaVz_%s",qaNames[mode]))))->Fill(aEvent[10]);
 }
 
 //________________________________________________________________________
 void InitializeTrackHists() {
-  // -- Initialize trigger statistics histograms
+  // -- Initialize track QA histograms
 
-  const Char_t *trackNames[]  = { "before", "after", "final" };
-  const Char_t *trackTitles[] = { " (before cuts)", " (after cuts)",  " (after final cuts)" };
-
-  for (Int_t ii = 0 ; ii < 3 ; ++ii) {
-
+  for (Int_t ii = 0 ; ii < 2 ; ++ii) {
     fOutList->Add(new TList);
     TList *list = static_cast<TList*>(fOutList->Last());
-    list->SetName(Form("f%s_trackHists_%s", name, trackNames[ii]));
+    list->SetName(Form("f%s_trackHists_%s", name[analysisIdx], qaNames[ii]));
     list->SetOwner(kTRUE);
 
     // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 
     for (Int_t idxSign = 0 ; idxSign < 2; ++idxSign) { 
-      list->Add(new TH1F(Form("pt_%s_%d", trackNames[ii], idxSign),                Form("#it{p}_{T}%s;#it{p}_{T} (GeV/#it{c});Tracks", trackTitles[ii]),  binHnUnCorr[1], minHnUnCorr[1], maxHnUnCorr[1]));
-      list->Add(new TH1F(Form("eta_%s_%d", trackNames[ii], idxSign),               Form("#eta%s;#eta;Tracks", trackTitles[ii]),  binHnUnCorr[2], minHnUnCorr[2], maxHnUnCorr[2]));
-      list->Add(new TH1F(Form("dca_%s_%d", trackNames[ii], idxSign),               Form("DCA%s;DCA (cm);Tracks", trackTitles[ii]),  binHnUnCorr[4], minHnUnCorr[4], maxHnUnCorr[4]));
-      list->Add(new TH1F(Form("nHitsDedx_%s_%d", trackNames[ii], idxSign),         Form("nHitsDedx%s;nHitsDedx;Tracks", trackTitles[ii]),  binHnUnCorr[5], minHnUnCorr[5], maxHnUnCorr[5]));
-      list->Add(new TH1F(Form("nHitsFit_%s_%d", trackNames[ii], idxSign),          Form("nHitsFit%s;nHitsFit;Tracks", trackTitles[ii]),  binHnUnCorr[6], minHnUnCorr[6], maxHnUnCorr[6]));
-      list->Add(new TH1F(Form("nHitsFit_nFitPoss_%s_%d", trackNames[ii], idxSign), Form("nHitsFit/nFitPoss%s;nHitsFit/nFitPoss;Tracks", trackTitles[ii]),  binHnUnCorr[8], minHnUnCorr[8], maxHnUnCorr[8]));
-      list->Add(new TH1F(Form("nSigmaP_%s_%d", trackNames[ii], idxSign),           Form("nSigmaProton%s;n#Sigma_{proton};Tracks", trackTitles[ii]),  binHnUnCorr[11], minHnUnCorr[11], maxHnUnCorr[11]));
-      list->Add(new TH2F(Form("nSigmaP_pt_%s_%d", trackNames[ii], idxSign),        Form("nSigmaProton vs #it{p}_{T}%s;n#sigma_{proton};#it{p}_{T} (GeV/#it{c})", trackTitles[ii]),  
+      list->Add(new TH1F(Form("pt_%s_%d", qaNames[ii], idxSign),                Form("#it{p}_{T}%s;#it{p}_{T} (GeV/#it{c});Tracks", qaTitles[ii]),  
+			 binHnUnCorr[1], minHnUnCorr[1], maxHnUnCorr[1]));
+      list->Add(new TH1F(Form("eta_%s_%d", qaNames[ii], idxSign),               Form("#eta%s;#eta;Tracks", qaTitles[ii]),  
+			 binHnUnCorr[2], minHnUnCorr[2], maxHnUnCorr[2]));
+      list->Add(new TH1F(Form("dca_%s_%d", qaNames[ii], idxSign),               Form("DCA%s;DCA (cm);Tracks", qaTitles[ii]),  
+			 binHnUnCorr[4], minHnUnCorr[4], maxHnUnCorr[4]));
+      list->Add(new TH1F(Form("nHitsDedx_%s_%d", qaNames[ii], idxSign),         Form("nHitsDedx%s;nHitsDedx;Tracks", qaTitles[ii]), 
+			 binHnUnCorr[5], minHnUnCorr[5], maxHnUnCorr[5]));
+      list->Add(new TH1F(Form("nHitsFit_%s_%d", qaNames[ii], idxSign),          Form("nHitsFit%s;nHitsFit;Tracks", qaTitles[ii]),  
+			 binHnUnCorr[6], minHnUnCorr[6], maxHnUnCorr[6]));
+      list->Add(new TH1F(Form("nHitsFit_nFitPoss_%s_%d", qaNames[ii], idxSign), Form("nHitsFit/nFitPoss%s;nHitsFit/nFitPoss;Tracks", qaTitles[ii]),  
+			 binHnUnCorr[8], minHnUnCorr[8], maxHnUnCorr[8]));
+      list->Add(new TH1F(Form("nSigmaP_%s_%d", qaNames[ii], idxSign),           Form("nSigmaProton%s;n#Sigma_{proton};Tracks", qaTitles[ii]),  
+			 binHnUnCorr[11], minHnUnCorr[11], maxHnUnCorr[11]));
+      list->Add(new TH2F(Form("nSigmaP_pt_%s_%d", qaNames[ii], idxSign),        Form("nSigmaProton vs #it{p}_{T}%s;n#sigma_{proton};#it{p}_{T} (GeV/#it{c})", qaTitles[ii]),
 			 binHnUnCorr[11], minHnUnCorr[11], maxHnUnCorr[11], binHnUnCorr[1], minHnUnCorr[1], maxHnUnCorr[1]));
     }
   }
@@ -1159,19 +1269,17 @@ void InitializeTrackHists() {
 
 //________________________________________________________________________
 void FillTrackHists(Double_t *aTrack, Int_t mode) {
-      
-  const Char_t *trackNames[] = { "before", "after", "final" };
-
-  TList* list = static_cast<TList*>(fOutList->FindObject(Form("f%s_trackHists_%s", name, trackNames[mode])));
+  // -- Fill track QA histograms
 
   Int_t idxSign = (aTrack[3] < 0) ? 0 : 1;
 
-  (static_cast<TH1F*>(list->FindObject(Form("pt_%s_%d", trackNames[mode], idxSign))))->Fill(aTrack[1]);
-  (static_cast<TH1F*>(list->FindObject(Form("eta_%s_%d", trackNames[mode], idxSign))))->Fill(aTrack[2]);
-  (static_cast<TH1F*>(list->FindObject(Form("dca_%s_%d", trackNames[mode], idxSign))))->Fill(aTrack[4]);
-  (static_cast<TH1F*>(list->FindObject(Form("nHitsDedx_%s_%d", trackNames[mode], idxSign))))->Fill(aTrack[5]);
-  (static_cast<TH1F*>(list->FindObject(Form("nHitsFit_%s_%d", trackNames[mode], idxSign))))->Fill(aTrack[6]);
-  (static_cast<TH1F*>(list->FindObject(Form("nHitsFit_nFitPoss_%s_%d", trackNames[mode], idxSign))))->Fill(aTrack[8]);
-  (static_cast<TH1F*>(list->FindObject(Form("nSigmaP_%s_%d", trackNames[mode], idxSign))))->Fill(aTrack[11]);
-  (static_cast<TH2F*>(list->FindObject(Form("nSigmaP_pt_%s_%d", trackNames[mode], idxSign))))->Fill(aTrack[11], aTrack[1]);
+  TList* list = static_cast<TList*>(fOutList->FindObject(Form("f%s_trackHists_%s", name[analysisIdx], qaNames[mode])));
+  (static_cast<TH1F*>(list->FindObject(Form("pt_%s_%d", qaNames[mode], idxSign))))->Fill(aTrack[1]);
+  (static_cast<TH1F*>(list->FindObject(Form("eta_%s_%d", qaNames[mode], idxSign))))->Fill(aTrack[2]);
+  (static_cast<TH1F*>(list->FindObject(Form("dca_%s_%d", qaNames[mode], idxSign))))->Fill(aTrack[4]);
+  (static_cast<TH1F*>(list->FindObject(Form("nHitsDedx_%s_%d", qaNames[mode], idxSign))))->Fill(aTrack[5]);
+  (static_cast<TH1F*>(list->FindObject(Form("nHitsFit_%s_%d", qaNames[mode], idxSign))))->Fill(aTrack[6]);
+  (static_cast<TH1F*>(list->FindObject(Form("nHitsFit_nFitPoss_%s_%d", qaNames[mode], idxSign))))->Fill(aTrack[8]);
+  (static_cast<TH1F*>(list->FindObject(Form("nSigmaP_%s_%d", qaNames[mode], idxSign))))->Fill(aTrack[11]);
+  (static_cast<TH2F*>(list->FindObject(Form("nSigmaP_pt_%s_%d", qaNames[mode], idxSign))))->Fill(aTrack[11], aTrack[1]);
 }
