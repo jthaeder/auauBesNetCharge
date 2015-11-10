@@ -1,18 +1,19 @@
 #!/bin/bash
 
-##  ./submit.sh <energy> <suffix>
+##  ./submit.sh <energy> <suffix> <chargeSeparationMode> <etaMin> <etaMax>
 
 energy=$1
 suffix=$2
+chargeSeparation=$3
+etaMin=$4
+etaMax=$5
 
 folder=jobs
 
-if [ $# -eq 2 ] ; then
+if [ $# -eq 5 ] ; then
     folder=jobs/${folder}_${energy}_${suffix}
-elif [ $# -eq 1 ] ; then
-    folder=jobs/${folder}_${energy}
 else
-    echo  "   ./submit.sh <energy> <suffix>"
+    echo  "   ./submit.sh <energy> <suffix> <chargeSeparationMode> <etaMin> <etaMax>"
     exit 0
 fi
 
@@ -30,8 +31,10 @@ elif [ "$energy" == "39" ] ; then
     fileList=filelist_39GeV.list.hasRefmult
 elif [ "$energy" == "62.4" ] ; then
     fileList=filelist_62GeV.list.hasRefmult
+elif [ "$energy" == "200" ] ; then
+    fileList=filelist_200GeV.list.hasRefmult
 else
-    echo  "   ./submit.sh <energy> <suffix>"
+    echo  "   ./submit.sh <energy> <suffix> <chargeSeparationMode> <etaMin> <etaMax>"
     exit 0
 fi
 
@@ -49,7 +52,12 @@ for file in `cat datalist` ; do
     rm file.list*
     cp ../../../$file ./file.list
 
-    qsub -l h_vmem=3G -l projectio=1,scratchfree=500,h_cpu=24:00:00 -o ./job.out -e ./job.err run.csh --energy=${energy}
+    ln -sf ../../../StRoot/
+    ln -sf ../../../refMultExtract
+    ln -sf ../../../tools/makeRefMultList.sh
+    
+    qsub -l h_vmem=3G -l projectio=1,scratchfree=500,h_cpu=24:00:00 -o ./job.out -e ./job.err run.csh ${energy} ${chargeSeparation} ${etaMin} $etaMax}
+
     popd > /dev/null
 
     let "jobIdx+=1"
