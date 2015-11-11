@@ -534,7 +534,7 @@ Int_t main(int argc, char** argv) {
       // -- count for refMult2 track -- only for 14.5 GeV
       // ------------------------------------------------------------------
       if (energyIdx == 2 
-	  && TMath::Abs(eta) => etaAbsRangeRefMult[0][0] 
+	  && TMath::Abs(eta) >= etaAbsRangeRefMult[0][0] 
 	  && TMath::Abs(eta) <  etaAbsRangeRefMult[0][1] 
 	  && TMath::Abs(nHitsFit) > nHitsFitRefMult[0]  
 	  && DCA < dcaMaxRefMult[0])
@@ -543,7 +543,7 @@ Int_t main(int argc, char** argv) {
       // -- count for refMult3 track -- only for 14.5 GeV
       // ------------------------------------------------------------------
       if (energyIdx == 2 
-	  && TMath::Abs(eta) => etaAbsRangeRefMult[1][0] 
+	  && TMath::Abs(eta) >= etaAbsRangeRefMult[1][0] 
 	  && TMath::Abs(eta) < etaAbsRangeRefMult[1][1] 
 	  && TMath::Abs(nHitsFit) > nHitsFitRefMult[1]  
 	  && DCA < dcaMaxRefMult[1]
@@ -554,7 +554,7 @@ Int_t main(int argc, char** argv) {
       // -- count for refMult4 track -- only for 14.5 GeV
       // ------------------------------------------------------------------
       if (energyIdx == 2 
-	  && TMath::Abs(eta) => etaAbsRangeRefMult[2][0] 
+	  && TMath::Abs(eta) >= etaAbsRangeRefMult[2][0] 
 	  && TMath::Abs(eta) < etaAbsRangeRefMult[2][1] 
 	  && TMath::Abs(nHitsFit) > nHitsFitRefMult[2]  
 	  && DCA < dcaMaxRefMult[1]
@@ -1189,7 +1189,7 @@ void InitializeMultiplicityStats() {
     // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
     
     list->Add(new TH2F(Form("h%s_%sCorr%s", nameRefMult[analysisIdx], nameRefMult[analysisIdx], multNames[ii]),          
-		       Form("%s vs %sCorr%s;%s;%sCorr", nameRefMult[analysisIdx], nameRefMult[analysisIdx], multTitles[ii]
+		       Form("%s vs %sCorr%s;%s;%sCorr", nameRefMult[analysisIdx], nameRefMult[analysisIdx], multTitles[ii],
 			    nameRefMult[analysisIdx], nameRefMult[analysisIdx]),
 		       601, 0., 600., 601, 0., 600.));
     
@@ -1413,7 +1413,7 @@ void InitializeTrackHists() {
       list->Add(new TH1F(Form("nSigmaP_%s_%d", qaNames[ii], idxSign),           Form("nSigmaProton%s;n#sigma_{proton};Tracks", qaTitles[ii]),  
 			 binHnUnCorr[11], minHnUnCorr[11], maxHnUnCorr[11]));
 
-      list->Add(new TH1F(Form("dca_pt_%s_%d", qaNames[ii], idxSign),            Form("DCA vs #it{p}_{T}%s;DCA (cm);#it{p}_{T} (GeV/#it{c})", qaTitles[ii]),  
+      list->Add(new TH2F(Form("dca_pt_%s_%d", qaNames[ii], idxSign),            Form("DCA vs #it{p}_{T}%s;DCA (cm);#it{p}_{T} (GeV/#it{c})", qaTitles[ii]),  
 			 binHnUnCorr[4], minHnUnCorr[4], maxHnUnCorr[4], binHnUnCorr[1], minHnUnCorr[1], maxHnUnCorr[1]));
       list->Add(new TH2F(Form("nHitsDedx_pt_%s_%d", qaNames[ii], idxSign),      Form("nHitsDedx vs #it{p}_{T}%s;nHitsDedx;#it{p}_{T} (GeV/#it{c})", qaTitles[ii]), 
 			 binHnUnCorr[5], minHnUnCorr[5], maxHnUnCorr[5], binHnUnCorr[1], minHnUnCorr[1], maxHnUnCorr[1]));
@@ -1453,11 +1453,11 @@ void FillRunByRunEventHists(Double_t *aEvent, Int_t mode, Int_t runIdx) {
   // -- Fill run-by-run event distributions
   
   TList* list = static_cast<TList*>(fOutList->FindObject(Form("f%s_runByRunEventHists_%s", name[analysisIdx], qaRunNames[mode])));
-  (static_cast<TProfile*>(list->FindObject(Form("pAllRefMult_%s",   qaRunNames[mode]))))->Fill(0, aEvent[0]);
-  (static_cast<TProfile*>(list->FindObject(Form("pAll%s_%s",        nameRefMult[analysisIdx], qaRunNames[mode]))))->Fill(0, aEvent[1]);
-  (static_cast<TProfile*>(list->FindObject(Form("pAllNetProton_%s", qaRunNames[mode]))))->Fill(0, aEvent[2]);
-  (static_cast<TProfile*>(list->FindObject(Form("pAllneg_%s",       qaRunNames[mode]))))->Fill(0, aEvent[3]);
-  (static_cast<TProfile*>(list->FindObject(Form("pAllpos_%s",       qaRunNames[mode]))))->Fill(0, aEvent[4]);
+  (static_cast<TProfile*>(list->FindObject(Form("pAllRefMult_%s",   qaRunNames[mode]))))->Fill(0., aEvent[0]);
+  (static_cast<TProfile*>(list->FindObject(Form("pAll%s_%s",        nameRefMult[analysisIdx], qaRunNames[mode]))))->Fill(0., aEvent[1]);
+  (static_cast<TProfile*>(list->FindObject(Form("pAllNetProton_%s", qaRunNames[mode]))))->Fill(0., aEvent[2]);
+  (static_cast<TProfile*>(list->FindObject(Form("pAllneg_%s",       qaRunNames[mode]))))->Fill(0., aEvent[3]);
+  (static_cast<TProfile*>(list->FindObject(Form("pAllpos_%s",       qaRunNames[mode]))))->Fill(0., aEvent[4]);
 
   (static_cast<TProfile*>(list->FindObject(Form("pRefMult_%s",   qaRunNames[mode]))))->Fill(runIdx, aEvent[0]);
   (static_cast<TProfile*>(list->FindObject(Form("p%s_%s",        nameRefMult[analysisIdx], qaRunNames[mode]))))->Fill(runIdx, aEvent[1]);
