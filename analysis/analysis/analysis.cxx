@@ -75,9 +75,9 @@ void   FillEventHists(Double_t *aEvent, Int_t mode);
 void   FillTrackHists(Double_t *aTrack, Int_t mode);
 
 void   FillRunByRunEventHists(Double_t *aEvent, Int_t mode, Int_t runIdx);
-void   FillRunByRunTrackHists(Double_t *aTrack, Int_t mode, Int_t runIdx);
+void   FillRunByRunTrackHists(Double_t *aTrack, Int_t isBadRun, Int_t mode, Int_t runIdx);
 
-Int_t  RefMultCorrection(Double_t vz, Int_t refmult2, Int_t anaIdx);
+Int_t  RefMultCorrection(Double_t vz, Int_t refmultX, Int_t anaIdx);
 
 Double_t NN(Double_t, Int_t);
 
@@ -100,6 +100,9 @@ Int_t nMultSets = 5;
 const Char_t *qaNames[]  = { "before", "after"};
 const Char_t *qaTitles[] = { " (before cuts)", " (after cuts)"};
 
+const Char_t *qaRunNames[]  = { "after_good", "after_bad", "before_good", "before_bad"};
+const Char_t *qaRunTitles[] = { " (after cuts - good runs)", " (after cuts - bad runs)", " (before cuts - good runs)", " (before cuts - bad runs)"};
+
 const Char_t* multNames[]  = {
   "_base", 
   "_before_TOF_rejected",  "_before_TOF", 
@@ -120,7 +123,7 @@ const char *exactEnergies[] = {"7.7", "11.5", "14.5", "19.6", "27.0", "39.0", "6
 const Char_t* name[3]  = {"NetCharge", "NetProton", "NetKaon"};
 const Char_t* name2[3] = {"charge", "proton", "kaon"};
 
-const Char_t* nameRefMult[3]      = {"refMult2", "refMult3", "refMult4"};
+const Char_t* nameRefMult[3]      = {"RefMult2", "RefMult3", "RefMult4"};
 const Char_t* nameRefMultShort[3] = {"refmult2", "refmult3", "refmult4"};
 
 enum particleCharge {kPOS, kNEG, kNET, kParticleCharge};
@@ -135,9 +138,12 @@ const Char_t *aEventCutNames[]   = {"all", "bad run", "trigger", "#it{v}_{z} < #
 
 double randomEff[2][9];
 
-Int_t nRuns = 484;
-Int_t runs[] = {15053001, 15053003, 15053004, 15053005, 15053007, 15053008, 15053009, 15053011, 15053012, 15053015, 15053016, 15053017, 15053019, 15053020, 15053021, 15053022, 15053023, 15053024, 15053025, 15053026, 15053047, 15053059, 15053060, 15053062, 15053064, 15053065, 15053067, 15054001, 15054002, 15054003, 15054004, 15054005, 15054006, 15054007, 15054008, 15054009, 15054010, 15054011, 15054012, 15054013, 15054014, 15054015, 15054016, 15054017, 15054018, 15054019, 15054020, 15054021, 15054023, 15054024, 15054025, 15054026, 15054028, 15054029, 15054030, 15054031, 15054037, 15054042, 15054043, 15054044, 15054046, 15054047, 15054048, 15054049, 15054050, 15054051, 15054052, 15055001, 15055002, 15055003, 15055004, 15055005, 15055006, 15055007, 15055008, 15055009, 15055011, 15055012, 15055013, 15055014, 15055015, 15055016, 15055017, 15055019, 15055020, 15055021, 15055135, 15055136, 15055138, 15055139, 15055140, 15055141, 15056001, 15056002, 15056003, 15056004, 15056005, 15056006, 15056007, 15056008, 15056009, 15056013, 15056014, 15056015, 15056016, 15056017, 15056018, 15056019, 15056020, 15056021, 15056022, 15056023, 15056024, 15056025, 15056026, 15056027, 15056028, 15056036, 15056037, 15056038, 15056039, 15058051, 15058052, 15058053, 15058054, 15058055, 15059001, 15059002, 15059003, 15059005, 15059006, 15059007, 15059009, 15059010, 15059011, 15059013, 15059014, 15059015, 15059016, 15059017, 15059018, 15059019, 15059020, 15059021, 15059024, 15059025, 15059026, 15059027, 15059028, 15059029, 15059033, 15059037, 15059038, 15059040, 15059041, 15059042, 15059055, 15059059, 15059060, 15059061, 15059063, 15059064, 15059068, 15059074, 15059076, 15059081, 15059082, 15059086, 15059087, 15059090, 15060001, 15060006, 15060007, 15060009, 15060011, 15060012, 15060014, 15060015, 15060016, 15060017, 15060018, 15060019, 15060020, 15060021, 15060022, 15060023, 15060024, 15060027, 15060028, 15060029, 15060031, 15060032, 15060033, 15060035, 15060036, 15060037, 15060044, 15060045, 15060046, 15060047, 15060048, 15060049, 15060050, 15060051, 15060052, 15060053, 15060067, 15060068, 15060069, 15060070, 15060071, 15061003, 15061004, 15061006, 15061007, 15061008, 15061010, 15061011, 15061012, 15061014, 15061015, 15061016, 15061018, 15061019, 15061021, 15061023, 15061024, 15061025, 15061026, 15061027, 15061028, 15061034, 15061036, 15061037, 15061038, 15061039, 15061041, 15061047, 15061048, 15061051, 15061053, 15061054, 15061055, 15061056, 15061059, 15061060, 15061061, 15061062, 15061063, 15061064, 15062003, 15062004, 15062005, 15062007, 15062008, 15062009, 15062010, 15062011, 15062012, 15062013, 15062015, 15062017, 15062018, 15062020, 15062022, 15062023, 15062024, 15062025, 15062026, 15062031, 15062032, 15062033, 15062034, 15062035, 15062036, 15062037, 15062038, 15062040, 15062041, 15062042, 15062066, 15062070, 15062071, 15062075, 15062076, 15062077, 15063001, 15063002, 15063003, 15063006, 15063008, 15063010, 15063011, 15063012, 15063013, 15063014, 15063016, 15063018, 15063020, 15063021, 15063029, 15063032, 15063036, 15063037, 15063040, 15063041, 15063042, 15063043, 15063045, 15063046, 15063048, 15063049, 15063053, 15063056, 15063059, 15063060, 15063061, 15063062, 15063063, 15063065, 15063066, 15063067, 15064001, 15064002, 15064003, 15064005, 15064006, 15064007, 15064008, 15064009, 15064010, 15064011, 15065011, 15065013, 15065017, 15065054, 15065056, 15065059, 15065060, 15065061, 15066005, 15066006, 15066010, 15066012, 15066014, 15066016, 15066019, 15066020, 15066021, 15066022, 15066023, 15066024, 15066025, 15066026, 15066064, 15066076, 15066077, 15066083, 15066085, 15066086, 15066088, 15067001, 15067002, 15067003, 15067005, 15067006, 15067008, 15067009, 15067011, 15067012, 15067013, 15067014, 15067015, 15067016, 15067018, 15067019, 15067020, 15067022, 15067023, 15067024, 15067025, 15067026, 15067032, 15067033, 15067034, 15067035, 15067036, 15067037, 15067038, 15067040, 15067041, 15067042, 15067043, 15067044, 15067046, 15067048, 15068001, 15068002, 15068003, 15068004, 15068005, 15068006, 15068007, 15068008, 15068009, 15068010, 15068012, 15068022, 15068023, 15068024, 15068025, 15068026, 15068027, 15068028, 15068031, 15068032, 15068033, 15068034, 15068035, 15068036, 15068037, 15068038, 15068039, 15068040, 15068041, 15068042, 15068043, 15068044, 15068045, 15068046, 15068047, 15068048, 15068049, 15069001, 15069002, 15069003, 15069004, 15069005, 15069006, 15069007, 15069008, 15069009, 15069010, 15069011, 15069012, 15069013, 15069014, 15069015, 15069016, 15069017, 15069018, 15069019, 15069020, 15069021, 15069022, 15069023, 15069030, 15069031, 15069034, 15069035, 15069038, 15069039, 15069040, 15069042, 15069043, 15069044, 15069045, 15069046, 15069047, 15069048, 15069049, 15069050, 15069051, 15070001, 15070002, 15070013, 15070014, 15070015, 15070016, 15070017, 15070018, 15070019, 15070020, 15070021} ;
+Int_t nRunsGood = 484;
+Int_t nRunsAll  = 842;
 
+Int_t runsGood[] = {15053001, 15053003, 15053004, 15053005, 15053007, 15053008, 15053009, 15053011, 15053012, 15053015, 15053016, 15053017, 15053019, 15053020, 15053021, 15053022, 15053023, 15053024, 15053025, 15053026, 15053047, 15053059, 15053060, 15053062, 15053064, 15053065, 15053067, 15054001, 15054002, 15054003, 15054004, 15054005, 15054006, 15054007, 15054008, 15054009, 15054010, 15054011, 15054012, 15054013, 15054014, 15054015, 15054016, 15054017, 15054018, 15054019, 15054020, 15054021, 15054023, 15054024, 15054025, 15054026, 15054028, 15054029, 15054030, 15054031, 15054037, 15054042, 15054043, 15054044, 15054046, 15054047, 15054048, 15054049, 15054050, 15054051, 15054052, 15055001, 15055002, 15055003, 15055004, 15055005, 15055006, 15055007, 15055008, 15055009, 15055011, 15055012, 15055013, 15055014, 15055015, 15055016, 15055017, 15055019, 15055020, 15055021, 15055135, 15055136, 15055138, 15055139, 15055140, 15055141, 15056001, 15056002, 15056003, 15056004, 15056005, 15056006, 15056007, 15056008, 15056009, 15056013, 15056014, 15056015, 15056016, 15056017, 15056018, 15056019, 15056020, 15056021, 15056022, 15056023, 15056024, 15056025, 15056026, 15056027, 15056028, 15056036, 15056037, 15056038, 15056039, 15058051, 15058052, 15058053, 15058054, 15058055, 15059001, 15059002, 15059003, 15059005, 15059006, 15059007, 15059009, 15059010, 15059011, 15059013, 15059014, 15059015, 15059016, 15059017, 15059018, 15059019, 15059020, 15059021, 15059024, 15059025, 15059026, 15059027, 15059028, 15059029, 15059033, 15059037, 15059038, 15059040, 15059041, 15059042, 15059055, 15059059, 15059060, 15059061, 15059063, 15059064, 15059068, 15059074, 15059076, 15059081, 15059082, 15059086, 15059087, 15059090, 15060001, 15060006, 15060007, 15060009, 15060011, 15060012, 15060014, 15060015, 15060016, 15060017, 15060018, 15060019, 15060020, 15060021, 15060022, 15060023, 15060024, 15060027, 15060028, 15060029, 15060031, 15060032, 15060033, 15060035, 15060036, 15060037, 15060044, 15060045, 15060046, 15060047, 15060048, 15060049, 15060050, 15060051, 15060052, 15060053, 15060067, 15060068, 15060069, 15060070, 15060071, 15061003, 15061004, 15061006, 15061007, 15061008, 15061010, 15061011, 15061012, 15061014, 15061015, 15061016, 15061018, 15061019, 15061021, 15061023, 15061024, 15061025, 15061026, 15061027, 15061028, 15061034, 15061036, 15061037, 15061038, 15061039, 15061041, 15061047, 15061048, 15061051, 15061053, 15061054, 15061055, 15061056, 15061059, 15061060, 15061061, 15061062, 15061063, 15061064, 15062003, 15062004, 15062005, 15062007, 15062008, 15062009, 15062010, 15062011, 15062012, 15062013, 15062015, 15062017, 15062018, 15062020, 15062022, 15062023, 15062024, 15062025, 15062026, 15062031, 15062032, 15062033, 15062034, 15062035, 15062036, 15062037, 15062038, 15062040, 15062041, 15062042, 15062066, 15062070, 15062071, 15062075, 15062076, 15062077, 15063001, 15063002, 15063003, 15063006, 15063008, 15063010, 15063011, 15063012, 15063013, 15063014, 15063016, 15063018, 15063020, 15063021, 15063029, 15063032, 15063036, 15063037, 15063040, 15063041, 15063042, 15063043, 15063045, 15063046, 15063048, 15063049, 15063053, 15063056, 15063059, 15063060, 15063061, 15063062, 15063063, 15063065, 15063066, 15063067, 15064001, 15064002, 15064003, 15064005, 15064006, 15064007, 15064008, 15064009, 15064010, 15064011, 15065011, 15065013, 15065017, 15065054, 15065056, 15065059, 15065060, 15065061, 15066005, 15066006, 15066010, 15066012, 15066014, 15066016, 15066019, 15066020, 15066021, 15066022, 15066023, 15066024, 15066025, 15066026, 15066064, 15066076, 15066077, 15066083, 15066085, 15066086, 15066088, 15067001, 15067002, 15067003, 15067005, 15067006, 15067008, 15067009, 15067011, 15067012, 15067013, 15067014, 15067015, 15067016, 15067018, 15067019, 15067020, 15067022, 15067023, 15067024, 15067025, 15067026, 15067032, 15067033, 15067034, 15067035, 15067036, 15067037, 15067038, 15067040, 15067041, 15067042, 15067043, 15067044, 15067046, 15067048, 15068001, 15068002, 15068003, 15068004, 15068005, 15068006, 15068007, 15068008, 15068009, 15068010, 15068012, 15068022, 15068023, 15068024, 15068025, 15068026, 15068027, 15068028, 15068031, 15068032, 15068033, 15068034, 15068035, 15068036, 15068037, 15068038, 15068039, 15068040, 15068041, 15068042, 15068043, 15068044, 15068045, 15068046, 15068047, 15068048, 15068049, 15069001, 15069002, 15069003, 15069004, 15069005, 15069006, 15069007, 15069008, 15069009, 15069010, 15069011, 15069012, 15069013, 15069014, 15069015, 15069016, 15069017, 15069018, 15069019, 15069020, 15069021, 15069022, 15069023, 15069030, 15069031, 15069034, 15069035, 15069038, 15069039, 15069040, 15069042, 15069043, 15069044, 15069045, 15069046, 15069047, 15069048, 15069049, 15069050, 15069051, 15070001, 15070002, 15070013, 15070014, 15070015, 15070016, 15070017, 15070018, 15070019, 15070020, 15070021} ;
+
+Int_t runsAll[] = {15046073, 15046089, 15046094, 15046096, 15046102, 15046103, 15046104, 15046105, 15046106, 15046107, 15046108, 15046109, 15046110, 15046111, 15047004, 15047015, 15047016, 15047019, 15047021, 15047023, 15047024, 15047026, 15047027, 15047028, 15047029, 15047030, 15047039, 15047040, 15047041, 15047044, 15047047, 15047050, 15047052, 15047053, 15047056, 15047057, 15047061, 15047062, 15047063, 15047064, 15047065, 15047068, 15047069, 15047070, 15047071, 15047072, 15047074, 15047075, 15047082, 15047085, 15047086, 15047087, 15047093, 15047096, 15047097, 15047098, 15047100, 15047102, 15047104, 15047106, 15048003, 15048004, 15048012, 15048013, 15048014, 15048016, 15048017, 15048018, 15048019, 15048020, 15048021, 15048023, 15048024, 15048025, 15048026, 15048028, 15048029, 15048030, 15048031, 15048033, 15048034, 15048074, 15048075, 15048076, 15048077, 15048078, 15048079, 15048080, 15048081, 15048082, 15048083, 15048084, 15048085, 15048086, 15048087, 15048088, 15048089, 15048091, 15048092, 15048093, 15048094, 15048095, 15048096, 15048097, 15048098, 15049002, 15049003, 15049009, 15049013, 15049014, 15049015, 15049016, 15049017, 15049018, 15049019, 15049020, 15049021, 15049022, 15049023, 15049025, 15049026, 15049027, 15049028, 15049030, 15049031, 15049032, 15049033, 15049037, 15049038, 15049039, 15049040, 15049041, 15049074, 15049077, 15049083, 15049084, 15049085, 15049086, 15049087, 15049088, 15049089, 15049090, 15049091, 15049092, 15049093, 15049094, 15049096, 15049097, 15049098, 15049099, 15050001, 15050002, 15050003, 15050004, 15050005, 15050006, 15050010, 15050011, 15050012, 15050013, 15050014, 15050015, 15050016, 15051131, 15051132, 15051133, 15051134, 15051137, 15051141, 15051144, 15051146, 15051147, 15051148, 15051149, 15051156, 15051157, 15051159, 15051160, 15052001, 15052004, 15052005, 15052006, 15052007, 15052008, 15052009, 15052010, 15052011, 15052014, 15052015, 15052016, 15052017, 15052018, 15052019, 15052020, 15052021, 15052022, 15052023, 15052024, 15052025, 15052026, 15052040, 15052041, 15052042, 15052043, 15052060, 15052061, 15052062, 15052063, 15052064, 15052065, 15052066, 15052067, 15052068, 15052069, 15052070, 15052073, 15052074, 15052075, 15053001, 15053002, 15053003, 15053004, 15053005, 15053006, 15053007, 15053008, 15053009, 15053011, 15053012, 15053014, 15053015, 15053016, 15053017, 15053019, 15053020, 15053021, 15053022, 15053023, 15053024, 15053025, 15053026, 15053027, 15053028, 15053029, 15053034, 15053035, 15053047, 15053048, 15053049, 15053050, 15053052, 15053053, 15053054, 15053055, 15053056, 15053057, 15053058, 15053059, 15053060, 15053062, 15053064, 15053065, 15053067, 15054001, 15054002, 15054003, 15054004, 15054005, 15054006, 15054007, 15054008, 15054009, 15054010, 15054011, 15054012, 15054013, 15054014, 15054015, 15054016, 15054017, 15054018, 15054019, 15054020, 15054021, 15054023, 15054024, 15054025, 15054026, 15054028, 15054029, 15054030, 15054031, 15054037, 15054042, 15054043, 15054044, 15054046, 15054047, 15054048, 15054049, 15054050, 15054051, 15054052, 15054053, 15054054, 15055001, 15055002, 15055003, 15055004, 15055005, 15055006, 15055007, 15055008, 15055009, 15055011, 15055012, 15055013, 15055014, 15055015, 15055016, 15055017, 15055018, 15055019, 15055020, 15055021, 15055131, 15055133, 15055134, 15055135, 15055136, 15055137, 15055138, 15055139, 15055140, 15055141, 15056001, 15056002, 15056003, 15056004, 15056005, 15056006, 15056007, 15056008, 15056009, 15056013, 15056014, 15056015, 15056016, 15056017, 15056018, 15056019, 15056020, 15056021, 15056022, 15056023, 15056024, 15056025, 15056026, 15056027, 15056028, 15056036, 15056037, 15056038, 15056039, 15056113, 15056114, 15056116, 15056117, 15056119, 15056123, 15056124, 15056125, 15057001, 15057002, 15057003, 15057004, 15057005, 15057006, 15057007, 15057008, 15057010, 15057011, 15057012, 15057013, 15057014, 15057015, 15057016, 15057017, 15057018, 15057019, 15057020, 15057021, 15057022, 15057023, 15057029, 15057030, 15057031, 15057048, 15057049, 15057050, 15057051, 15057052, 15057053, 15057054, 15057055, 15057056, 15057057, 15057058, 15057059, 15057060, 15057061, 15057062, 15057063, 15058001, 15058002, 15058003, 15058004, 15058005, 15058006, 15058007, 15058008, 15058009, 15058010, 15058011, 15058012, 15058013, 15058014, 15058015, 15058016, 15058017, 15058018, 15058019, 15058020, 15058021, 15058022, 15058024, 15058025, 15058032, 15058033, 15058043, 15058044, 15058045, 15058048, 15058049, 15058050, 15058051, 15058052, 15058053, 15058054, 15058055, 15059001, 15059002, 15059003, 15059005, 15059006, 15059007, 15059009, 15059010, 15059011, 15059013, 15059014, 15059015, 15059016, 15059017, 15059018, 15059019, 15059020, 15059021, 15059024, 15059025, 15059026, 15059027, 15059028, 15059029, 15059033, 15059037, 15059038, 15059040, 15059041, 15059042, 15059055, 15059057, 15059058, 15059059, 15059060, 15059061, 15059063, 15059064, 15059068, 15059074, 15059076, 15059081, 15059082, 15059086, 15059087, 15059090, 15060001, 15060006, 15060007, 15060009, 15060011, 15060012, 15060014, 15060015, 15060016, 15060017, 15060018, 15060019, 15060020, 15060021, 15060022, 15060023, 15060024, 15060027, 15060028, 15060029, 15060031, 15060032, 15060033, 15060035, 15060036, 15060037, 15060044, 15060045, 15060046, 15060047, 15060048, 15060049, 15060050, 15060051, 15060052, 15060053, 15060061, 15060062, 15060067, 15060068, 15060069, 15060070, 15060071, 15061001, 15061002, 15061003, 15061004, 15061006, 15061007, 15061008, 15061009, 15061010, 15061011, 15061012, 15061014, 15061015, 15061016, 15061018, 15061019, 15061021, 15061023, 15061024, 15061025, 15061026, 15061027, 15061028, 15061034, 15061036, 15061037, 15061038, 15061039, 15061041, 15061047, 15061048, 15061051, 15061053, 15061054, 15061055, 15061056, 15061059, 15061060, 15061061, 15061062, 15061063, 15061064, 15062002, 15062003, 15062004, 15062005, 15062006, 15062007, 15062008, 15062009, 15062010, 15062011, 15062012, 15062013, 15062015, 15062017, 15062018, 15062020, 15062022, 15062023, 15062024, 15062025, 15062026, 15062031, 15062032, 15062033, 15062034, 15062035, 15062036, 15062037, 15062038, 15062040, 15062041, 15062042, 15062066, 15062069, 15062070, 15062071, 15062075, 15062076, 15062077, 15063001, 15063002, 15063003, 15063006, 15063008, 15063010, 15063011, 15063012, 15063013, 15063014, 15063016, 15063017, 15063018, 15063020, 15063021, 15063029, 15063032, 15063036, 15063037, 15063040, 15063041, 15063042, 15063043, 15063045, 15063046, 15063048, 15063049, 15063053, 15063056, 15063059, 15063060, 15063061, 15063062, 15063063, 15063065, 15063066, 15063067, 15064001, 15064002, 15064003, 15064005, 15064006, 15064007, 15064008, 15064009, 15064010, 15064011, 15065011, 15065012, 15065013, 15065014, 15065017, 15065054, 15065056, 15065059, 15065060, 15065061, 15066005, 15066006, 15066008, 15066010, 15066012, 15066013, 15066014, 15066016, 15066017, 15066018, 15066019, 15066020, 15066021, 15066022, 15066023, 15066024, 15066025, 15066026, 15066064, 15066065, 15066070, 15066071, 15066072, 15066074, 15066076, 15066077, 15066082, 15066083, 15066085, 15066086, 15066088, 15067001, 15067002, 15067003, 15067005, 15067006, 15067008, 15067009, 15067011, 15067012, 15067013, 15067014, 15067015, 15067016, 15067018, 15067019, 15067020, 15067022, 15067023, 15067024, 15067025, 15067026, 15067027, 15067032, 15067033, 15067034, 15067035, 15067036, 15067037, 15067038, 15067040, 15067041, 15067042, 15067043, 15067044, 15067046, 15067048, 15068001, 15068002, 15068003, 15068004, 15068005, 15068006, 15068007, 15068008, 15068009, 15068010, 15068012, 15068013, 15068014, 15068016, 15068018, 15068022, 15068023, 15068024, 15068025, 15068026, 15068027, 15068028, 15068029, 15068030, 15068031, 15068032, 15068033, 15068034, 15068035, 15068036, 15068037, 15068038, 15068039, 15068040, 15068041, 15068042, 15068043, 15068044, 15068045, 15068046, 15068047, 15068048, 15068049, 15069001, 15069002, 15069003, 15069004, 15069005, 15069006, 15069007, 15069008, 15069009, 15069010, 15069011, 15069012, 15069013, 15069014, 15069015, 15069016, 15069017, 15069018, 15069019, 15069020, 15069021, 15069022, 15069023, 15069030, 15069031, 15069034, 15069035, 15069036, 15069038, 15069039, 15069040, 15069042, 15069043, 15069044, 15069045, 15069046, 15069047, 15069048, 15069049, 15069050, 15069051, 15070001, 15070002, 15070008, 15070009, 15070010, 15070013, 15070014, 15070015, 15070016, 15070017, 15070018, 15070019, 15070020, 15070021};
 
 // ----------------------------------------------------------------------------  
 // -- Globals
@@ -160,6 +166,9 @@ Int_t                 energyIdx   = -1;             // energyIdx
 Int_t                 analysisIdx = -1;             // 0 - net-charge
                                                     // 1 - net-proton
                                                     // 2 - net-kaon
+// =======================================================================
+Int_t                 qaMode = 0;                   // 0 - NO QA MODE
+                                                    // 1 - QA MODE
 // =======================================================================
 Int_t                 useModeChargeSeparation = 0;  // 0 - off
                                                     // 1 - positive charge -> positive eta
@@ -458,8 +467,8 @@ Int_t main(int argc, char** argv) {
     
     Int_t runId   = pico->Event_mRunId[0];
     Int_t runIdx = 0;
-    for (Int_t ii = 0; ii < nRuns; ++ii) {
-      if (runId == runs[ii]) {
+    for (Int_t ii = 0; ii < nRunsAll; ++ii) {
+      if (runId == runsAll[ii]) {
 	runIdx = ii;
 	break;
       }
@@ -697,6 +706,12 @@ Int_t main(int argc, char** argv) {
 
     // -- Fill statistics
     // ------------------------------------------------------------------
+    Int_t isBadRun = (aEventCuts[1]) ? 1 : 0;
+
+    // -- don't cut on bad runs for qaMode
+    if (qaMode)
+      aEventCuts[1] = 0;
+    
     Bool_t isRejectedWithoutTOF = (aEventCuts[0] || aEventCuts[1] || aEventCuts[2] || aEventCuts[3] || 
 				   aEventCuts[4] || aEventCuts[5] || aEventCuts[6]) ? kTRUE : kFALSE;
 
@@ -838,7 +853,7 @@ Int_t main(int argc, char** argv) {
       // -- fill ThnSparse - tracks
       // ------------------------------------------------------------------
       Double_t aTrack[12] = {Double_t(centrality), pt, eta, sign, DCA,
-			     Double_t(nHitsDedx), Double_t(nHitsFit), Double_t(nFitPoss), ratio, 
+			     Double_t(nHitsDedx), Double_t(TMath::Abs(nHitsFit)), Double_t(nFitPoss), ratio, 
 			     Double_t(isInRefMult), Double_t(isTrackAccepted), nSigma[analysisIdx]};
       
 #if TRACK_THN      
@@ -846,7 +861,7 @@ Int_t main(int argc, char** argv) {
 #endif
 
       FillTrackHists(aTrack, 0);
-      FillRunByRunTrackHists(aTrack, 0, runIdx);
+      FillRunByRunTrackHists(aTrack, isBadRun, 0, runIdx);
 
       // -- reject track
       // ------------------------------------------------------------------
@@ -854,7 +869,7 @@ Int_t main(int argc, char** argv) {
 	continue;
       
       FillTrackHists(aTrack, 1);
-      FillRunByRunTrackHists(aTrack, 1, runIdx);
+      FillRunByRunTrackHists(aTrack, isBadRun, 1, runIdx);
 
       // ------------------------------------------------------------------
       // -- Add up for event multiplicity
@@ -905,7 +920,7 @@ Int_t main(int argc, char** argv) {
 			     Double_t(fNp[0][1] - fNp[0][0]), 
 			     Double_t(fNp[0][0]), Double_t (fNp[0][1])};
 
-    FillRunByRunEventHists(aEventRun, 1, runIdx); 
+    FillRunByRunEventHists(aEventRun, isBadRun, runIdx); 
   
     // ------------------------------------------------------------------
 
@@ -1135,59 +1150,85 @@ void InitializeMultiplicityStats() {
       hCentralityStat->GetXaxis()->SetBinLabel(jj+1, aCentralityNames[jj]);
   
     // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
-    list->Add(new TH1F(Form("hRefMultStat%s", multNames[ii]),                    Form("RefMult  Statistics%s;RefMult;Events",multTitles[ii]),
+    list->Add(new TH1F(Form("hRefMultStat%s", multNames[ii]),                    
+		       Form("RefMult  Statistics%s;RefMult;Events",multTitles[ii]),
 		       601, 0., 600.));
-    list->Add(new TH1F(Form("hRefMult2Stat%s", multNames[ii]),                   Form("RefMult2 Statistics%s;RefMult2;Events",multTitles[ii]),  
+
+    list->Add(new TH1F(Form("h%sStat%s", nameRefMult[analysisIdx], multNames[ii]), 
+		       Form("%s Statistics%s;%s;Events", nameRefMult[analysisIdx], multTitles[ii], nameRefMult[analysisIdx]),  
 		       601, 0., 600.));
 
     // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 
-    list->Add(new TH2F(Form("hRefMult2_nGlobalTracks%s", multNames[ii]),         Form("RefMult2 vs nGlobalTracks%s;RefMult2;nGlobalTracks",multTitles[ii]),
+    list->Add(new TH2F(Form("h%s_nGlobalTracks%s", nameRefMult[analysisIdx], multNames[ii]),         
+		       Form("%s vs nGlobalTracks%s;%s;nGlobalTracks", nameRefMult[analysisIdx], multTitles[ii], nameRefMult[analysisIdx]),
 		       601, 0., 600., 2501, 0., 2500.));
-    list->Add(new TH2F(Form("hRefMult2_nPrimaryTracks%s", multNames[ii]),        Form("RefMult2 vs nPrimaryTracks%s;RefMult2;nPrimaryTracks",multTitles[ii]),
+
+    list->Add(new TH2F(Form("h%s_nPrimaryTracks%s", nameRefMult[analysisIdx], multNames[ii]),        
+		       Form("%s vs nPrimaryTracks%s;%s;nPrimaryTracks", nameRefMult[analysisIdx], multTitles[ii], nameRefMult[analysisIdx]),
 		       601, 0., 600., 1001, 0., 1000.));
-    list->Add(new TH2F(Form("hRefMult2_nTOFMatch%s", multNames[ii]),             Form("RefMult2 vs nTOFMatch%s;RefMult2;nTOFMatch",multTitles[ii]),
+
+    list->Add(new TH2F(Form("h%s_nTOFMatch%s", nameRefMult[analysisIdx], multNames[ii]),   
+		       Form("%s vs nTOFMatch%s;%s;nTOFMatch", nameRefMult[analysisIdx], multTitles[ii], nameRefMult[analysisIdx]),
 		       601, 0., 600., 601, 0., 600.));
     
     // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
     
-    list->Add(new TH2F(Form("hRefMult_nGlobalTracks%s", multNames[ii]),          Form("RefMult vs nGlobalTracks%s;RefMult;nGlobalTracks",multTitles[ii]),
+    list->Add(new TH2F(Form("hRefMult_nGlobalTracks%s", multNames[ii]),          
+		       Form("RefMult vs nGlobalTracks%s;RefMult;nGlobalTracks", multTitles[ii]),
 		       601, 0., 600., 2501, 0., 2500.));
-    list->Add(new TH2F(Form("hRefMult_nPrimaryTracks%s", multNames[ii]),         Form("RefMult vs nPrimaryTracks%s;RefMult;nPrimaryTracks",multTitles[ii]),
+
+    list->Add(new TH2F(Form("hRefMult_nPrimaryTracks%s", multNames[ii]),         
+		       Form("RefMult vs nPrimaryTracks%s;RefMult;nPrimaryTracks", multTitles[ii]),
 		       601, 0., 600., 1001, 0., 1000.));
-    list->Add(new TH2F(Form("hRefMult_nTOFMatch%s", multNames[ii]),              Form("RefMult vs nTOFMatch%s;RefMult;nTOFMatch",multTitles[ii]),
+
+    list->Add(new TH2F(Form("hRefMult_nTOFMatch%s", multNames[ii]),              
+		       Form("RefMult vs nTOFMatch%s;RefMult;nTOFMatch", multTitles[ii]),
 		       601, 0., 600., 601, 0., 600.));
     
     // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
     
-    list->Add(new TH2F(Form("hRefMult2_RefMult2Corr%s", multNames[ii]),          Form("RefMult2 vs RefMult2Corr%s;RefMult2;RefMult2Corr",multTitles[ii]),
+    list->Add(new TH2F(Form("h%s_%sCorr%s", nameRefMult[analysisIdx], nameRefMult[analysisIdx], multNames[ii]),          
+		       Form("%s vs %sCorr%s;%s;%sCorr", nameRefMult[analysisIdx], nameRefMult[analysisIdx], multTitles[ii]
+			    nameRefMult[analysisIdx], nameRefMult[analysisIdx]),
 		       601, 0., 600., 601, 0., 600.));
-    list->Add(new TH2F(Form("hRefMult2_RefMult%s", multNames[ii]),               Form("RefMult2 vs RefMult%s;RefMult2;RefMult",multTitles[ii]),
+    
+    list->Add(new TH2F(Form("h%s_RefMult%s", nameRefMult[analysisIdx], multNames[ii]),               
+		       Form("%s vs RefMult%s;%s;RefMult", nameRefMult[analysisIdx], multTitles[ii], nameRefMult[analysisIdx]),
 		       601, 0., 600., 601, 0., 600.));
     
     // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
     
-    list->Add(new TH2F(Form("hnPrimaryTracks_nGlobalTracks%s", multNames[ii]),   Form("nPrimaryTracks vs nGlobalTracks%s;nPrimaryTracks;nGlobalTracks",multTitles[ii]),
+    list->Add(new TH2F(Form("hnPrimaryTracks_nGlobalTracks%s", multNames[ii]),   
+		       Form("nPrimaryTracks vs nGlobalTracks%s;nPrimaryTracks;nGlobalTracks", multTitles[ii]),
 		       1001, 0., 1000., 2501, 0., 2500.));
-    list->Add(new TH2F(Form("hnPrimaryTracks_nTOFMatch%s", multNames[ii]),       Form("nPrimaryTracks vs nTOFMatch%s; nPrimaryTracks;nTOFMatch",multTitles[ii]),
+
+    list->Add(new TH2F(Form("hnPrimaryTracks_nTOFMatch%s", multNames[ii]),       
+		       Form("nPrimaryTracks vs nTOFMatch%s; nPrimaryTracks;nTOFMatch", multTitles[ii]),
 		       1001, 0., 1000., 601, 0., 600.));    
-    list->Add(new TH2F(Form("hnGlobalTracks_nTOFMatch%s", multNames[ii]),        Form("nGlobalTracks vs nTOFMatch%s;nGlobalTracks;nTOFMatch",multTitles[ii]),
+    
+    list->Add(new TH2F(Form("hnGlobalTracks_nTOFMatch%s", multNames[ii]),        
+		       Form("nGlobalTracks vs nTOFMatch%s;nGlobalTracks;nTOFMatch", multTitles[ii]),
 		       2501, 0., 2500., 601, 0., 600.));
       
     // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 
     if ( ii == nMultSets-1 ) {
-      list->Add(new TProfile("hRefMult2Mean",            "RefMult2 Mean vs Centrality;Centrality Bins;<RefMult2>",         fNCentralityBins,-0.5,fNCentralityBins-0.5));
-      TH1F* hRefMult2Mean = static_cast<TH1F*>(list->Last());
+      list->Add(new TProfile(Form("h%sMean", nameRefMult[analysisIdx]),
+			     Form("%s Mean vs Centrality;Centrality Bins;<%s>", nameRefMult[analysisIdx], nameRefMult[analysisIdx]),
+			     fNCentralityBins, -0.5, fNCentralityBins-0.5));
+      TH1F* hRefMultXMean = static_cast<TH1F*>(list->Last());
       
-      list->Add(new TProfile("hRefMult2CorrMean",        "RefMult2Corr Mean vs Centrality;Centrality Bins;<RefMult2Corr>", fNCentralityBins,-0.5,fNCentralityBins-0.5));
-      TH1F* hRefMult2CorrMean = static_cast<TH1F*>(list->Last());
+      list->Add(new TProfile(Form("h%sCorrMean", nameRefMult[analysisIdx]),        
+			     Form("%sCorr Mean vs Centrality;Centrality Bins;<%sCorr>", nameRefMult[analysisIdx], nameRefMult[analysisIdx]), 
+			     fNCentralityBins, -0.5, fNCentralityBins-0.5));
+      TH1F* hRefMultXCorrMean = static_cast<TH1F*>(list->Last());
       
       // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
       
       for (Int_t jj=0; jj < fNCentralityBins; jj++) {
-	hRefMult2Mean->GetXaxis()->SetBinLabel(jj+1, aCentralityNames[jj]);
-	hRefMult2CorrMean->GetXaxis()->SetBinLabel(jj+1, aCentralityNames[jj]);
+	hRefMultXMean->GetXaxis()->SetBinLabel(jj+1, aCentralityNames[jj]);
+	hRefMultXCorrMean->GetXaxis()->SetBinLabel(jj+1, aCentralityNames[jj]);
       }
     }
   }    
@@ -1204,13 +1245,13 @@ void InitializeMultiplicityStats() {
   (static_cast<TH1F*>(list->FindObject(Form("hCentralityStat%s",               multNames[mode]))))->Fill(aMult[0]);
 
   (static_cast<TH1F*>(list->FindObject(Form("hRefMultStat%s",                  multNames[mode]))))->Fill(aMult[1]);  
-  (static_cast<TH1F*>(list->FindObject(Form("hRefMult2Stat%s",                 multNames[mode]))))->Fill(aMult[2]);
+  (static_cast<TH1F*>(list->FindObject(Form("h%sStat%s",                 nameRefMult[analysisIdx], multNames[mode]))))->Fill(aMult[2]);
 
   // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 
-  (static_cast<TH2F*>(list->FindObject(Form("hRefMult2_nGlobalTracks%s",       multNames[mode]))))->Fill(aMult[2], aMult[4]);
-  (static_cast<TH2F*>(list->FindObject(Form("hRefMult2_nPrimaryTracks%s",      multNames[mode]))))->Fill(aMult[2], aMult[5]);
-  (static_cast<TH2F*>(list->FindObject(Form("hRefMult2_nTOFMatch%s",           multNames[mode]))))->Fill(aMult[2], aMult[6]);
+  (static_cast<TH2F*>(list->FindObject(Form("h%s_nGlobalTracks%s",       nameRefMult[analysisIdx], multNames[mode]))))->Fill(aMult[2], aMult[4]);
+  (static_cast<TH2F*>(list->FindObject(Form("h%s_nPrimaryTracks%s",      nameRefMult[analysisIdx], multNames[mode]))))->Fill(aMult[2], aMult[5]);
+  (static_cast<TH2F*>(list->FindObject(Form("h%s_nTOFMatch%s",           nameRefMult[analysisIdx], multNames[mode]))))->Fill(aMult[2], aMult[6]);
 
   // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 
@@ -1220,8 +1261,8 @@ void InitializeMultiplicityStats() {
   
   // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
   
-  (static_cast<TH2F*>(list->FindObject(Form("hRefMult2_RefMult2Corr%s",        multNames[mode]))))->Fill(aMult[2], aMult[3]);
-  (static_cast<TH2F*>(list->FindObject(Form("hRefMult2_RefMult%s",             multNames[mode]))))->Fill(aMult[2], aMult[1]);
+  (static_cast<TH2F*>(list->FindObject(Form("h%s_%sCorr%s", nameRefMult[analysisIdx], nameRefMult[analysisIdx], multNames[mode]))))->Fill(aMult[2], aMult[3]);
+  (static_cast<TH2F*>(list->FindObject(Form("h%s_RefMult%s", nameRefMult[analysisIdx], multNames[mode]))))->Fill(aMult[2], aMult[1]);
   
   (static_cast<TH2F*>(list->FindObject(Form("hnPrimaryTracks_nGlobalTracks%s", multNames[mode]))))->Fill(aMult[5], aMult[4]);
 
@@ -1232,8 +1273,8 @@ void InitializeMultiplicityStats() {
   // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 
   if (mode == nMultSets-1) {
-    (static_cast<TProfile*>(list->FindObject("hRefMult2Mean")))->Fill(aMult[0], aMult[2]);
-    (static_cast<TProfile*>(list->FindObject("hRefMult2CorrMean")))->Fill(aMult[0], aMult[3]);
+    (static_cast<TProfile*>(list->FindObject(Form("h%sMean", nameRefMult[analysisIdx]))))->Fill(aMult[0], aMult[2]);
+    (static_cast<TProfile*>(list->FindObject(Form("h%sCorrMean", nameRefMult[analysisIdx]))))->Fill(aMult[0], aMult[3]);
   }
 }
 
@@ -1280,17 +1321,26 @@ void InitializeRunByRunEventHists() {
   for (Int_t ii = 0 ; ii < 2 ; ++ii) {
     fOutList->Add(new TList);
     TList *list = static_cast<TList*>(fOutList->Last());
-    list->SetName(Form("f%s_runByRunEventHists_%s", name[analysisIdx], qaNames[ii]));
+    list->SetName(Form("f%s_runByRunEventHists_%s", name[analysisIdx], qaRunNames[ii]));
     list->SetOwner(kTRUE);
-    
-    list->Add(new TProfile(Form("pRefMult_%s", qaNames[ii]), Form("<RefMult>%s;<RefMult>;Run", qaTitles[ii]), nRuns, -0.5, nRuns-0.5));
-    //    list->Add(new TProfile(Form("pRefMult2_%s", qaNames[ii]), Form("<RefMult2>%s;<RefMult2>;Run", qaTitles[ii]), nRuns, -0.5, nRuns-0.5));
-    list->Add(new TProfile(Form("pRefMult3_%s", qaNames[ii]), Form("<RefMult3>%s;<RefMult3>;Run", qaTitles[ii]), nRuns, -0.5, nRuns-0.5));
-    //    list->Add(new TProfile(Form("pRefMult4_%s", qaNames[ii]), Form("<RefMult4>%s;<RefMult4>;Run", qaTitles[ii]), nRuns, -0.5, nRuns-0.5));
 
-    list->Add(new TProfile(Form("pNetProton_%s", qaNames[ii]), Form("<NetProton>%s;<NetProton>;Run", qaTitles[ii]), nRuns, -0.5, nRuns-0.5));
-    list->Add(new TProfile(Form("pneg_%s", qaNames[ii]), Form("<neg>%s;<neg>;Run", qaTitles[ii]), nRuns, -0.5, nRuns-0.5));
-    list->Add(new TProfile(Form("ppos_%s", qaNames[ii]), Form("<pos>%s;<pos>;Run", qaTitles[ii]), nRuns, -0.5, nRuns-0.5));
+    // -- Over all runs
+    list->Add(new TProfile(Form("pAllRefMult_%s", qaRunNames[ii]), Form("<RefMult>%s;All;<RefMult>", qaRunTitles[ii]), 1, -0.5, 0.5));
+    list->Add(new TProfile(Form("pAll%s_%s", nameRefMult[analysisIdx], qaRunNames[ii]), 
+			   Form("<%s>%s;All;<%s>", nameRefMult[analysisIdx], qaRunTitles[ii], nameRefMult[analysisIdx]), 1, -0.5, 0.5));
+
+    list->Add(new TProfile(Form("pAllNetProton_%s", qaRunNames[ii]), Form("<NetProton>%s;All;<NetProton>", qaRunTitles[ii]), 1, -0.5, 0.5));
+    list->Add(new TProfile(Form("pAllneg_%s", qaRunNames[ii]), Form("<neg>%s;All;<neg>", qaRunTitles[ii]), 1, -0.5, 0.5));
+    list->Add(new TProfile(Form("pAllpos_%s", qaRunNames[ii]), Form("<pos>%s;All;<pos>", qaRunTitles[ii]), 1, -0.5, 0.5));
+
+    // -- Run by run
+    list->Add(new TProfile(Form("pRefMult_%s", qaRunNames[ii]), Form("<RefMult>%s;Run;<RefMult>", qaRunTitles[ii]), nRunsAll, -0.5, nRunsAll-0.5));
+    list->Add(new TProfile(Form("p%s_%s", nameRefMult[analysisIdx], qaRunNames[ii]), 
+			   Form("<%s>%s;Run;<%s>", nameRefMult[analysisIdx], qaRunTitles[ii], nameRefMult[analysisIdx]), nRunsAll, -0.5, nRunsAll-0.5));
+
+    list->Add(new TProfile(Form("pNetProton_%s", qaRunNames[ii]), Form("<NetProton>%s;Run;<NetProton>", qaRunTitles[ii]), nRunsAll, -0.5, nRunsAll-0.5));
+    list->Add(new TProfile(Form("pneg_%s", qaRunNames[ii]), Form("<neg>%s;Run;<neg>", qaRunTitles[ii]), nRunsAll, -0.5, nRunsAll-0.5));
+    list->Add(new TProfile(Form("ppos_%s", qaRunNames[ii]), Form("<pos>%s;Run;<pos>", qaRunTitles[ii]), nRunsAll, -0.5, nRunsAll-0.5));
   }
 }
 
@@ -1298,29 +1348,26 @@ void InitializeRunByRunEventHists() {
 void InitializeRunByRunTrackHists() {
   // -- Initialize run-by-run event distributions
   
-  for (Int_t ii = 0 ; ii < 2 ; ++ii) {
+  for (Int_t ii = 0 ; ii < 4 ; ++ii) {
     fOutList->Add(new TList);
     TList *list = static_cast<TList*>(fOutList->Last());
-    list->SetName(Form("f%s_runByRunTrackHists_%s", name[analysisIdx], qaNames[ii]));
+    list->SetName(Form("f%s_runByRunTrackHists_%s", name[analysisIdx], qaRunNames[ii]));
     list->SetOwner(kTRUE);
     
-    list->Add(new TProfile(Form("pPt_neg_%s", qaNames[ii]), Form("<pT_neg>%s;<pT_neg>;Run", qaTitles[ii]), nRuns, -0.5, nRuns-0.5));
-    list->Add(new TProfile(Form("pPt_pos_%s", qaNames[ii]), Form("<pT_pos>%s;<pT_pos>;Run", qaTitles[ii]), nRuns, -0.5, nRuns-0.5));
+    list->Add(new TProfile(Form("pPt_neg_%s", qaRunNames[ii]), Form("<p_T^{neg}>%s;Run;<p_T^{neg}>", qaRunTitles[ii]), nRunsAll, -0.5, nRunsAll-0.5));
+    list->Add(new TProfile(Form("pPt_pos_%s", qaRunNames[ii]), Form("<p_T^{po}>%s;Run;<p_T^{pos}>", qaRunTitles[ii]), nRunsAll, -0.5, nRunsAll-0.5));
 
-    list->Add(new TProfile(Form("pDca_%s", qaNames[ii]), Form("<dca>%s;<dca>;Run", qaTitles[ii]), nRuns, -0.5, nRuns-0.5));
-    list->Add(new TProfile(Form("pNSigmaProton_%s", qaNames[ii]), Form("<nSigmaProton>%s;<nSigmaProton>;Run", qaTitles[ii]), nRuns, -0.5, nRuns-0.5));
+    list->Add(new TProfile(Form("pDca_%s", qaRunNames[ii]), Form("<dca>%s;Run;<dca>", qaRunTitles[ii]), nRunsAll, -0.5, nRunsAll-0.5));
+    list->Add(new TProfile(Form("pNSigmaProton_%s", qaRunNames[ii]), Form("<nSigmaProton>%s;Run;<nSigmaProton>", qaRunTitles[ii]), nRunsAll, -0.5, nRunsAll-0.5));
 
-    list->Add(new TH2D(Form("hPt_neg_%s", qaNames[ii]), Form("pT_neg%s;Run;pT", qaTitles[ii]), 
-		       nRuns, -0.5, nRuns-0.5,
+    list->Add(new TH2D(Form("hPt_neg_%s", qaRunNames[ii]), Form("p_T^{neg}%s;Run;p_T^{neg}", qaRunTitles[ii]), 
+		       nRunsAll, -0.5, nRunsAll-0.5,
 		       binHnUnCorr[1], minHnUnCorr[1], maxHnUnCorr[1]));
-    list->Add(new TH2D(Form("hPt_pos_%s", qaNames[ii]), Form("pT_pos%s;Run;pT", qaTitles[ii]), 
-		       nRuns, -0.5, nRuns-0.5,
+    list->Add(new TH2D(Form("hPt_pos_%s", qaRunNames[ii]), Form("p_T^{pos}%s;Run;p_T^{pos}", qaRunTitles[ii]), 
+		       nRunsAll, -0.5, nRunsAll-0.5,
 		       binHnUnCorr[1], minHnUnCorr[1], maxHnUnCorr[1]));
-
   }
 }
-
-
 
 //________________________________________________________________________
 void FillEventHists(Double_t *aEvent, Int_t mode) {
@@ -1355,16 +1402,27 @@ void InitializeTrackHists() {
 			 binHnUnCorr[2], minHnUnCorr[2], maxHnUnCorr[2]));
       list->Add(new TH1F(Form("dca_%s_%d", qaNames[ii], idxSign),               Form("DCA%s;DCA (cm);Tracks", qaTitles[ii]),  
 			 binHnUnCorr[4], minHnUnCorr[4], maxHnUnCorr[4]));
+      list->Add(new TH1F(Form("dca_%s_%d", qaNames[ii], idxSign),               Form("DCA%s;DCA (cm);Tracks", qaTitles[ii]),  
+			 binHnUnCorr[4], minHnUnCorr[4], maxHnUnCorr[4]));
       list->Add(new TH1F(Form("nHitsDedx_%s_%d", qaNames[ii], idxSign),         Form("nHitsDedx%s;nHitsDedx;Tracks", qaTitles[ii]), 
 			 binHnUnCorr[5], minHnUnCorr[5], maxHnUnCorr[5]));
       list->Add(new TH1F(Form("nHitsFit_%s_%d", qaNames[ii], idxSign),          Form("nHitsFit%s;nHitsFit;Tracks", qaTitles[ii]),  
 			 binHnUnCorr[6], minHnUnCorr[6], maxHnUnCorr[6]));
       list->Add(new TH1F(Form("nHitsFit_nFitPoss_%s_%d", qaNames[ii], idxSign), Form("nHitsFit/nFitPoss%s;nHitsFit/nFitPoss;Tracks", qaTitles[ii]),  
 			 binHnUnCorr[8], minHnUnCorr[8], maxHnUnCorr[8]));
-      list->Add(new TH1F(Form("nSigmaP_%s_%d", qaNames[ii], idxSign),           Form("nSigmaProton%s;n#Sigma_{proton};Tracks", qaTitles[ii]),  
+      list->Add(new TH1F(Form("nSigmaP_%s_%d", qaNames[ii], idxSign),           Form("nSigmaProton%s;n#sigma_{proton};Tracks", qaTitles[ii]),  
 			 binHnUnCorr[11], minHnUnCorr[11], maxHnUnCorr[11]));
+
+      list->Add(new TH1F(Form("dca_pt_%s_%d", qaNames[ii], idxSign),            Form("DCA vs #it{p}_{T}%s;DCA (cm);#it{p}_{T} (GeV/#it{c})", qaTitles[ii]),  
+			 binHnUnCorr[4], minHnUnCorr[4], maxHnUnCorr[4], binHnUnCorr[1], minHnUnCorr[1], maxHnUnCorr[1]));
+      list->Add(new TH2F(Form("nHitsDedx_pt_%s_%d", qaNames[ii], idxSign),      Form("nHitsDedx vs #it{p}_{T}%s;nHitsDedx;#it{p}_{T} (GeV/#it{c})", qaTitles[ii]), 
+			 binHnUnCorr[5], minHnUnCorr[5], maxHnUnCorr[5], binHnUnCorr[1], minHnUnCorr[1], maxHnUnCorr[1]));
+      list->Add(new TH2F(Form("nHitsFit_pt_%s_%d", qaNames[ii], idxSign),       Form("nHitsFit vs #it{p}_{T}%s;nHitsFit;#it{p}_{T} (GeV/#it{c})", qaTitles[ii]),  
+			 binHnUnCorr[6], minHnUnCorr[6], maxHnUnCorr[6], binHnUnCorr[1], minHnUnCorr[1], maxHnUnCorr[1]));
       list->Add(new TH2F(Form("nSigmaP_pt_%s_%d", qaNames[ii], idxSign),        Form("nSigmaProton vs #it{p}_{T}%s;n#sigma_{proton};#it{p}_{T} (GeV/#it{c})", qaTitles[ii]),
 			 binHnUnCorr[11], minHnUnCorr[11], maxHnUnCorr[11], binHnUnCorr[1], minHnUnCorr[1], maxHnUnCorr[1]));
+
+
     }
   }
 }
@@ -1383,6 +1441,10 @@ void FillTrackHists(Double_t *aTrack, Int_t mode) {
   (static_cast<TH1F*>(list->FindObject(Form("nHitsFit_%s_%d", qaNames[mode], idxSign))))->Fill(aTrack[6]);
   (static_cast<TH1F*>(list->FindObject(Form("nHitsFit_nFitPoss_%s_%d", qaNames[mode], idxSign))))->Fill(aTrack[8]);
   (static_cast<TH1F*>(list->FindObject(Form("nSigmaP_%s_%d", qaNames[mode], idxSign))))->Fill(aTrack[11]);
+
+  (static_cast<TH2F*>(list->FindObject(Form("dca_pt_%s_%d", qaNames[mode], idxSign))))->Fill(aTrack[4], aTrack[1]);
+  (static_cast<TH2F*>(list->FindObject(Form("nHitsDedx_pt_%s_%d", qaNames[mode], idxSign))))->Fill(aTrack[5], aTrack[1]);
+  (static_cast<TH2F*>(list->FindObject(Form("nHitsFit_pt_%s_%d", qaNames[mode], idxSign))))->Fill(aTrack[6], aTrack[1]);
   (static_cast<TH2F*>(list->FindObject(Form("nSigmaP_pt_%s_%d", qaNames[mode], idxSign))))->Fill(aTrack[11], aTrack[1]);
 }
 
@@ -1390,30 +1452,40 @@ void FillTrackHists(Double_t *aTrack, Int_t mode) {
 void FillRunByRunEventHists(Double_t *aEvent, Int_t mode, Int_t runIdx) {
   // -- Fill run-by-run event distributions
   
-  TList* list = static_cast<TList*>(fOutList->FindObject(Form("f%s_runByRunEventHists_%s", name[analysisIdx], qaNames[mode])));
-  (static_cast<TProfile*>(list->FindObject(Form("pRefMult_%s",   qaNames[mode]))))->Fill(runIdx, aEvent[0]);
-  (static_cast<TProfile*>(list->FindObject(Form("pRefMult3_%s",  qaNames[mode]))))->Fill(runIdx, aEvent[1]);
-  (static_cast<TProfile*>(list->FindObject(Form("pNetProton_%s", qaNames[mode]))))->Fill(runIdx, aEvent[2]);
-  (static_cast<TProfile*>(list->FindObject(Form("pneg_%s",       qaNames[mode]))))->Fill(runIdx, aEvent[3]);
-  (static_cast<TProfile*>(list->FindObject(Form("ppos_%s",       qaNames[mode]))))->Fill(runIdx, aEvent[4]);
+  TList* list = static_cast<TList*>(fOutList->FindObject(Form("f%s_runByRunEventHists_%s", name[analysisIdx], qaRunNames[mode])));
+  (static_cast<TProfile*>(list->FindObject(Form("pAllRefMult_%s",   qaRunNames[mode]))))->Fill(0, aEvent[0]);
+  (static_cast<TProfile*>(list->FindObject(Form("pAll%s_%s",        nameRefMult[analysisIdx], qaRunNames[mode]))))->Fill(0, aEvent[1]);
+  (static_cast<TProfile*>(list->FindObject(Form("pAllNetProton_%s", qaRunNames[mode]))))->Fill(0, aEvent[2]);
+  (static_cast<TProfile*>(list->FindObject(Form("pAllneg_%s",       qaRunNames[mode]))))->Fill(0, aEvent[3]);
+  (static_cast<TProfile*>(list->FindObject(Form("pAllpos_%s",       qaRunNames[mode]))))->Fill(0, aEvent[4]);
+
+  (static_cast<TProfile*>(list->FindObject(Form("pRefMult_%s",   qaRunNames[mode]))))->Fill(runIdx, aEvent[0]);
+  (static_cast<TProfile*>(list->FindObject(Form("p%s_%s",        nameRefMult[analysisIdx], qaRunNames[mode]))))->Fill(runIdx, aEvent[1]);
+  (static_cast<TProfile*>(list->FindObject(Form("pNetProton_%s", qaRunNames[mode]))))->Fill(runIdx, aEvent[2]);
+  (static_cast<TProfile*>(list->FindObject(Form("pneg_%s",       qaRunNames[mode]))))->Fill(runIdx, aEvent[3]);
+  (static_cast<TProfile*>(list->FindObject(Form("ppos_%s",       qaRunNames[mode]))))->Fill(runIdx, aEvent[4]);
 }
 
 //________________________________________________________________________
-void FillRunByRunTrackHists(Double_t *aTrack, Int_t mode, Int_t runIdx) {
+void FillRunByRunTrackHists(Double_t *aTrack, Int_t isBadRun, Int_t mode, Int_t runIdx) {
   // -- Fill run-by-run track distributions
+
+  Int_t idx = mode*2 + isBadRun;
+
+  // "after_good", "after_bad", "before_good", "before_bad"};
 
   Int_t idxSign = (aTrack[3] < 0) ? 0 : 1;  
 
-  TList* list = static_cast<TList*>(fOutList->FindObject(Form("f%s_runByRunTrackHists_%s", name[analysisIdx], qaNames[mode])));
+  TList* list = static_cast<TList*>(fOutList->FindObject(Form("f%s_runByRunTrackHists_%s", name[analysisIdx], qaRunNames[idx])));
   
   if (idxSign == 0) {
-    (static_cast<TProfile*>(list->FindObject(Form("pPt_neg_%s", qaNames[mode]))))->Fill(runIdx, aTrack[1]);
-    (static_cast<TH2D*>(list->FindObject(Form("hPt_neg_%s", qaNames[mode]))))->Fill(runIdx, aTrack[1]);
+    (static_cast<TProfile*>(list->FindObject(Form("pPt_neg_%s", qaRunNames[idx]))))->Fill(runIdx, aTrack[1]);
+    (static_cast<TH2D*>(list->FindObject(Form("hPt_neg_%s",     qaRunNames[idx]))))->Fill(runIdx, aTrack[1]);
   }
   else {
-    (static_cast<TProfile*>(list->FindObject(Form("pPt_pos_%s", qaNames[mode]))))->Fill(runIdx, aTrack[1]);
-    (static_cast<TH2D*>(list->FindObject(Form("hPt_pos_%s", qaNames[mode]))))->Fill(runIdx, aTrack[1]);
+    (static_cast<TProfile*>(list->FindObject(Form("pPt_pos_%s", qaRunNames[idx]))))->Fill(runIdx, aTrack[1]);
+    (static_cast<TH2D*>(list->FindObject(Form("hPt_pos_%s",     qaRunNames[idx]))))->Fill(runIdx, aTrack[1]);
   }
 
-  (static_cast<TProfile*>(list->FindObject(Form("pDca_%s", qaNames[mode]))))->Fill(runIdx, aTrack[4]);  
+  (static_cast<TProfile*>(list->FindObject(Form("pDca_%s", qaRunNames[idx]))))->Fill(runIdx, aTrack[4]);  
 }
