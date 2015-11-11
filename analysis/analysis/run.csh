@@ -3,14 +3,16 @@
 make clean
 make 
 
-set energy=$1
+set analysis=$1
+set energy=$2
 
 if ( $energy != 14.5 ) then
     ./makeRefMultList.sh file.list 1
 endif
 
-set chargeSeparation=$2
-set etaMin=$3
-set etaMax=$4
+set chargeSeparation=$3
+set etaMin=$4
+set etaMax=$5
 
-./analysis --energy=$energy --chargeSeparation=$chargeSeparation --etaMin=$etaMin --etaMax=$etaMax
+./analysis --analysis=$analysis --energy=$energy 
+# --chargeSeparation=$chargeSeparation --etaMin=$etaMin --etaMax=$etaMax

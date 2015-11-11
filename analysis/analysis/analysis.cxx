@@ -64,12 +64,18 @@ void   InitializeMultiplicityStats();
 void   InitializeEventHists();
 void   InitializeTrackHists();
 
+void   InitializeRunByRunEventHists();
+void   InitializeRunByRunTrackHists();
+
 Int_t  GetCentrality(Int_t nRefMultTracksCorr, Int_t anaIdx);
 
 Bool_t FillEventStats(Int_t *aEventCuts);
 void   FillMultiplicityStats(Double_t *aMult, Int_t mode);
 void   FillEventHists(Double_t *aEvent, Int_t mode);
 void   FillTrackHists(Double_t *aTrack, Int_t mode);
+
+void   FillRunByRunEventHists(Double_t *aEvent, Int_t mode, Int_t runIdx);
+void   FillRunByRunTrackHists(Double_t *aTrack, Int_t mode, Int_t runIdx);
 
 Int_t  RefMultCorrection(Double_t vz, Int_t refmult2, Int_t anaIdx);
 
@@ -87,7 +93,7 @@ Double_t maxHnEvent[11] = { 9.5,  2.0,  1.0,  100.0,  2.0, 600.0, 600.0, 3000.0,
 
 Int_t    binHnUnCorr[12] = {  10,  34,   21,    3,  50,   51,   51,   51, 101,    2,    2, 81};
 Double_t minHnUnCorr[12] = {-0.5, 0.1, -1.0, -1.5,   0,  0.0,  0.0,  0.0, 0.0, -0.5, -0.5, -4};
-Double_t maxHnUnCorr[12] = { 9.5, 3.0,  1.0,  1.5,  10, 50.0, 50.0, 50.0, 1.0,  1.5,  1.5,  4};
+Double_t maxHnUnCorr[12] = { 9.5, 3.0,  1.0,  1.5,   5, 50.0, 50.0, 50.0, 1.0,  1.5,  1.5,  4};
 
 Int_t nMultSets = 5;
 
@@ -111,7 +117,11 @@ const int   nEnergies       = 8;
 const char *energies[]      = {  "7",   "11",   "14",   "19",   "27",   "39",   "62", "200"};
 const char *exactEnergies[] = {"7.7", "11.5", "14.5", "19.6", "27.0", "39.0", "62.4", "200"};
 
-const Char_t* name[3] = {"NetCharge", "NetProton", "NetKaon"};
+const Char_t* name[3]  = {"NetCharge", "NetProton", "NetKaon"};
+const Char_t* name2[3] = {"charge", "proton", "kaon"};
+
+const Char_t* nameRefMult[3]      = {"refMult2", "refMult3", "refMult4"};
+const Char_t* nameRefMultShort[3] = {"refmult2", "refmult3", "refmult4"};
 
 enum particleCharge {kPOS, kNEG, kNET, kParticleCharge};
 
@@ -124,6 +134,10 @@ const Char_t *aEventCutNames[]   = {"all", "bad run", "trigger", "#it{v}_{z} < #
 				    "centrality", "nTOFMatch>2","nTOFMatch cut", "accepted"};
 
 double randomEff[2][9];
+
+Int_t nRuns = 484;
+Int_t runs[] = {15053001, 15053003, 15053004, 15053005, 15053007, 15053008, 15053009, 15053011, 15053012, 15053015, 15053016, 15053017, 15053019, 15053020, 15053021, 15053022, 15053023, 15053024, 15053025, 15053026, 15053047, 15053059, 15053060, 15053062, 15053064, 15053065, 15053067, 15054001, 15054002, 15054003, 15054004, 15054005, 15054006, 15054007, 15054008, 15054009, 15054010, 15054011, 15054012, 15054013, 15054014, 15054015, 15054016, 15054017, 15054018, 15054019, 15054020, 15054021, 15054023, 15054024, 15054025, 15054026, 15054028, 15054029, 15054030, 15054031, 15054037, 15054042, 15054043, 15054044, 15054046, 15054047, 15054048, 15054049, 15054050, 15054051, 15054052, 15055001, 15055002, 15055003, 15055004, 15055005, 15055006, 15055007, 15055008, 15055009, 15055011, 15055012, 15055013, 15055014, 15055015, 15055016, 15055017, 15055019, 15055020, 15055021, 15055135, 15055136, 15055138, 15055139, 15055140, 15055141, 15056001, 15056002, 15056003, 15056004, 15056005, 15056006, 15056007, 15056008, 15056009, 15056013, 15056014, 15056015, 15056016, 15056017, 15056018, 15056019, 15056020, 15056021, 15056022, 15056023, 15056024, 15056025, 15056026, 15056027, 15056028, 15056036, 15056037, 15056038, 15056039, 15058051, 15058052, 15058053, 15058054, 15058055, 15059001, 15059002, 15059003, 15059005, 15059006, 15059007, 15059009, 15059010, 15059011, 15059013, 15059014, 15059015, 15059016, 15059017, 15059018, 15059019, 15059020, 15059021, 15059024, 15059025, 15059026, 15059027, 15059028, 15059029, 15059033, 15059037, 15059038, 15059040, 15059041, 15059042, 15059055, 15059059, 15059060, 15059061, 15059063, 15059064, 15059068, 15059074, 15059076, 15059081, 15059082, 15059086, 15059087, 15059090, 15060001, 15060006, 15060007, 15060009, 15060011, 15060012, 15060014, 15060015, 15060016, 15060017, 15060018, 15060019, 15060020, 15060021, 15060022, 15060023, 15060024, 15060027, 15060028, 15060029, 15060031, 15060032, 15060033, 15060035, 15060036, 15060037, 15060044, 15060045, 15060046, 15060047, 15060048, 15060049, 15060050, 15060051, 15060052, 15060053, 15060067, 15060068, 15060069, 15060070, 15060071, 15061003, 15061004, 15061006, 15061007, 15061008, 15061010, 15061011, 15061012, 15061014, 15061015, 15061016, 15061018, 15061019, 15061021, 15061023, 15061024, 15061025, 15061026, 15061027, 15061028, 15061034, 15061036, 15061037, 15061038, 15061039, 15061041, 15061047, 15061048, 15061051, 15061053, 15061054, 15061055, 15061056, 15061059, 15061060, 15061061, 15061062, 15061063, 15061064, 15062003, 15062004, 15062005, 15062007, 15062008, 15062009, 15062010, 15062011, 15062012, 15062013, 15062015, 15062017, 15062018, 15062020, 15062022, 15062023, 15062024, 15062025, 15062026, 15062031, 15062032, 15062033, 15062034, 15062035, 15062036, 15062037, 15062038, 15062040, 15062041, 15062042, 15062066, 15062070, 15062071, 15062075, 15062076, 15062077, 15063001, 15063002, 15063003, 15063006, 15063008, 15063010, 15063011, 15063012, 15063013, 15063014, 15063016, 15063018, 15063020, 15063021, 15063029, 15063032, 15063036, 15063037, 15063040, 15063041, 15063042, 15063043, 15063045, 15063046, 15063048, 15063049, 15063053, 15063056, 15063059, 15063060, 15063061, 15063062, 15063063, 15063065, 15063066, 15063067, 15064001, 15064002, 15064003, 15064005, 15064006, 15064007, 15064008, 15064009, 15064010, 15064011, 15065011, 15065013, 15065017, 15065054, 15065056, 15065059, 15065060, 15065061, 15066005, 15066006, 15066010, 15066012, 15066014, 15066016, 15066019, 15066020, 15066021, 15066022, 15066023, 15066024, 15066025, 15066026, 15066064, 15066076, 15066077, 15066083, 15066085, 15066086, 15066088, 15067001, 15067002, 15067003, 15067005, 15067006, 15067008, 15067009, 15067011, 15067012, 15067013, 15067014, 15067015, 15067016, 15067018, 15067019, 15067020, 15067022, 15067023, 15067024, 15067025, 15067026, 15067032, 15067033, 15067034, 15067035, 15067036, 15067037, 15067038, 15067040, 15067041, 15067042, 15067043, 15067044, 15067046, 15067048, 15068001, 15068002, 15068003, 15068004, 15068005, 15068006, 15068007, 15068008, 15068009, 15068010, 15068012, 15068022, 15068023, 15068024, 15068025, 15068026, 15068027, 15068028, 15068031, 15068032, 15068033, 15068034, 15068035, 15068036, 15068037, 15068038, 15068039, 15068040, 15068041, 15068042, 15068043, 15068044, 15068045, 15068046, 15068047, 15068048, 15068049, 15069001, 15069002, 15069003, 15069004, 15069005, 15069006, 15069007, 15069008, 15069009, 15069010, 15069011, 15069012, 15069013, 15069014, 15069015, 15069016, 15069017, 15069018, 15069019, 15069020, 15069021, 15069022, 15069023, 15069030, 15069031, 15069034, 15069035, 15069038, 15069039, 15069040, 15069042, 15069043, 15069044, 15069045, 15069046, 15069047, 15069048, 15069049, 15069050, 15069051, 15070001, 15070002, 15070013, 15070014, 15070015, 15070016, 15070017, 15070018, 15070019, 15070020, 15070021} ;
+
 
 // ----------------------------------------------------------------------------  
 // -- Globals
@@ -335,10 +349,7 @@ Int_t main(int argc, char** argv) {
   // -- Get PicoDsts
   // -----------------------------------------------------------------------
   picoDST* pico = new picoDST();
-  StRefMultCorr* refmultCorr;
-  if (analysisIdx == 0)      refmultCorr= new StRefMultCorr("refmult2");
-  else if (analysisIdx == 1) refmultCorr= new StRefMultCorr("refmult3");
-  else if (analysisIdx == 1) refmultCorr= new StRefMultCorr("refmult4");
+  StRefMultCorr* refmultCorr = new StRefMultCorr(nameRefMultShort[analysisIdx]);
 
   // -----------------------------------------------------------------------
   // -- Get refMult / refMult2 from muDst
@@ -389,6 +400,8 @@ Int_t main(int argc, char** argv) {
   InitializeMultiplicityStats();
   InitializeEventHists();
   InitializeTrackHists();
+  InitializeRunByRunEventHists();
+  InitializeRunByRunTrackHists();
 
   TString sTitle("");
   sTitle += (!analysisIdx) ? Form("%.2f<#eta<%.2f", etaAbsRange[analysisIdx][0], etaAbsRange[analysisIdx][1]) : 
@@ -444,10 +457,18 @@ Int_t main(int argc, char** argv) {
     Reset();
     
     Int_t runId   = pico->Event_mRunId[0];
+    Int_t runIdx = 0;
+    for (Int_t ii = 0; ii < nRuns; ++ii) {
+      if (runId == runs[ii]) {
+	runIdx = ii;
+	break;
+      }
+    }
+    
     Int_t eventId = pico->Event_mEventId[0];
 
     // ------------------------------------------------------------------
-    // -- Track loop - for refMult2 / TOF tracks - track multiplicity
+    // -- Track loop - for refMultX / TOF tracks - track multiplicity
     // ------------------------------------------------------------------
     Int_t nTracks         = pico->Tracks_;      
     Int_t nGlobalTracks   = pico->Event_mNumberOfGlobalTracks[0]; 
@@ -504,8 +525,8 @@ Int_t main(int argc, char** argv) {
       // -- count for refMult2 track -- only for 14.5 GeV
       // ------------------------------------------------------------------
       if (energyIdx == 2 
-	  && TMath::Abs(eta) > etaAbsRangeRefMult[0][0] 
-	  && TMath::Abs(eta) <= etaAbsRangeRefMult[0][1] 
+	  && TMath::Abs(eta) => etaAbsRangeRefMult[0][0] 
+	  && TMath::Abs(eta) <  etaAbsRangeRefMult[0][1] 
 	  && TMath::Abs(nHitsFit) > nHitsFitRefMult[0]  
 	  && DCA < dcaMaxRefMult[0])
 	++nRefMultXTracks[0];
@@ -513,19 +534,19 @@ Int_t main(int argc, char** argv) {
       // -- count for refMult3 track -- only for 14.5 GeV
       // ------------------------------------------------------------------
       if (energyIdx == 2 
-	  && TMath::Abs(eta) > etaAbsRangeRefMult[1][0] 
-	  && TMath::Abs(eta) <= etaAbsRangeRefMult[1][1] 
+	  && TMath::Abs(eta) => etaAbsRangeRefMult[1][0] 
+	  && TMath::Abs(eta) < etaAbsRangeRefMult[1][1] 
 	  && TMath::Abs(nHitsFit) > nHitsFitRefMult[1]  
 	  && DCA < dcaMaxRefMult[1]
 	  && nSigmaProton < (-3) 
 	  && mSquare < 0.4)
-	++nRefMultXTracks[2];
+	++nRefMultXTracks[1];
 
       // -- count for refMult4 track -- only for 14.5 GeV
       // ------------------------------------------------------------------
       if (energyIdx == 2 
-	  && TMath::Abs(eta) > etaAbsRangeRefMult[2][0] 
-	  && TMath::Abs(eta) <= etaAbsRangeRefMult[2][1] 
+	  && TMath::Abs(eta) => etaAbsRangeRefMult[2][0] 
+	  && TMath::Abs(eta) < etaAbsRangeRefMult[2][1] 
 	  && TMath::Abs(nHitsFit) > nHitsFitRefMult[2]  
 	  && DCA < dcaMaxRefMult[1]
 	  && ( (mSquare == -999 && fabs(nSigmaKaon) > 3) || (mSquare != -999 && (mSquare > 0.6 || mSquare < 0.1))) )
@@ -695,7 +716,7 @@ Int_t main(int argc, char** argv) {
 #if EVENT_THN
     fHnEvent->Fill(aEvent);
 #endif
-    
+
     // -- Fill eventHists
     FillEventHists(aEvent, 0);
     
@@ -718,6 +739,7 @@ Int_t main(int argc, char** argv) {
       FillMultiplicityStats(aMult, 3);
       continue;
     }
+
 #if DEBUG
     if ( nRefMultXTracks[analysisIdx] != nRefMult2TracksPico && TMath::Abs(nRefMultXTracks[analysisIdx] - nRefMult2TracksPico) > 1)
       cout << " nRefMultXTracks " << nRefMultXTracks[analysisIdx] << " -> (pico) " << nRefMult2TracksPico << endl;
@@ -813,7 +835,6 @@ Int_t main(int argc, char** argv) {
       // -->> is track accepted  - clusters/dca && kinematics && PID
       Bool_t isTrackAccepted = (isTrackAcceptedKin && isTrackAcceptedCut && isTrackAcceptedPid);
 
-      
       // -- fill ThnSparse - tracks
       // ------------------------------------------------------------------
       Double_t aTrack[12] = {Double_t(centrality), pt, eta, sign, DCA,
@@ -825,6 +846,7 @@ Int_t main(int argc, char** argv) {
 #endif
 
       FillTrackHists(aTrack, 0);
+      FillRunByRunTrackHists(aTrack, 0, runIdx);
 
       // -- reject track
       // ------------------------------------------------------------------
@@ -832,6 +854,7 @@ Int_t main(int argc, char** argv) {
 	continue;
       
       FillTrackHists(aTrack, 1);
+      FillRunByRunTrackHists(aTrack, 1, runIdx);
 
       // ------------------------------------------------------------------
       // -- Add up for event multiplicity
@@ -846,7 +869,7 @@ Int_t main(int argc, char** argv) {
       if (gRandom->Rndm() > randomEff[idxPart][centrality])
 	continue;
 #endif
- 
+
       // -- Apply Charge separation 
       //    -> default: off  => 0  
       //    -> positive particles from postive eta / negative particles from negative eta => 1
@@ -878,6 +901,14 @@ Int_t main(int argc, char** argv) {
 
     // ------------------------------------------------------------------
 
+    Double_t aEventRun[] = { Double_t(nRefMultTracks),  Double_t(nRefMultXTracks[analysisIdx]),
+			     Double_t(fNp[0][1] - fNp[0][0]), 
+			     Double_t(fNp[0][0]), Double_t (fNp[0][1])};
+
+    FillRunByRunEventHists(aEventRun, 1, runIdx); 
+  
+    // ------------------------------------------------------------------
+
     for(int i=0;i<=9;i++) 
       for(int j=0;j<=9;j++) 
 	for(int k=0;k<=9;k++) 
@@ -897,7 +928,7 @@ Int_t main(int argc, char** argv) {
 
   TH1::AddDirectory(oldStatus);
 
-  TString collision(Form("Moments_hist_AuAu%sGeV_charge", exactEnergies[energyIdx]));
+  TString collision(Form("Moments_hist_AuAu%sGeV_%s", exactEnergies[energyIdx], name2[analysisIdx]));
   TFile *outFile = new TFile(Form("%s.root", collision.Data()), "recreate");   
   outFile->cd();
   fOutList->Write(fOutList->GetName(), TObject::kSingleKey);
@@ -908,7 +939,7 @@ Int_t main(int argc, char** argv) {
 
 //________________________________________________________________________
 Int_t RefMultCorrection(Double_t vz, Int_t refmultIn, Int_t anaIdx) {
-  // -- Correction of refmult2
+  // -- Correction of refmultX
 
   Double_t refMultZ = aRefMultCorrPar[anaIdx][0] + 
     aRefMultCorrPar[anaIdx][1]*vz + aRefMultCorrPar[anaIdx][2]*vz*vz + aRefMultCorrPar[anaIdx][3]*vz*vz*vz + 
@@ -1105,34 +1136,34 @@ void InitializeMultiplicityStats() {
   
     // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
     list->Add(new TH1F(Form("hRefMultStat%s", multNames[ii]),                    Form("RefMult  Statistics%s;RefMult;Events",multTitles[ii]),
-		       501, 0., 500.));
+		       601, 0., 600.));
     list->Add(new TH1F(Form("hRefMult2Stat%s", multNames[ii]),                   Form("RefMult2 Statistics%s;RefMult2;Events",multTitles[ii]),  
-		       501, 0., 500.));
+		       601, 0., 600.));
 
     // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 
     list->Add(new TH2F(Form("hRefMult2_nGlobalTracks%s", multNames[ii]),         Form("RefMult2 vs nGlobalTracks%s;RefMult2;nGlobalTracks",multTitles[ii]),
-		       501, 0., 500., 2501, 0., 2500.));
+		       601, 0., 600., 2501, 0., 2500.));
     list->Add(new TH2F(Form("hRefMult2_nPrimaryTracks%s", multNames[ii]),        Form("RefMult2 vs nPrimaryTracks%s;RefMult2;nPrimaryTracks",multTitles[ii]),
-		       501, 0., 500., 1001, 0., 1000.));
+		       601, 0., 600., 1001, 0., 1000.));
     list->Add(new TH2F(Form("hRefMult2_nTOFMatch%s", multNames[ii]),             Form("RefMult2 vs nTOFMatch%s;RefMult2;nTOFMatch",multTitles[ii]),
-		       501, 0., 500., 601, 0., 600.));
+		       601, 0., 600., 601, 0., 600.));
     
     // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
     
     list->Add(new TH2F(Form("hRefMult_nGlobalTracks%s", multNames[ii]),          Form("RefMult vs nGlobalTracks%s;RefMult;nGlobalTracks",multTitles[ii]),
-		       501, 0., 500., 2501, 0., 2500.));
+		       601, 0., 600., 2501, 0., 2500.));
     list->Add(new TH2F(Form("hRefMult_nPrimaryTracks%s", multNames[ii]),         Form("RefMult vs nPrimaryTracks%s;RefMult;nPrimaryTracks",multTitles[ii]),
-		       501, 0., 500., 1001, 0., 1000.));
+		       601, 0., 600., 1001, 0., 1000.));
     list->Add(new TH2F(Form("hRefMult_nTOFMatch%s", multNames[ii]),              Form("RefMult vs nTOFMatch%s;RefMult;nTOFMatch",multTitles[ii]),
-		       501, 0., 500., 601, 0., 600.));
+		       601, 0., 600., 601, 0., 600.));
     
     // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
     
     list->Add(new TH2F(Form("hRefMult2_RefMult2Corr%s", multNames[ii]),          Form("RefMult2 vs RefMult2Corr%s;RefMult2;RefMult2Corr",multTitles[ii]),
-		       501, 0., 500., 501, 0., 500.));
+		       601, 0., 600., 601, 0., 600.));
     list->Add(new TH2F(Form("hRefMult2_RefMult%s", multNames[ii]),               Form("RefMult2 vs RefMult%s;RefMult2;RefMult",multTitles[ii]),
-		       501, 0., 500., 501, 0., 500.));
+		       601, 0., 600., 601, 0., 600.));
     
     // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
     
@@ -1243,6 +1274,55 @@ void InitializeEventHists() {
 }
 
 //________________________________________________________________________
+void InitializeRunByRunEventHists() {
+  // -- Initialize run-by-run event distributions
+  
+  for (Int_t ii = 0 ; ii < 2 ; ++ii) {
+    fOutList->Add(new TList);
+    TList *list = static_cast<TList*>(fOutList->Last());
+    list->SetName(Form("f%s_runByRunEventHists_%s", name[analysisIdx], qaNames[ii]));
+    list->SetOwner(kTRUE);
+    
+    list->Add(new TProfile(Form("pRefMult_%s", qaNames[ii]), Form("<RefMult>%s;<RefMult>;Run", qaTitles[ii]), nRuns, -0.5, nRuns-0.5));
+    //    list->Add(new TProfile(Form("pRefMult2_%s", qaNames[ii]), Form("<RefMult2>%s;<RefMult2>;Run", qaTitles[ii]), nRuns, -0.5, nRuns-0.5));
+    list->Add(new TProfile(Form("pRefMult3_%s", qaNames[ii]), Form("<RefMult3>%s;<RefMult3>;Run", qaTitles[ii]), nRuns, -0.5, nRuns-0.5));
+    //    list->Add(new TProfile(Form("pRefMult4_%s", qaNames[ii]), Form("<RefMult4>%s;<RefMult4>;Run", qaTitles[ii]), nRuns, -0.5, nRuns-0.5));
+
+    list->Add(new TProfile(Form("pNetProton_%s", qaNames[ii]), Form("<NetProton>%s;<NetProton>;Run", qaTitles[ii]), nRuns, -0.5, nRuns-0.5));
+    list->Add(new TProfile(Form("pneg_%s", qaNames[ii]), Form("<neg>%s;<neg>;Run", qaTitles[ii]), nRuns, -0.5, nRuns-0.5));
+    list->Add(new TProfile(Form("ppos_%s", qaNames[ii]), Form("<pos>%s;<pos>;Run", qaTitles[ii]), nRuns, -0.5, nRuns-0.5));
+  }
+}
+
+//________________________________________________________________________
+void InitializeRunByRunTrackHists() {
+  // -- Initialize run-by-run event distributions
+  
+  for (Int_t ii = 0 ; ii < 2 ; ++ii) {
+    fOutList->Add(new TList);
+    TList *list = static_cast<TList*>(fOutList->Last());
+    list->SetName(Form("f%s_runByRunTrackHists_%s", name[analysisIdx], qaNames[ii]));
+    list->SetOwner(kTRUE);
+    
+    list->Add(new TProfile(Form("pPt_neg_%s", qaNames[ii]), Form("<pT_neg>%s;<pT_neg>;Run", qaTitles[ii]), nRuns, -0.5, nRuns-0.5));
+    list->Add(new TProfile(Form("pPt_pos_%s", qaNames[ii]), Form("<pT_pos>%s;<pT_pos>;Run", qaTitles[ii]), nRuns, -0.5, nRuns-0.5));
+
+    list->Add(new TProfile(Form("pDca_%s", qaNames[ii]), Form("<dca>%s;<dca>;Run", qaTitles[ii]), nRuns, -0.5, nRuns-0.5));
+    list->Add(new TProfile(Form("pNSigmaProton_%s", qaNames[ii]), Form("<nSigmaProton>%s;<nSigmaProton>;Run", qaTitles[ii]), nRuns, -0.5, nRuns-0.5));
+
+    list->Add(new TH2D(Form("hPt_neg_%s", qaNames[ii]), Form("pT_neg%s;Run;pT", qaTitles[ii]), 
+		       nRuns, -0.5, nRuns-0.5,
+		       binHnUnCorr[1], minHnUnCorr[1], maxHnUnCorr[1]));
+    list->Add(new TH2D(Form("hPt_pos_%s", qaNames[ii]), Form("pT_pos%s;Run;pT", qaTitles[ii]), 
+		       nRuns, -0.5, nRuns-0.5,
+		       binHnUnCorr[1], minHnUnCorr[1], maxHnUnCorr[1]));
+
+  }
+}
+
+
+
+//________________________________________________________________________
 void FillEventHists(Double_t *aEvent, Int_t mode) {
   // -- Fill event QA histograms      
 
@@ -1304,4 +1384,36 @@ void FillTrackHists(Double_t *aTrack, Int_t mode) {
   (static_cast<TH1F*>(list->FindObject(Form("nHitsFit_nFitPoss_%s_%d", qaNames[mode], idxSign))))->Fill(aTrack[8]);
   (static_cast<TH1F*>(list->FindObject(Form("nSigmaP_%s_%d", qaNames[mode], idxSign))))->Fill(aTrack[11]);
   (static_cast<TH2F*>(list->FindObject(Form("nSigmaP_pt_%s_%d", qaNames[mode], idxSign))))->Fill(aTrack[11], aTrack[1]);
+}
+
+//________________________________________________________________________
+void FillRunByRunEventHists(Double_t *aEvent, Int_t mode, Int_t runIdx) {
+  // -- Fill run-by-run event distributions
+  
+  TList* list = static_cast<TList*>(fOutList->FindObject(Form("f%s_runByRunEventHists_%s", name[analysisIdx], qaNames[mode])));
+  (static_cast<TProfile*>(list->FindObject(Form("pRefMult_%s",   qaNames[mode]))))->Fill(runIdx, aEvent[0]);
+  (static_cast<TProfile*>(list->FindObject(Form("pRefMult3_%s",  qaNames[mode]))))->Fill(runIdx, aEvent[1]);
+  (static_cast<TProfile*>(list->FindObject(Form("pNetProton_%s", qaNames[mode]))))->Fill(runIdx, aEvent[2]);
+  (static_cast<TProfile*>(list->FindObject(Form("pneg_%s",       qaNames[mode]))))->Fill(runIdx, aEvent[3]);
+  (static_cast<TProfile*>(list->FindObject(Form("ppos_%s",       qaNames[mode]))))->Fill(runIdx, aEvent[4]);
+}
+
+//________________________________________________________________________
+void FillRunByRunTrackHists(Double_t *aTrack, Int_t mode, Int_t runIdx) {
+  // -- Fill run-by-run track distributions
+
+  Int_t idxSign = (aTrack[3] < 0) ? 0 : 1;  
+
+  TList* list = static_cast<TList*>(fOutList->FindObject(Form("f%s_runByRunTrackHists_%s", name[analysisIdx], qaNames[mode])));
+  
+  if (idxSign == 0) {
+    (static_cast<TProfile*>(list->FindObject(Form("pPt_neg_%s", qaNames[mode]))))->Fill(runIdx, aTrack[1]);
+    (static_cast<TH2D*>(list->FindObject(Form("hPt_neg_%s", qaNames[mode]))))->Fill(runIdx, aTrack[1]);
+  }
+  else {
+    (static_cast<TProfile*>(list->FindObject(Form("pPt_pos_%s", qaNames[mode]))))->Fill(runIdx, aTrack[1]);
+    (static_cast<TH2D*>(list->FindObject(Form("hPt_pos_%s", qaNames[mode]))))->Fill(runIdx, aTrack[1]);
+  }
+
+  (static_cast<TProfile*>(list->FindObject(Form("pDca_%s", qaNames[mode]))))->Fill(runIdx, aTrack[4]);  
 }
