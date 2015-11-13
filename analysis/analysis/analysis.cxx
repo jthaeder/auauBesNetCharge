@@ -962,7 +962,8 @@ Int_t RefMultCorrection(Double_t vz, Int_t refmultIn, Int_t anaIdx) {
 
   Double_t Hovno    = (aRefMultCorrPar[anaIdx][0] + aRefMultCorrPar[anaIdx][7]) / refMultZ;
 
-  Double_t refMultD = Double_t(refmultIn) + gRandom->Rndm(); // random sampling over bin width -> avoid peak structures in corrected distribution
+  Double_t refMultD = Double_t(refmultIn);
+  //  Double_t refMultD = Double_t(refmultIn) + gRandom->Rndm(); // random sampling over bin width -> avoid peak structures in corrected distribution
   
   return Int_t(refMultD * Hovno);
 }
