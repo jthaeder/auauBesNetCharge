@@ -2,6 +2,7 @@
 #include "TSystem.h"
 #include "TNtuple.h"
 #include "TFile.h"
+#include "TF1.h"
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TProfile.h"
@@ -14,7 +15,18 @@
 
 using namespace std;
 
-void study_efficiencies(const char* particle, int energy = 14) {
+double binomial(double *x, double *par) {
+  //  P(k; p,n) -> scale k = nx  -> P (x/n ; p,n) = 
+  //  n = par[0]
+  //  p = par[1]
+  //
+  //  return TMath::Binomial(par[0], x[0]*par[0])*pow(par[1], par[0]*x[0])*pow(1. - par[1], par[0]*(1. - x[0]));
+
+  // not scaled
+  return TMath::Binomial(par[0], x[0])*pow(par[1], x[0])*pow(1. - par[1], par[0] - x[0]);
+}
+
+void study_efficiencies(const char* particle = "piplus", int energy = 14) {
 
   gStyle->SetOptStat(111111);
   gStyle->SetPalette(1);
@@ -29,6 +41,8 @@ void study_efficiencies(const char* particle, int energy = 14) {
   //gStyle->SetPadBottomMargin(0.05);
   gStyle->SetPadLeftMargin(0.11);
 
+  int idxPart = 0;
+
   // --------------------------------------------------------------------------------
   // -- track cuts
   // --------------------------------------------------------------------------------
@@ -39,11 +53,7 @@ void study_efficiencies(const char* particle, int energy = 14) {
   float min_fitpts_nposs = .52;
   float max_eta          = 0.5;
   float max_dca          = 1.0;
-  
-  int   max_events       = 100;
-  double smearBin        = 0.3;
-  int idxPart = 0;
-  
+
   // --------------------------------------------------------------------------------
   // -- vertex cuts
   // --------------------------------------------------------------------------------
@@ -214,16 +224,22 @@ void study_efficiencies(const char* particle, int energy = 14) {
   // -- Create histograms
   // --------------------------------------------------------------------------------
 
-  const int   nCent       = 9;
-  const char* cent[]      = {"0005","0510","1020","2030","3040","4050","5060","6070","7080"};
+  const int   nCent            = 9;
+  const char* cent[]           = {"0005","0510","1020","2030","3040","4050","5060","6070","7080"};
 
-  const int    Nbins      = 20;
-  const double pt_bin[21] = {0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.4,1.7,2.0,2.3,2.7,3.5,4.0,4.5,5.0};
+  const int    Nbins           = 20;
+  const double pt_bin[21]      = {0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.4,1.7,2.0,2.3,2.7,3.5,4.0,4.5,5.0};
 
-  const int    NbinsRed     = 4;
+  const int    NbinsRed        = 4;
   const double pt_binRed[3][5] = { {0.0, 0.5, 0.7, 2.3, 5.0},
 				   {0.0, 0.5, 1.0, 2.3, 5.0},
 				   {0.0, 0.5, 0.8, 2.3, 5.0} };
+
+  const double smearBin        = 0.3;
+    
+  const int    max_events      = 100;
+
+  const int    nTracksMcMax    = 25;
 
   // --------------------------------------------------------------------------------
   // -- Initialize pt hists
@@ -235,6 +251,42 @@ void study_efficiencies(const char* particle, int energy = 14) {
 
   TH1D* hpt_mc[nCent];
   TH1D* hpt_rec[nCent];
+
+  TH1D* hnTracks_mc[nCent];
+  TH1D* hnTracks_mc_sum = new TH1D("hnTracks_mc_sum", ";N_{Mc}; Events", nTracksMcMax+1, -0.5, Double_t(nTracksMcMax)+0.5);
+
+  TH1D* hnTracks_rec[nCent];
+  TH1D* hnTracks_rec_sum = new TH1D("hnTracks_rec_sum", ";N_{Rec}; Events", nTracksMcMax+1, -0.5, Double_t(nTracksMcMax)+0.5);
+
+  // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+  
+  TH1D* hnTracksRec[nCent][nTracksMcMax];
+  TH1D* hnTracksRec_sum[nTracksMcMax];
+
+  TF1* fnTracksRec[nCent][nTracksMcMax];
+  TF1* fnTracksRec_sum[nTracksMcMax];
+
+  for (Int_t idxTrack = 0; idxTrack < nTracksMcMax; idxTrack++) {
+    hnTracksRec_sum[idxTrack] = new TH1D(Form("hnTracksRec_sum_%d", idxTrack), ";N_{Rec};Events",
+					      nTracksMcMax+1, -0.5, Double_t(nTracksMcMax)+0.5);
+
+      fnTracksRec_sum[idxTrack] = new TF1(Form("fnTracksRec_sum_%d", idxTrack), binomial, 0, nTracksMcMax, 2);
+    
+    for (Int_t idxCent = 0; idxCent < nCent; idxCent++) {
+      hnTracksRec[idxCent][idxTrack] = new TH1D(Form("hnTracksRec_%s_%d", cent[idxCent], idxTrack), ";N_{Rec};Events",
+						nTracksMcMax+1, -0.5, Double_t(nTracksMcMax)+0.5);
+      fnTracksRec[idxCent][idxTrack] = new TF1(Form("fnTracksRec_%s_%d", cent[idxCent], idxTrack), binomial, 0, nTracksMcMax, 2);
+
+    }
+  }
+
+
+  // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+
+  TH2D* hnTracks_mc_rec[nCent];
+  TH2D* hnTracks_mc_rec_sum = new TH2D("hnTracks_mc_rec_sum", ";N_{Mc};N_{Rec}", 
+				       nTracksMcMax+1, -0.5, Double_t(nTracksMcMax)+0.5, nTracksMcMax+1, -0.5, Double_t(nTracksMcMax)+0.5);
+
 
   TH1D* hpt_width[nCent];
   TH1D* hpt_widthSmeared[nCent];
@@ -259,12 +311,24 @@ void study_efficiencies(const char* particle, int energy = 14) {
 						 Form("effProfileSmearedRed_%s;#it{p}_{T} (GeV/#it{c});efficiency", cent[idxCent]), NbinsRed, 0., 5.);
     effProfileSmearedRed[idxCent]->GetXaxis()->Set(NbinsRed,pt_binRed[idxPart]);
 
+    // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
 
     hpt_mc[idxCent] = new TH1D(Form("hpt_mc_%s",  cent[idxCent]), "", Nbins, 0., 5.);
     hpt_mc[idxCent]->GetXaxis()->Set(Nbins, pt_bin);
 
     hpt_rec[idxCent] = new TH1D(Form("hpt_rec_%s", cent[idxCent]), "", Nbins, 0., 5.);
     hpt_rec[idxCent]->GetXaxis()->Set(Nbins, pt_bin);
+
+
+    hnTracks_mc[idxCent]  = new TH1D(Form("hnTracks_mc_%s",  cent[idxCent]), ";N_{Mc}; Events",  nTracksMcMax+1, -0.5, Double_t(nTracksMcMax)+0.5);
+    hnTracks_rec[idxCent] = new TH1D(Form("hnTracks_rec_%s", cent[idxCent]), ";N_{Rec}; Events", nTracksMcMax+1, -0.5, Double_t(nTracksMcMax)+0.5);
+
+    hnTracks_mc_rec[idxCent] = new TH2D(Form("hnTracks_mc_rec_%s",  cent[idxCent]), ";N_{Mc};N_{Rec}", 
+					nTracksMcMax+1, -0.5, Double_t(nTracksMcMax)+0.5, nTracksMcMax+1, -0.5, Double_t(nTracksMcMax)+0.5);
+
+    
+
+    // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
 
     hpt_width[idxCent] = new TH1D(Form("hpt_width_%s", cent[idxCent]), "Width;#it{p}_{T} (GeV/#it{c});width", Nbins, 0., 5.);
     hpt_width[idxCent]->GetXaxis()->Set(Nbins, pt_bin);
@@ -287,7 +351,7 @@ void study_efficiencies(const char* particle, int energy = 14) {
 
   int lastEvent = -1;
   int nEventsMC  = 0;
-  int nEventsRec = 0;
+  //  int nEventsRec = 0;
 
   for(int i = 0; i < nTracksMC; i++){
     McTrack->GetEntry(i);
@@ -299,19 +363,19 @@ void study_efficiencies(const char* particle, int energy = 14) {
     }
   }
   
-  lastEvent = -1;
-  for(int i = 0; i < nTracksRec; i++){
-    MatchedPairs->GetEntry(i);
-    int current=Int_t(EventId);
+  // lastEvent = -1;
+  // for(int i = 0; i < nTracksRec; i++){
+  //   MatchedPairs->GetEntry(i);
+  //   int current=Int_t(EventId);
     
-    if (current != lastEvent) {
-      lastEvent = current;
-      ++nEventsRec;
-    }
-  }
+  //   if (current != lastEvent) {
+  //     lastEvent = current;
+  //     ++nEventsRec;
+  //   }
+  // }
 
   printf("nEvents MC %d \n",  nEventsMC);
-  printf("nEvents Rec %d \n", nEventsRec);
+  //  printf("nEvents Rec %d \n", nEventsRec);
 
   // --------------------------------------------------------------------------------
   // -- Loop over events 
@@ -343,6 +407,9 @@ void study_efficiencies(const char* particle, int energy = 14) {
   // -- event loop
   for (int idxEvent = 0; idxEvent < nEventsMC; ++idxEvent) {
 
+    int nTracksEventMc    = 0;
+    int nTracksEventRec    = 0;
+
     // -- MC loop
     // --------------------------------------------------------------------------------
     lastEventMC = currentEventMC;
@@ -359,7 +426,7 @@ void study_efficiencies(const char* particle, int energy = 14) {
       //    - check cuts
       //    - fill histogram
       // --------------------------------------------------------------------------------
-    
+     
       int idxCent = -1;
       if (pCentrality16 == 15)      idxCent = 0;
       else if (pCentrality16 == 14) idxCent = 1;
@@ -375,7 +442,7 @@ void study_efficiencies(const char* particle, int energy = 14) {
       
       if (pParentGeantId != 0)
 	continue;
-      
+
       if (pGeantId != PID)
 	continue;
       
@@ -395,7 +462,7 @@ void study_efficiencies(const char* particle, int energy = 14) {
       if (fabs(pEtaMc) > max_eta)
 	continue;
       // --------------------------------------------------------------------------------
-
+      ++nTracksEventMc;
       hpt_mc[idxCent]->Fill(pPtMc);
     } // for(; idxMC < nTracksMC; idxMC++) {
     
@@ -439,7 +506,7 @@ void study_efficiencies(const char* particle, int energy = 14) {
       
       if (GeantId != PID)
 	continue;
-      
+
       if ((VertexX-vxo)*(VertexX-vxo) + (VertexY-vyo)*(VertexY-vyo) > max_r*max_r) 
 	continue;
       
@@ -472,8 +539,9 @@ void study_efficiencies(const char* particle, int energy = 14) {
       
       if (fabs(EtaMc) > max_eta)
 	continue;
-      // --------------------------------------------------------------------------------
 
+      // --------------------------------------------------------------------------------
+      ++nTracksEventRec;
       hpt_rec[idxCent]->Fill(PtMc);
     } // for(; idxRec < nTracksRec; idxRec++) {
 
@@ -491,6 +559,26 @@ void study_efficiencies(const char* particle, int energy = 14) {
     else if (pCentrality16 == 0  || pCentrality16 == 1)  idxCent = 8;
     else 
       continue;
+
+    // -----------------------------------------------
+
+    hnTracks_mc_sum->Fill(nTracksEventMc);
+    hnTracks_mc[idxCent]->Fill(nTracksEventMc);
+
+    hnTracks_rec_sum->Fill(nTracksEventRec);
+    hnTracks_rec[idxCent]->Fill(nTracksEventRec);
+
+    hnTracks_mc_rec_sum->Fill(nTracksEventMc, nTracksEventRec);
+    hnTracks_mc_rec[idxCent]->Fill(nTracksEventMc, nTracksEventRec);
+
+
+    hnTracksRec[idxCent][nTracksEventMc]->Fill(nTracksEventRec);
+    hnTracksRec_sum[nTracksEventMc]->Fill(nTracksEventRec);
+    
+    // hnTracksPtRec[idxCent][nTracksEventMc]->Fill(nTracksEventRec);
+    // hnTracksPtRec_sum[nTracksEventMc]->Fill(nTracksEventRec);
+    
+
 
     // -----------------------------------------------
 
@@ -607,7 +695,70 @@ void study_efficiencies(const char* particle, int energy = 14) {
   }
   
   // --------------------------------------------------------------------------------
-  
+
+  for (Int_t idxTrack = 1; idxTrack < nTracksMcMax; idxTrack++) {
+    Double_t nEntries = hnTracksRec_sum[idxTrack]->GetEntries();
+    if (nEntries == 0){
+      delete hnTracksRec_sum[idxTrack];
+      hnTracksRec_sum[idxTrack] = NULL;
+      continue;
+    }
+
+    Double_t mean = hnTracksRec_sum[idxTrack]->GetMean();
+    Double_t eff  = mean / Double_t(idxTrack);
+
+    hnTracksRec_sum[idxTrack]->Scale(1./hnTracksRec_sum[idxTrack]->Integral());
+
+    fnTracksRec_sum[idxTrack]->SetParameter(0, nEntries);
+    fnTracksRec_sum[idxTrack]->SetParameter(1, eff);
+    // int flag = hnTracksRec_sum[idxTrack]->Fit(fnTracksRec_sum[idxTrack], "QRsame", "", 0.0, Double_t(idxTrack));
+
+    fnTracksRec_sum[idxTrack]->SetLineColor(kRed+2);
+    fnTracksRec_sum[idxTrack]->SetMarkerColor(kRed+2);
+    fnTracksRec_sum[idxTrack]->SetMarkerStyle(20);
+    fnTracksRec_sum[idxTrack]->Write();
+
+    hnTracksRec_sum[idxTrack]->SetLineColor(kAzure);
+    hnTracksRec_sum[idxTrack]->SetMarkerColor(kAzure);
+    hnTracksRec_sum[idxTrack]->SetMarkerStyle(25);
+  }
+
+  for (Int_t idxCent = 0; idxCent < nCent; idxCent++) {
+    delete hnTracksRec[idxCent][0];
+    hnTracksRec[idxCent][0] = NULL;
+  }
+
+  for (Int_t idxTrack = 1; idxTrack < nTracksMcMax; idxTrack++) {
+    for (Int_t idxCent = 0; idxCent < nCent; idxCent++) {
+      Double_t nEntries = hnTracksRec[idxCent][idxTrack]->GetEntries();
+
+      if (nEntries == 0){
+	delete hnTracksRec[idxCent][idxTrack];
+	hnTracksRec[idxCent][idxTrack] = NULL;
+	continue;
+      }
+
+      Double_t mean = hnTracksRec[idxCent][idxTrack]->GetMean();
+      Double_t eff  = mean / Double_t(idxTrack);
+      hnTracksRec[idxCent][idxTrack]->Scale(1./hnTracksRec[idxCent][idxTrack]->Integral());
+
+      fnTracksRec[idxCent][idxTrack]->SetParameter(0, nEntries);
+      fnTracksRec[idxCent][idxTrack]->SetParameter(1, eff);
+      // int flag = hnTracksRec[idxCent][idxTrack]->Fit(fnTracksRec[idxCent][idxTrack], "QRsame", "", 0.10, 1.0);
+      
+      fnTracksRec[idxCent][idxTrack]->SetLineColor(kRed+2);
+      fnTracksRec[idxCent][idxTrack]->SetMarkerColor(kRed+2);
+      fnTracksRec[idxCent][idxTrack]->SetMarkerStyle(20);
+      fnTracksRec[idxCent][idxTrack]->Write();
+      
+      hnTracksRec[idxCent][idxTrack]->SetLineColor(kAzure);
+      hnTracksRec[idxCent][idxTrack]->SetMarkerColor(kAzure);
+      hnTracksRec[idxCent][idxTrack]->SetMarkerStyle(25);
+    }
+  }
+
+  // --------------------------------------------------------------------------------
+
   fOut->Write();
   fOut->Close();
 }
