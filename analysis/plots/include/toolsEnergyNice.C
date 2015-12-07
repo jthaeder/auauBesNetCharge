@@ -333,7 +333,7 @@ void CreateLegends(Int_t linesExp, Int_t linesTheo, Float_t leftX, Float_t topY)
 }
 
 // ______________________________________________________________________________________
-void SaveCanvas(const Char_t* name) {
+void SaveCanvas(const Char_t* name, Bool_t isNice = kTRUE) {
   // -- Write out canvas
   
   gSystem->Exec(Form("mkdir -p results/nice/%s/png",  name));
@@ -341,9 +341,11 @@ void SaveCanvas(const Char_t* name) {
   gSystem->Exec(Form("mkdir -p results/nice/%s/eps",  name));
   gSystem->Exec(Form("mkdir -p results/nice/%s/gif",  name));
   gSystem->Exec(Form("mkdir -p results/nice/%s/root", name));
-  gSystem->Exec(Form("mkdir -p results/nice/pdf"));
-  gSystem->Exec(Form("mkdir -p results/nice/png"));
-  
+  if (isNice) {
+    gSystem->Exec(Form("mkdir -p results/nice/pdf"));
+    gSystem->Exec(Form("mkdir -p results/nice/png"));
+  }
+
   // -----------------------------------------------------
   
   for (Int_t idx = 0; idx < canA.GetEntriesFast() ; ++idx) {
@@ -355,10 +357,12 @@ void SaveCanvas(const Char_t* name) {
     c->SaveAs(Form("results/nice/%s/eps/%s.eps",   name, c->GetName()));
     c->SaveAs(Form("results/nice/%s/gif/%s.gif",   name, c->GetName()));
     c->SaveAs(Form("results/nice/%s/pdf/%s.pdf",   name, c->GetName()));
-    c->SaveAs(Form("results/nice/pdf/%s.pdf",            c->GetName()));
-    c->SaveAs(Form("results/nice/png/%s.png",            c->GetName()));
     c->SaveAs(Form("results/nice/%s/root/%s.C",    name, c->GetName()));
     c->SaveAs(Form("results/nice/%s/root/%s.root", name, c->GetName()));
+    if (isNice) {
+      c->SaveAs(Form("results/nice/pdf/%s.pdf",            c->GetName()));
+      c->SaveAs(Form("results/nice/png/%s.png",            c->GetName()));
+    }
   }
 }
 
