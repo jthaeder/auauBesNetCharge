@@ -1,6 +1,7 @@
 #!/bin/bash
 
 energies="200"
+#energies="7 11 14 19 27 39 62 200"
 
 mkdir -p log embeddingTrees efficiency efficiencyStudy
 
