@@ -12,6 +12,8 @@ void SetGlobals() {
 // ______________________________________________________________________________________
 void plotEnergyCharge(const Char_t* name = "ratioNetChargeVsEnergy") {
 
+  Int_t idxNames = kNetQ;
+
   gROOT->LoadMacro("include/toolsEnergyNice.C++");
   gROOT->LoadMacro("include/getPublished.C++");
 
@@ -68,7 +70,7 @@ void plotEnergyCharge(const Char_t* name = "ratioNetChargeVsEnergy") {
       }
     }
   }
-        
+
   // -----------------------------------------------------
 
   for (int idxEnergy = 0 ; idxEnergy < nEnergies; ++idxEnergy) { 
@@ -120,8 +122,10 @@ void plotEnergyCharge(const Char_t* name = "ratioNetChargeVsEnergy") {
 
   // -----------------------------------------------------
 
-  SetupCanvas(name, "Net-Charge Ratio energy dependence");
+  SetupCanvas(name, Form("%s Ratio energy dependence", aNames[idxNames]));
   CreateLegends(2, 3, 0.4, 0.09);
+
+  // -----------------------------------------------------
 
   for (int idxMoment = 4; idxMoment < nMoments; ++idxMoment) {
     pad->cd(idxMoment-3);
@@ -142,29 +146,65 @@ void plotEnergyCharge(const Char_t* name = "ratioNetChargeVsEnergy") {
   } // for (int idxMoment = 4; idxMoment < nMoments; ++idxMoment) {
 
   legTheo->AddEntry(graphUrqmd[0][4][0], Form("%s UrQMD", cent1[0]), "f");
+      
+  // -----------------------------------------------------
+
+  LabelCanvas(aNames[idxNames], aNamesPt[idxNames]);
+  SaveCanvas(name);
 
   // -----------------------------------------------------
 
-  LabelCanvas("Net-Charge", "0.2 < #it{p}_{T} (GeV/#it{c}) < 2.0, |#eta| < 0.5");
-  SaveCanvas(name);
-
   TFile *fOut = TFile::Open("STAR_QM2015_Preliminary.root", "UPDATE");
   fOut->cd();
-
+  
   TList* list = new TList;
-
+  
   for (int idxMoment = 4; idxMoment < nMoments; ++idxMoment) {
     for (int idxCent = 0; idxCent < nCent; ++idxCent) {
       if (idxCent != 0) 
 	continue;
-
-      graphStat[0][idxMoment][idxCent]->SetName(Form("Net-Charge_%s_sNN_%s_stat", aMoments2[idxMoment], cent[idxCent]));
-      graphSys[0][idxMoment][idxCent]->SetName(Form("Net-Charge_%s_sNN_%s_sys",  aMoments2[idxMoment], cent[idxCent]));
-
+      
+      graphStat[0][idxMoment][idxCent]->SetName(Form("%s_%s_sNN_%s_stat", aNames[idxNames], aMoments2[idxMoment], cent[idxCent]));
+      graphSys[0][idxMoment][idxCent]->SetName(Form("%s_%s_sNN_%s_sys",  aNames[idxNames], aMoments2[idxMoment], cent[idxCent]));
+      
       list->Add(graphStat[0][idxMoment][idxCent]);
       list->Add(graphSys[0][idxMoment][idxCent]);
     }
   }
-  list->Write("Net-Charge", TObject::kSingleKey);
+  list->Write(aNames[idxNames], TObject::kSingleKey);
   fOut->Close();
+
+  // -----------------------------------------------------
+
+  TFile *fOutAll = TFile::Open("STAR_Preliminary.root", "UPDATE");
+  fOutAll->cd();
+  
+  TList* listAll = new TList;
+
+  for (int idxMoment = 4; idxMoment < nMoments; ++idxMoment) {
+    for (int idxCent = 0; idxCent < nCent; ++idxCent) {
+      if (graphStat[0][idxMoment][idxCent] && graphStat[0][idxMoment][idxCent]->GetN() > 0) {
+	graphStat[0][idxMoment][idxCent]->SetName(Form("%s_%s_sNN_%s_stat", aNames[idxNames], aMoments2[idxMoment], cent[idxCent]));
+	listAll->Add(graphStat[0][idxMoment][idxCent]);
+      }
+      if (graphSys[0][idxMoment][idxCent] && graphSys[0][idxMoment][idxCent]->GetN() > 0) {
+	graphSys[0][idxMoment][idxCent]->SetName(Form("%s_%s_sNN_%s_sys", aNames[idxNames], aMoments2[idxMoment], cent[idxCent]));
+	listAll->Add(graphSys[0][idxMoment][idxCent]);
+      }
+      if (graphUrqmd[0][idxMoment][idxCent] && graphUrqmd[0][idxMoment][idxCent]->GetN() > 0) {
+	graphUrqmd[0][idxMoment][idxCent]->SetName(Form("%s_%s_sNN_%s_urqmd", aNames[idxNames], aMoments2[idxMoment], cent[idxCent]));
+	listAll->Add(graphUrqmd[0][idxMoment][idxCent]);
+      }
+      if (graphPoisson[0][idxMoment][idxCent] && graphPoisson[0][idxMoment][idxCent]->GetN() > 0) {
+	graphPoisson[0][idxMoment][idxCent]->SetName(Form("%s_%s_sNN_%s_poisson", aNames[idxNames], aMoments2[idxMoment], cent[idxCent]));
+	listAll->Add(graphPoisson[0][idxMoment][idxCent]);
+      }
+      if (graph14 && graph14[0][idxMoment][idxCent] && graph14[0][idxMoment][idxCent]->GetN() > 0) {
+	graph14[0][idxMoment][idxCent]->SetName(Form("%s_%s_sNN_%s_14", aNames[idxNames], aMoments2[idxMoment], cent[idxCent]));
+	listAll->Add(graph14[0][idxMoment][idxCent]);
+      }
+    }
+  }
+  listAll->Write(aNames[idxNames], TObject::kSingleKey);
+  fOutAll->Close();
 }

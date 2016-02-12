@@ -1,6 +1,6 @@
 #!/bin/bash
 
-rm -f STAR_QM2015_Preliminary.root
+rm -f STAR_QM2015_Preliminary.root STAR_Preliminary.root
 rm -f *.so *.d include/*.so include/*.d
 
 root -l -b -q calcSys.C++
