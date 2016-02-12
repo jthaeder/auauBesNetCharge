@@ -206,8 +206,8 @@ void DrawSet(TGraphErrors *gStat, TGraphErrors *gSys, TGraphErrors *gUrqmd, TGra
 
   ConfigGraph(gStat,    idxMoment, idxCent);
   ConfigGraph(gSys,     idxMoment, idxCent, 2);
-  ConfigGraph(gPoisson, idxMoment, idxCent, 3);
-  ConfigGraph(gUrqmd,   idxMoment, idxCent, 1);
+  ConfigGraph(gUrqmd,   idxMoment, idxCent, 3);
+  ConfigGraph(gPoisson, idxMoment, idxCent, 1);
   
   if (g14) {
     PrepareGraph(g14);

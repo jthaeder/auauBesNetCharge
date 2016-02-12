@@ -1,7 +1,5 @@
-
 #include "include/toolsEnergyNice.C"
 #include "include/getPublished.C"
-
 
 // ______________________________________________________________________________________
 void SetGlobals() {
@@ -18,6 +16,8 @@ void SetGlobals() {
 
 // ______________________________________________________________________________________
 void plotEnergyProtonOverview(const Char_t* name = "ratioNetProtonVsEnergyOverview") {
+
+  Int_t idxNames = kNetP;
 
   gROOT->LoadMacro("include/toolsEnergyNice.C++");
   gROOT->LoadMacro("include/getPublished.C++");
@@ -119,11 +119,11 @@ void plotEnergyProtonOverview(const Char_t* name = "ratioNetProtonVsEnergyOvervi
 
       } // for (int idxCent = 0; idxCent < nCent; ++idxCent) {
     } // for (int idxMoment = 0 ; idxMoment < nMoments; ++idxMoment) {   
-  } // for (int idxEnergy  = 0 ; idxEnergy < nEnergies; ++idxEnergy) { 
+  } // for (int idxEnergy = 0 ; idxEnergy < nEnergies; ++idxEnergy) { 
 
   // -----------------------------------------------------
 
-  SetupCanvas(name, "Net-Proton Ratio energy dependence");
+  SetupCanvas(name, Form("%s Ratio energy dependence", aNames[idxNames]));
   CreateLegends(2, 3, 0.4, 0.28);
 
   // -----------------------------------------------------
@@ -136,19 +136,19 @@ void plotEnergyProtonOverview(const Char_t* name = "ratioNetProtonVsEnergyOvervi
       if (idxCent != 0 && idxCent != 8)
 	continue;
 
-      DrawSet(graphStat[0][idxMoment][idxCent],    graphSys[0][idxMoment][idxCent],
-	      graphPoisson[0][idxMoment][idxCent], graphUrqmd[0][idxMoment][idxCent],
+      DrawSet(graphStat[0][idxMoment][idxCent],  graphSys[0][idxMoment][idxCent],
+	      graphUrqmd[0][idxMoment][idxCent], graphPoisson[0][idxMoment][idxCent],
 	      idxMoment, idxCent);
     } // for (int idxCent = 0; idxCent < nCent; ++idxCent) {
- 
+
     graphStat[0][idxMoment][0]->Draw("ZP,SAME");
     graphSys[0][idxMoment][0]->Draw("[],SAME");
   } // for (int idxMoment = 4; idxMoment < nMoments; ++idxMoment) {
-  
+
   legTheo->AddEntry(graphUrqmd[0][4][0], Form("%s UrQMD", cent1[0]), "f");
-        
+      
   // -----------------------------------------------------
-  
-  LabelCanvas("Net-Proton", "0.4 < #it{p}_{T} (GeV/#it{c}) < 2.0, |#it{y}| < 0.5");  
+
+  LabelCanvas(aNames[idxNames], aNamesPt[idxNames]);
   SaveCanvas(name);
 }

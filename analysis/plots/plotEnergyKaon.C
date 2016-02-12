@@ -130,8 +130,8 @@ void plotEnergyKaon(const Char_t* name = "ratioNetKaonVsEnergy") {
       if (idxCent != 0 && idxCent != 8)
 	continue;
 
-      DrawSet(graphStat[0][idxMoment][idxCent],    graphSys[0][idxMoment][idxCent],
-	      graphPoisson[0][idxMoment][idxCent], graphUrqmd[0][idxMoment][idxCent],
+      DrawSet(graphStat[0][idxMoment][idxCent],  graphSys[0][idxMoment][idxCent],
+	      graphUrqmd[0][idxMoment][idxCent], graphPoisson[0][idxMoment][idxCent],
 	      idxMoment, idxCent);
     } // for (int idxCent = 0; idxCent < nCent; ++idxCent) {
 
