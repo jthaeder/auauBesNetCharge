@@ -161,7 +161,7 @@ void plotEnergyProton(const Char_t* name = "ratioNetProtonVsEnergy") {
   
   for (int idxMoment = 4; idxMoment < nMoments; ++idxMoment) {
     for (int idxCent = 0; idxCent < nCent; ++idxCent) {
-      if (idxCent != 0) 
+      if (idxCent != 0 && idxCent != 1) 
 	continue;
       
       graphStat[0][idxMoment][idxCent]->SetName(Form("%s_%s_sNN_%s_stat", aNames[idxNames], aMoments2[idxMoment], cent[idxCent]));
