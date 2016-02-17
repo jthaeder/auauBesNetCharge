@@ -29,16 +29,16 @@ void plotEnergyCharge(const Char_t* name = "ratioNetChargeVsEnergy") {
   TFile *inFilesSys[nEnergies];
   TFile *inFilesUrqmd[nEnergies];
 
-  TGraphErrors *inGraphsStat[nEnergies][nMoments];
-  TGraphErrors *inGraphsSys[nEnergies][nMoments];
+  TGraphErrors *inGraphsStat[nEnergies][nMoments+1];
+  TGraphErrors *inGraphsSys[nEnergies][nMoments+1];
   TGraphErrors *inGraphsPoisson[nEnergies][nMoments];
   TGraphErrors *inGraphsUrqmd[nEnergies][nMoments];
 
-  for (int idxEnergy  = 0 ; idxEnergy < nEnergies; ++idxEnergy) { 
+  for (int idxEnergy = 0; idxEnergy < nEnergies; ++idxEnergy) { 
     if (idxEnergy != 2) {
       inFilesUrqmd[idxEnergy]= TFile::Open(Form("URQMD/urqmd_charge/AuAu%sGeV_Vz30_kpi1.root", exactEnergies[idxEnergy]));
 
-      for (int idxMoment = 0 ; idxMoment < nMoments; ++idxMoment) { 
+      for (int idxMoment = 0; idxMoment < nMoments; ++idxMoment) { 
        	if (idxMoment == 4) 
        	  inGraphsUrqmd[idxEnergy][idxMoment] = static_cast<TGraphErrors*>((inFilesUrqmd[idxEnergy]->Get(Form("R21")))->Clone());
 	else if (idxMoment == 5) 
@@ -51,12 +51,15 @@ void plotEnergyCharge(const Char_t* name = "ratioNetChargeVsEnergy") {
     else {
       inFilesSys[idxEnergy] = TFile::Open(Form("sysError/jobs_%s_sysError.root", exactEnergies[idxEnergy]));
       
-      for (int idxMoment = 0 ; idxMoment < nMoments; ++idxMoment) { 
+      for (int idxMoment = 0; idxMoment < nMoments; ++idxMoment) { 
 	// -- value and stat errors
 	inFiles[idxEnergy][idxMoment]  = TFile::Open(Form("output/jobs_14.5_base/%s/Moments_%s.root", aDataSets[0], aMoments[idxMoment]));
 	
 	inGraphsStat[idxEnergy][idxMoment] = (idxMoment != 5) ? static_cast<TGraphErrors*>((inFiles[idxEnergy][idxMoment]->Get(aMoments[idxMoment]))->Clone()) :
 	  static_cast<TGraphErrors*>((inFiles[idxEnergy][idxMoment]->Get(Form("%s_Poisson_ratio", aMoments[idxMoment])))->Clone());
+
+	if (idxMoment == 5)
+	  inGraphsStat[idxEnergy][nMoments] = static_cast<TGraphErrors*>((inFiles[idxEnergy][idxMoment]->Get(aMoments[idxMoment]))->Clone());
 	
 	// -- poisson
 	inGraphsPoisson[idxEnergy][idxMoment] = static_cast<TGraphErrors*>((inFiles[idxEnergy][idxMoment]->Get(Form("%s_Poisson_base", aMoments[idxMoment])))->Clone());
@@ -67,18 +70,22 @@ void plotEnergyCharge(const Char_t* name = "ratioNetChargeVsEnergy") {
 	// -- sysErrors
 	inGraphsSys[idxEnergy][idxMoment] = (idxMoment != 5) ? static_cast<TGraphErrors*>((inFilesSys[idxEnergy]->Get(Form("%s_sys",aMoments[idxMoment])))->Clone()) :
 	  static_cast<TGraphErrors*>((inFilesSys[idxEnergy]->Get(Form("%s_Poisson_ratio_sys", aMoments[idxMoment])))->Clone());
+
+	if (idxMoment == 5)
+	  inGraphsSys[idxEnergy][nMoments] = static_cast<TGraphErrors*>((inFilesSys[idxEnergy]->Get(Form("%s_sys",aMoments[idxMoment])))->Clone());
       }
     }
   }
 
   // -----------------------------------------------------
-
-  for (int idxEnergy = 0 ; idxEnergy < nEnergies; ++idxEnergy) { 
-    for (int idxMoment = 4 ; idxMoment < nMoments; ++idxMoment) {   
+  // -- Make graphs
+  
+  for (int idxEnergy = 0; idxEnergy < nEnergies; ++idxEnergy) { 
+    for (int idxMoment = 4; idxMoment < nMoments+1; ++idxMoment) {   
       for (int idxCent = 0; idxCent < nCent; ++idxCent) {
 	if (idxCent != 0 && idxCent != 8)
 	  continue;
-	
+
 	Double_t xIn, yIn;
 	if (idxEnergy == 2) {
 	  inGraphsStat[idxEnergy][idxMoment]->GetPoint(idxCent, xIn, yIn);
@@ -96,6 +103,9 @@ void plotEnergyCharge(const Char_t* name = "ratioNetChargeVsEnergy") {
 	    graphSys[idx][idxMoment][idxCent]->SetPointError(idxEnergy, 0, yErrorSysIn);
 	  }
 	  
+	  if (idxMoment == nMoments)
+	    continue;
+
 	  inGraphsPoisson[idxEnergy][idxMoment]->GetPoint(idxCent, xIn, yIn);    
 	  for (Int_t idx = 0; idx < 2; ++idx) {
 	    Double_t xOut, yOut;
@@ -104,7 +114,7 @@ void plotEnergyCharge(const Char_t* name = "ratioNetChargeVsEnergy") {
 	  }
 	}
 	else {
-	  if (idxCent == 0) {
+	  if (idxCent == 0 && idxMoment != nMoments) {
 	    Double_t yErrorUrqmdIn = inGraphsUrqmd[idxEnergy][idxMoment]->GetErrorY(idxCent);	
 	    
 	    inGraphsUrqmd[idxEnergy][idxMoment]->GetPoint(idxCent, xIn, yIn);    
@@ -159,7 +169,7 @@ void plotEnergyCharge(const Char_t* name = "ratioNetChargeVsEnergy") {
   
   TList* list = new TList;
   
-  for (int idxMoment = 4; idxMoment < nMoments; ++idxMoment) {
+  for (int idxMoment = 4; idxMoment < nMoments+1; ++idxMoment) {
     for (int idxCent = 0; idxCent < nCent; ++idxCent) {
       if (idxCent != 0) 
 	continue;
@@ -181,7 +191,7 @@ void plotEnergyCharge(const Char_t* name = "ratioNetChargeVsEnergy") {
   
   TList* listAll = new TList;
 
-  for (int idxMoment = 4; idxMoment < nMoments; ++idxMoment) {
+  for (int idxMoment = 4; idxMoment < nMoments+1; ++idxMoment) {
     for (int idxCent = 0; idxCent < nCent; ++idxCent) {
       if (graphStat[0][idxMoment][idxCent] && graphStat[0][idxMoment][idxCent]->GetN() > 0) {
 	graphStat[0][idxMoment][idxCent]->SetName(Form("%s_%s_sNN_%s_stat", aNames[idxNames], aMoments2[idxMoment], cent[idxCent]));
@@ -191,6 +201,14 @@ void plotEnergyCharge(const Char_t* name = "ratioNetChargeVsEnergy") {
 	graphSys[0][idxMoment][idxCent]->SetName(Form("%s_%s_sNN_%s_sys", aNames[idxNames], aMoments2[idxMoment], cent[idxCent]));
 	listAll->Add(graphSys[0][idxMoment][idxCent]);
       }
+      if (graph14 && graph14[0][idxMoment][idxCent] && graph14[0][idxMoment][idxCent]->GetN() > 0) {
+	graph14[0][idxMoment][idxCent]->SetName(Form("%s_%s_sNN_%s_14", aNames[idxNames], aMoments2[idxMoment], cent[idxCent]));
+	listAll->Add(graph14[0][idxMoment][idxCent]);
+      }
+
+      if (idxMoment == nMoments)
+	continue;
+
       if (graphUrqmd[0][idxMoment][idxCent] && graphUrqmd[0][idxMoment][idxCent]->GetN() > 0) {
 	graphUrqmd[0][idxMoment][idxCent]->SetName(Form("%s_%s_sNN_%s_urqmd", aNames[idxNames], aMoments2[idxMoment], cent[idxCent]));
 	listAll->Add(graphUrqmd[0][idxMoment][idxCent]);
@@ -198,10 +216,6 @@ void plotEnergyCharge(const Char_t* name = "ratioNetChargeVsEnergy") {
       if (graphPoisson[0][idxMoment][idxCent] && graphPoisson[0][idxMoment][idxCent]->GetN() > 0) {
 	graphPoisson[0][idxMoment][idxCent]->SetName(Form("%s_%s_sNN_%s_poisson", aNames[idxNames], aMoments2[idxMoment], cent[idxCent]));
 	listAll->Add(graphPoisson[0][idxMoment][idxCent]);
-      }
-      if (graph14 && graph14[0][idxMoment][idxCent] && graph14[0][idxMoment][idxCent]->GetN() > 0) {
-	graph14[0][idxMoment][idxCent]->SetName(Form("%s_%s_sNN_%s_14", aNames[idxNames], aMoments2[idxMoment], cent[idxCent]));
-	listAll->Add(graph14[0][idxMoment][idxCent]);
       }
     }
   }
