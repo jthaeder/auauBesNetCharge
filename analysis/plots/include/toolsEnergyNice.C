@@ -40,11 +40,11 @@ const Char_t *aNamesPt[3]      = { "0.2 < #it{p}_{T} (GeV/#it{c}) < 2.0, |#eta| 
 
 // -----------------------------------------------------------
 
-const Char_t* aMomentsTitle[]  = {"c_{1}","c_{2}","c_{3}","c_{4}","#sigma^{2}/M","S #sigma", "#kappa #sigma^{2}"};
-const Char_t* aMomentsTitle2[] = {"c_{1}","c_{2}","c_{3}","c_{4}","#sigma^{2}/M","S #sigma/Skellam", "#kappa #sigma^{2}"};
+const Char_t* aMomentsTitle[]  = {"c_{1}","c_{2}","c_{3}","c_{4}","#sigma^{2}/M","S #sigma","#kappa #sigma^{2}"};
+const Char_t* aMomentsTitle2[] = {"c_{1}","c_{2}","c_{3}","c_{4}","#sigma^{2}/M","S #sigma/Skellam","#kappa #sigma^{2}","S #sigma"};
 
 const Char_t* aMoments[]       = {"C1","C2","C3","C4","VM","SD","KV"};
-const Char_t* aMoments2[]      = {"C1","C2","C3","C4","VM","SDSk","KV"};
+const Char_t* aMoments2[]      = {"C1","C2","C3","C4","VM","SDSk","KV","SD"};
 const Int_t   nMoments         = 7;
 
 const Char_t* aDataSetsTitle[] = {"corrected - 11.5 GeV #epsilon_{1} , #epsilon_{2}"};
