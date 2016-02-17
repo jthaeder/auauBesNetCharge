@@ -18,13 +18,11 @@
 #include "TLine.h"
 #include "TGraphErrors.h"
 
-      float   aEta[]           = {0.5};
-const int     nEta             = 1;
 
-const Char_t* aMomentsTitle[]  = {"c_{1}","c_{2}","c_{3}","c_{4}","#sigma^{2}/M","S#sigma", "#kappa#sigma^{2}", "(S#sigma - M/#sigma^{2})"};
+const Char_t* aMomentsTitle[]  = {"c_{1}","c_{2}","c_{3}","c_{4}","#sigma^{2}/M","S#sigma/Skellam","#kappa#sigma^{2}","S#sigma"};
 
-const Char_t* aMoments[]       = {"C1","C2","C3","C4","VM","SD","KV", "VM"};
-const int     nMoments         = 7;
+const Char_t* aMoments[]       = {"C1","C2","C3","C4","VM","SD","KV","SD"};
+const int     nMoments         = 8;
 
 const int     nSysNames = 13;
 const Char_t* aSysNames[] = { "base", 
@@ -40,8 +38,6 @@ const Char_t* aDataSetsTitle[] = {"corrected - #epsilon_{1} , #epsilon_{2}"};
 
 const Char_t* aSysTitle[] = {"default", "eff (+5% && +5%)", "eff (-5% && -5%)", "eff (+2% && -2%)", "eff (-2% && +2%)"};
 
-Bool_t useRatioSDSkellam = kTRUE;
-//Bool_t useRatioSDSkellam = kFALSE;
 
 TObjArray canA;
 TObjArray sysErrorA;
@@ -59,30 +55,29 @@ void calcSys(const Char_t* name = "jobs_14.5") {
       for (int idxMoment = 0; idxMoment < nMoments; ++idxMoment) {
 	inFiles[idxSys][idxDataSet][idxMoment] = TFile::Open(Form("output/%s_%s/%s/Moments_%s.root", name, aSysNames[idxSys],
 								  aDataSets[idxDataSet], aMoments[idxMoment]));
-
-	 graphs[idxSys][idxDataSet][idxMoment] = (useRatioSDSkellam && idxMoment == 5) ?
-	   static_cast<TGraphErrors*>(inFiles[idxSys][idxDataSet][idxMoment]->Get(Form("%s_Poisson_ratio",aMoments[idxMoment]))->Clone()) :	   
-	   static_cast<TGraphErrors*>(inFiles[idxSys][idxDataSet][idxMoment]->Get(aMoments[idxMoment])->Clone()) ;
-	   
-	 if (useRatioSDSkellam && idxMoment == 5) {
-	   if (idxSys == 0)
-	     graphs[idxSys][idxDataSet][idxMoment]->SetName(Form("%s_Poisson_ratio_stat", aMoments[idxMoment]));
-	   else
-	     graphs[idxSys][idxDataSet][idxMoment]->SetName(Form("%s_Poisson_ratio_sys_%d", aMoments[idxMoment], idxSys));
+	
+	graphs[idxSys][idxDataSet][idxMoment] = (idxMoment == 5) ?
+	  static_cast<TGraphErrors*>(inFiles[idxSys][idxDataSet][idxMoment]->Get(Form("%s_Poisson_ratio",aMoments[idxMoment]))->Clone()) :	   
+	  static_cast<TGraphErrors*>(inFiles[idxSys][idxDataSet][idxMoment]->Get(aMoments[idxMoment])->Clone()) ;
+	
+	if (idxMoment == 5) {
+	  if (idxSys == 0)
+	    graphs[idxSys][idxDataSet][idxMoment]->SetName(Form("%s_Poisson_ratio_stat", aMoments[idxMoment]));
+	  else
+	    graphs[idxSys][idxDataSet][idxMoment]->SetName(Form("%s_Poisson_ratio_sys_%d", aMoments[idxMoment], idxSys));
+	}
+	else {
+	  if (idxSys == 0)
+	    graphs[idxSys][idxDataSet][idxMoment]->SetName(Form("%s_stat", aMoments[idxMoment]));
+	  else
+	    graphs[idxSys][idxDataSet][idxMoment]->SetName(Form("%s_sys_%d", aMoments[idxMoment], idxSys));
 	 }
-	 else {
-	   if (idxSys == 0)
-	     graphs[idxSys][idxDataSet][idxMoment]->SetName(Form("%s_stat", aMoments[idxMoment]));
-	   else
-	     graphs[idxSys][idxDataSet][idxMoment]->SetName(Form("%s_sys_%d", aMoments[idxMoment], idxSys));
-	 }
 
-	 
-	 inFiles[idxSys][idxDataSet][idxMoment]->Close();
+	inFiles[idxSys][idxDataSet][idxMoment]->Close();
       }
 
   // -----------------------------------------------------
-
+  
   TGraphErrors *graphsSysError[nDataSets][nMoments];
 
   for (int idxDataSet = 0 ; idxDataSet < nDataSets; ++idxDataSet) {
@@ -198,18 +193,17 @@ void calcSys(const Char_t* name = "jobs_14.5") {
 
       // --------------------------------------------
       
-      cout << "MOM: " << idxMoment << endl;
-      for (Int_t idx = 0 ; idx < 4; ++idx) {
+      cout << "MOM: " << aMomentsTitle[idxMoment] << endl;
+      for (Int_t idx = 0 ; idx < 4; ++idx)
 	cout << "    Set " << idx << " : " << rms[idx][0] << endl;
-      }
-      cout << "    SYS " << " : " << sysErr[0] << endl;
+      cout << "    SYS  " << " : " << sysErr[0] << endl;
       
       cout << "--------------------------------------------" << endl;
       
 
       graphsSysError[idxDataSet][idxMoment] = new TGraphErrors(9, defaultX, defaultY, 0, sysErr);
 
-      if (useRatioSDSkellam && idxMoment == 5)
+      if (idxMoment == 5)
 	graphsSysError[idxDataSet][idxMoment]->SetName(Form("%s_Poisson_ratio_sys", aMoments[idxMoment]));
       else 
 	graphsSysError[idxDataSet][idxMoment]->SetName(Form("%s_sys", aMoments[idxMoment]));
