@@ -20,11 +20,11 @@
 
 // ---------------------------------------------------------------------------------
 //                    [snn/mub][moments][cent]
-TGraphErrors *graphStat[2][7][9];
-TGraphErrors *graphSys[2][7][9];
-TGraphErrors *graphPoisson[2][7][9];
-TGraphErrors *graphUrqmd[2][7][9];
-TGraphErrors *graph14[2][7][9];
+TGraphErrors *graphStat[2][8][9];     // 8 = C1-C4 + VM + SDSk + KV + SD
+TGraphErrors *graphSys[2][8][9];      // 8 = C1-C4 + VM + SDSk + KV + SD
+TGraphErrors *graphPoisson[2][8][9];  // 7 = C1-C4 + VM + SDSk + KV 
+TGraphErrors *graphUrqmd[2][8][9];    // 7 = C1-C4 + VM + SDSk + KV 
+TGraphErrors *graph14[2][8][9];       // 8 = C1-C4 + VM + SDSk + KV + SD
 
 // ---------------------------------------------------------------------------------
 
@@ -126,126 +126,79 @@ void getPublished() {
   // ---------------------------------------------------------------------------------
   
   const Int_t nEnergyMax = 8;
-
-  Double_t y[2][nEnergyMax], eyStat[2][nEnergyMax], eySys[2][nEnergyMax], yPoisson[2][nEnergyMax];
   
-  Double_t exSys[nEnergyMax] = {0.75, 3, 3, 3, 4, 4, 4, 10};
+  // Double_t exSys[nEnergyMax] = {0.75, 3, 3, 3, 4, 4, 4, 10};
 
-  for (Int_t idxEnergy = 0; idxEnergy < nEnergyMax; ++idxEnergy)   
-    exSys[idxEnergy] = 1.;
+  // for (Int_t idxEnergy = 0; idxEnergy < nEnergyMax; ++idxEnergy)   
+  //   exSys[idxEnergy] = 1.;
 
-  // -------------------------------------------------
-  //  -- VM
-  // ------------------------------------------------
-  int idxMoment = 4;
-  for (Int_t ii = 0; ii < 2; ++ii) {
-    Int_t idxCent = (ii == 1) ? 8 : 0;
-
-    for (Int_t idxEnergy = 0; idxEnergy < nEnergyMax; ++idxEnergy) {
-      Int_t energyArrayAccess = (idxEnergy >= 2) ? idxEnergy-1 : idxEnergy;
-      
-      if (idxEnergy != 2) {
-	y[ii][idxEnergy]        = publishedVM[ii][energyArrayAccess][1];
-	eyStat[ii][idxEnergy]   = publishedVM[ii][energyArrayAccess][2];
-	eySys[ii][idxEnergy]    = publishedVM[ii][energyArrayAccess][3];
-	yPoisson[ii][idxEnergy] = publishedVM[ii][energyArrayAccess][5];
-      }
-      else {
-	y[ii][idxEnergy]        = 1.;
-	eyStat[ii][idxEnergy]   = 1.;
-	eySys[ii][idxEnergy]    = 1.;
-	yPoisson[ii][idxEnergy] = 1.;
-      }
-    } // for (Int_t idxEnergy = 0; idxEnergy < nEnergyMax; ++idxEnergy) {
-    
-    graphStat[0][idxMoment][idxCent]    = new TGraphErrors(nEnergyMax, snn, y[ii], 0, eyStat[ii]);
-    graphStat[1][idxMoment][idxCent]    = new TGraphErrors(nEnergyMax, mub, y[ii], 0, eyStat[ii]);    
-
-    // graphSys[0][idxMoment][idxCent]     = new TGraphErrors(nEnergyMax, snn, y[ii], exSys, eySys[ii]);    
-    // graphSys[1][idxMoment][idxCent]     = new TGraphErrors(nEnergyMax, mub, y[ii], exSys, eySys[ii]);
-
-    graphSys[0][idxMoment][idxCent]     = new TGraphErrors(nEnergyMax, snn, y[ii], 0, eySys[ii]);    
-    graphSys[1][idxMoment][idxCent]     = new TGraphErrors(nEnergyMax, mub, y[ii], 0, eySys[ii]);
-
-    graphPoisson[0][idxMoment][idxCent] = new TGraphErrors(nEnergyMax, snn, yPoisson[ii], 0, 0);    
-    graphPoisson[1][idxMoment][idxCent] = new TGraphErrors(nEnergyMax, mub, yPoisson[ii], 0, 0);
-  } // for (Int_t ii = 0; ii < 2; ++i) {
+  // ---------------------------------------------------------------------------------
   
-  // -------------------------------------------------
-  //  -- SD
-  // -------------------------------------------------
-  idxMoment = 5;
-  for (Int_t ii = 0; ii < 2; ++ii) {
-    Int_t idxCent = (ii == 1) ? 8 : 0;
+  for (Int_t idxMoment = 4; idxMoment < 8; ++idxMoment) {
 
-    for (Int_t idxEnergy = 0; idxEnergy < nEnergyMax; ++idxEnergy) {
-      Int_t energyArrayAccess = (idxEnergy >= 2) ? idxEnergy-1 : idxEnergy;
+    Double_t y[2][nEnergyMax], eyStat[2][nEnergyMax], eySys[2][nEnergyMax], yPoisson[2][nEnergyMax];
+
+    for (Int_t ii = 0; ii < 2; ++ii) {
+      Int_t idxCent = (ii == 1) ? 8 : 0;
       
-      if (idxEnergy != 2) {
-	y[ii][idxEnergy]        = publishedSD[ii][energyArrayAccess][1]/publishedSD[ii][energyArrayAccess][5];
-	eyStat[ii][idxEnergy]   = publishedSD[ii][energyArrayAccess][2]/TMath::Abs(publishedSD[ii][energyArrayAccess][5]);
-	eySys[ii][idxEnergy]    = publishedSD[ii][energyArrayAccess][3]/TMath::Abs(publishedSD[ii][energyArrayAccess][5]);
-	yPoisson[ii][idxEnergy] = 1.;
-	// y[ii][idxEnergy]        = publishedSD[ii][energyArrayAccess][1];
-	// eyStat[ii][idxEnergy]   = publishedSD[ii][energyArrayAccess][2];
-	// eySys[ii][idxEnergy]    = publishedSD[ii][energyArrayAccess][3];
-	// yPoisson[ii][idxEnergy] = publishedSD[ii][energyArrayAccess][5];
-      }
-      else {
-	y[ii][idxEnergy]        = 1.;
-	eyStat[ii][idxEnergy]   = 1.;
-	eySys[ii][idxEnergy]    = 1.;
-	yPoisson[ii][idxEnergy] = 1.;
-      }
-    } // for (Int_t idxEnergy = 0; idxEnergy < nEnergyMax; ++idxEnergy) {
-    
-    graphStat[0][idxMoment][idxCent]    = new TGraphErrors(nEnergyMax, snn, y[ii], 0, eyStat[ii]);    
-    graphStat[1][idxMoment][idxCent]    = new TGraphErrors(nEnergyMax, mub, y[ii], 0, eyStat[ii]);    
-
-    graphSys[0][idxMoment][idxCent]     = new TGraphErrors(nEnergyMax, snn, y[ii], 0, eySys[ii]);    
-    graphSys[1][idxMoment][idxCent]     = new TGraphErrors(nEnergyMax, mub, y[ii], 0, eySys[ii]);
-
-    graphPoisson[0][idxMoment][idxCent] = new TGraphErrors(nEnergyMax, snn, yPoisson[ii], 0, 0);    
-    graphPoisson[1][idxMoment][idxCent] = new TGraphErrors(nEnergyMax, mub, yPoisson[ii], 0, 0);
-  } // for (Int_t ii = 0; ii < 2; ++i) {
-  
-  // -------------------------------------------------
-  //  -- KV
-  // -------------------------------------------------
-  idxMoment = 6;
-  for (Int_t ii = 0; ii < 2; ++ii) {
-    Int_t idxCent = (ii == 1) ? 8 : 0;
-    
-    for (Int_t idxEnergy = 0; idxEnergy < nEnergyMax; ++idxEnergy) {
-      Int_t energyArrayAccess = (idxEnergy >= 2) ? idxEnergy-1 : idxEnergy;
+      for (Int_t idxEnergy = 0; idxEnergy < nEnergyMax; ++idxEnergy) {
+	Int_t energyArrayAccess = (idxEnergy >= 2) ? idxEnergy-1 : idxEnergy;
+	
+	if (idxEnergy != 2) {
+	  //  -- VM
+	  if (idxMoment == 4) {  
+	    y[ii][idxEnergy]        = publishedVM[ii][energyArrayAccess][1];
+	    eyStat[ii][idxEnergy]   = publishedVM[ii][energyArrayAccess][2];
+	    eySys[ii][idxEnergy]    = publishedVM[ii][energyArrayAccess][3];
+	    yPoisson[ii][idxEnergy] = publishedVM[ii][energyArrayAccess][5];
+	  }
+	  //  -- SDSk
+	  else if (idxMoment == 5) {  
+	    y[ii][idxEnergy]        = publishedSD[ii][energyArrayAccess][1]/publishedSD[ii][energyArrayAccess][5];
+	    eyStat[ii][idxEnergy]   = publishedSD[ii][energyArrayAccess][2]/TMath::Abs(publishedSD[ii][energyArrayAccess][5]);
+	    eySys[ii][idxEnergy]    = publishedSD[ii][energyArrayAccess][3]/TMath::Abs(publishedSD[ii][energyArrayAccess][5]);
+	    yPoisson[ii][idxEnergy] = 1.;
+	  }
+	  //  -- KV
+	  else if (idxMoment == 6) {  
+	    y[ii][idxEnergy]        = publishedKV[ii][energyArrayAccess][1];
+	    eyStat[ii][idxEnergy]   = publishedKV[ii][energyArrayAccess][2];
+	    eySys[ii][idxEnergy]    = publishedKV[ii][energyArrayAccess][3];
+	    yPoisson[ii][idxEnergy] = publishedKV[ii][energyArrayAccess][5];
+	  }
+	  //  -- SD
+	  else if (idxMoment == 7) {  
+	    y[ii][idxEnergy]        = publishedSD[ii][energyArrayAccess][1];
+	    eyStat[ii][idxEnergy]   = publishedSD[ii][energyArrayAccess][2];
+	    eySys[ii][idxEnergy]    = publishedSD[ii][energyArrayAccess][3];
+	    yPoisson[ii][idxEnergy] = publishedSD[ii][energyArrayAccess][5];
+	  }
+	}
+	else {
+	  y[ii][idxEnergy]        = 1.;
+	  eyStat[ii][idxEnergy]   = 1.;
+	  eySys[ii][idxEnergy]    = 1.;
+	  yPoisson[ii][idxEnergy] = 1.;
+	}
+      } // for (Int_t idxEnergy = 0; idxEnergy < nEnergyMax; ++idxEnergy) {
       
-      if (idxEnergy != 2) {
-	y[ii][idxEnergy]        = publishedKV[ii][energyArrayAccess][1];
-	eyStat[ii][idxEnergy]   = publishedKV[ii][energyArrayAccess][2];
-	eySys[ii][idxEnergy]    = publishedKV[ii][energyArrayAccess][3];
-	yPoisson[ii][idxEnergy] = publishedKV[ii][energyArrayAccess][5];
-      }
-      else {
-	y[ii][idxEnergy]        = 1.;
-	eyStat[ii][idxEnergy]   = 1.;
-	eySys[ii][idxEnergy]    = 1.;
-	yPoisson[ii][idxEnergy] = 1.;
-      }
-    } // for (Int_t idxEnergy = 0; idxEnergy < nEnergyMax; ++idxEnergy) {
-    
-    graphStat[0][idxMoment][idxCent]    = new TGraphErrors(nEnergyMax, snn, y[ii], 0, eyStat[ii]);    
-    graphStat[1][idxMoment][idxCent]    = new TGraphErrors(nEnergyMax, mub, y[ii], 0, eyStat[ii]);    
-
-    graphSys[0][idxMoment][idxCent]     = new TGraphErrors(nEnergyMax, snn, y[ii], 0, eySys[ii]);    
-    graphSys[1][idxMoment][idxCent]     = new TGraphErrors(nEnergyMax, mub, y[ii], 0, eySys[ii]);
-
-    graphPoisson[0][idxMoment][idxCent] = new TGraphErrors(nEnergyMax, snn, yPoisson[ii], 0, 0);    
-    graphPoisson[1][idxMoment][idxCent] = new TGraphErrors(nEnergyMax, mub, yPoisson[ii], 0, 0);
-  } // for (Int_t ii = 0; ii < 2; ++i) {
+      graphStat[0][idxMoment][idxCent]    = new TGraphErrors(nEnergyMax, snn, y[ii], 0, eyStat[ii]);
+      graphStat[1][idxMoment][idxCent]    = new TGraphErrors(nEnergyMax, mub, y[ii], 0, eyStat[ii]);    
+      
+      // graphSys[0][idxMoment][idxCent]     = new TGraphErrors(nEnergyMax, snn, y[ii], exSys, eySys[ii]);    
+      // graphSys[1][idxMoment][idxCent]     = new TGraphErrors(nEnergyMax, mub, y[ii], exSys, eySys[ii]);
+      
+      graphSys[0][idxMoment][idxCent]     = new TGraphErrors(nEnergyMax, snn, y[ii], 0, eySys[ii]);    
+      graphSys[1][idxMoment][idxCent]     = new TGraphErrors(nEnergyMax, mub, y[ii], 0, eySys[ii]);
+      
+      graphPoisson[0][idxMoment][idxCent] = new TGraphErrors(nEnergyMax, snn, yPoisson[ii], 0, 0);    
+      graphPoisson[1][idxMoment][idxCent] = new TGraphErrors(nEnergyMax, mub, yPoisson[ii], 0, 0);
+    } // for (Int_t ii = 0; ii < 2; ++i) {
+  } // for (Int_t idxMoment = 4; idxMoment < 8; ++idxMoment) {
 
   // -----------------------------------------------------------------------
-  
-  for (idxMoment = 0; idxMoment < 7; ++idxMoment) {
+
+  for (Int_t idxMoment = 0; idxMoment < 8; ++idxMoment) {
     for (Int_t idxCent = 0; idxCent < 9; ++idxCent) {
       if (!graphStat[0][idxMoment][idxCent]) {
 	graphStat[0][idxMoment][idxCent]    = new TGraphErrors(nEnergyMax, snn, 0, 0, 0);    
@@ -281,11 +234,8 @@ void getPublished() {
       }
       graph14[0][idxMoment][idxCent]->SetName(Form("14_snn_%d_%d", idxMoment, idxCent));
       graph14[1][idxMoment][idxCent]->SetName(Form("14_mub_%d_%d", idxMoment, idxCent));
-
     }
   }
-  
-
 
   // -----------------------------------------------------------------------
 
