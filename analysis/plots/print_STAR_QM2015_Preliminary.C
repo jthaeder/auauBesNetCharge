@@ -7,10 +7,10 @@ void print_STAR_QM2015_Preliminary() {
   TFile *file = TFile::Open("STAR_QM2015_Preliminary.root");
 
   const Char_t *aNames[3]  = {"Net-Charge", "Net-Kaon", "Net-Proton"};
-  const Char_t *aMom[3]    = {"VM", "SDSk", "KV"};
+  const Char_t *aMom[4]    = {"VM", "SDSk", "KV", "SD"};
   const Char_t *aMom2[3]   = {"VM", "SD", "KV"};
 
-  const Char_t *aTitle[3]  = {"#sigma^2 / M", "S #sigma / Skellam", "#kappa #sigma^2"};
+  const Char_t *aTitle[4]  = {"#sigma^2 / M", "S #sigma / Skellam", "#kappa #sigma^2", "S #sigma"};
   const Char_t *aTitle2[3] = {"#sigma^2 / M", "S #sigma", "#kappa #sigma^2"};
 
   const Char_t* aCent[9]   = {"0005",  "0510",   "1020",   "2030",   "3040",   "4050",   "5060",   "6070",   "7080"};
@@ -33,7 +33,7 @@ void print_STAR_QM2015_Preliminary() {
   for (int idxN = 0; idxN < 3; idxN++) {
     TList *list = static_cast<TList*>(file->Get(aNames[idxN]));
     printf("\n============================================================\n");
-    for (int idxM = 0; idxM < 3; idxM++) {
+    for (int idxM = 0; idxM < 4; idxM++) {
       printf("\n---------------------------------------------------\n");
       printf("-- %s vs sqrt(s_NN) : %s\n", aNames[idxN], aTitle[idxM]);
       printf("---------------------------------------------------\n");
@@ -53,9 +53,39 @@ void print_STAR_QM2015_Preliminary() {
 	  printf("%s ; %8.1f ; %8f ; %8f ; %8f \n",  aCent[idxC], snn, value, eStat, eSys);
 	} // for (Int_t idx = 0 ; idx < gStat->GetN(); ++idx) {
       } // for (int idxC = 0; idxC < 2; idxC++) {
-    } // for (int idxM = 0; idxM < 3; idxM++) {
+    } // for (int idxM = 0; idxM < 4; idxM++) {
   } // for (int idxN = 0; idxN < 3; idxN++) {
-  
+
+
+  // ======================================================================================
+  // ======================================================================================
+  {
+    int idxN = 2;
+    TList *list = static_cast<TList*>(file->Get(aNames[idxN]));
+    printf("\n============================================================\n");
+    for (int idxM = 0; idxM < 4; idxM++) {
+      printf("\n---------------------------------------------------\n");
+      printf("-- %s vs sqrt(s_NN) : C_%d\n", aNames[idxN], idxM+1);
+      printf("---------------------------------------------------\n");
+      
+      for (int idxC = 0; idxC < 2; idxC++) {
+	if (idxC == 1 && idxN != 2)
+	  continue;
+	TGraphErrors *gStat = static_cast<TGraphErrors*>(list->FindObject(Form("%s_C%d_sNN_%s_stat", aNames[idxN], idxM+1, aCent[idxC])));
+	TGraphErrors *gSys = static_cast<TGraphErrors*>(list->FindObject(Form("%s_C%d_sNN_%s_sys",   aNames[idxN], idxM+1, aCent[idxC])));
+	
+	printf("\ncent ; sqrt(sNN);    value ;     stat ;      sys \n");
+	for (Int_t idx = 0 ; idx < gStat->GetN(); ++idx) {
+	  Double_t snn, value;
+	  gStat->GetPoint(idx, snn, value);
+          Double_t eStat = gStat->GetErrorY(idx);	
+	  Double_t eSys = gSys->GetErrorY(idx);	
+	  printf("%s ; %8.1f ; %8f ; %8f ; %8f \n",  aCent[idxC], snn, value, eStat, eSys);
+	} // for (Int_t idx = 0 ; idx < gStat->GetN(); ++idx) {
+      } // for (int idxC = 0; idxC < 2; idxC++) {
+    } // for (int idxM = 0; idxM < 4; idxM++) {
+  }
+
   // ======================================================================================
   // ======================================================================================
   TList *list = static_cast<TList*>(file->Get("Net-Charge_VsDeltaEta"));
