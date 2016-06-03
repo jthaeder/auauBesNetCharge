@@ -85,7 +85,7 @@ Double_t NN(Double_t, Int_t);
 
 // ----------------------------------------------------------------------------  
 
-const Double_t masses[3] = {0.1349764, 0.493677, 0.9382723128};
+const Double_t masses[3] = {0.1349764, 0.9382723128, 0.493677};
 
 Int_t    binHnEvent[11] = {  10,   41,   41,    401,   21,   601,   601,   3001,    2,    201,   21};
 Double_t minHnEvent[11] = {-0.5, -2.0, -3.0, -100.0,  0.0,   0.0,   0.0,    0.0, -0.5, -100.0,  0.0};
@@ -818,7 +818,6 @@ Int_t main(int argc, char** argv) {
       else if (isTrackAcceptedKin && analysisIdx > 0) 
 	isTrackAcceptedKin = (y > yAbsRange[analysisIdx][0] && y < yAbsRange[analysisIdx][1]) ? kTRUE : kFALSE;
 
-      
       // -- is track accepted flag - clusters/dca
       Bool_t isTrackAcceptedCut = (TMath::Abs(nHitsFit) > nHitsFitMin[analysisIdx] 
 				   && DCA < dcaMax[analysisIdx] 
@@ -846,16 +845,17 @@ Int_t main(int argc, char** argv) {
 	
 	isTrackAcceptedPid = isTrackSpallationProton;
       }
-      
+   
       // -->> is track accepted  - clusters/dca && kinematics && PID
       Bool_t isTrackAccepted = (isTrackAcceptedKin && isTrackAcceptedCut && isTrackAcceptedPid);
 
+ 
       // -- fill ThnSparse - tracks
       // ------------------------------------------------------------------
-      Double_t aTrack[12] = {Double_t(centrality), pt, eta, sign, DCA,
+      Double_t aTrack[13] = {Double_t(centrality), pt, eta, sign, DCA,
 			     Double_t(nHitsDedx), Double_t(TMath::Abs(nHitsFit)), Double_t(nFitPoss), ratio, 
-			     Double_t(isInRefMult), Double_t(isTrackAccepted), nSigma[analysisIdx]};
-      
+			     Double_t(isInRefMult), Double_t(isTrackAccepted), nSigma[analysisIdx], pcm};
+ 
 #if TRACK_THN      
       fHnTrackUnCorr->Fill(aTrack);
 #endif
@@ -960,12 +960,12 @@ Int_t RefMultCorrection(Double_t vz, Int_t refmultIn, Int_t anaIdx) {
     aRefMultCorrPar[anaIdx][1]*vz + aRefMultCorrPar[anaIdx][2]*vz*vz + aRefMultCorrPar[anaIdx][3]*vz*vz*vz + 
     aRefMultCorrPar[anaIdx][4]*vz*vz*vz*vz + aRefMultCorrPar[anaIdx][5]*vz*vz*vz*vz*vz + aRefMultCorrPar[anaIdx][6]*vz*vz*vz*vz*vz*vz;
 
-  Double_t Hovno    = (aRefMultCorrPar[anaIdx][0] + aRefMultCorrPar[anaIdx][7]) / refMultZ;
+  Double_t temp = (aRefMultCorrPar[anaIdx][0] + aRefMultCorrPar[anaIdx][7]) / refMultZ;
 
-  Double_t refMultD = Double_t(refmultIn);
-  //  Double_t refMultD = Double_t(refmultIn) + gRandom->Rndm(); // random sampling over bin width -> avoid peak structures in corrected distribution
+  //  Double_t refMultD = Double_t(refmultIn);
+  Double_t refMultD = Double_t(refmultIn) + gRandom->Rndm(); // random sampling over bin width -> avoid peak structures in corrected distribution
   
-  return Int_t(refMultD * Hovno);
+  return Int_t(refMultD * temp);
 }
 
 //________________________________________________________________________
@@ -1355,8 +1355,9 @@ void InitializeRunByRunTrackHists() {
     list->SetName(Form("f%s_runByRunTrackHists_%s", name[analysisIdx], qaRunNames[ii]));
     list->SetOwner(kTRUE);
     
+    list->Add(new TProfile(Form("pPt_%s", qaRunNames[ii]), Form("<p_T>%s;Run;<p_T>", qaRunTitles[ii]), nRunsAll, -0.5, nRunsAll-0.5));
     list->Add(new TProfile(Form("pPt_neg_%s", qaRunNames[ii]), Form("<p_T^{neg}>%s;Run;<p_T^{neg}>", qaRunTitles[ii]), nRunsAll, -0.5, nRunsAll-0.5));
-    list->Add(new TProfile(Form("pPt_pos_%s", qaRunNames[ii]), Form("<p_T^{po}>%s;Run;<p_T^{pos}>", qaRunTitles[ii]), nRunsAll, -0.5, nRunsAll-0.5));
+    list->Add(new TProfile(Form("pPt_pos_%s", qaRunNames[ii]), Form("<p_T^{pos}>%s;Run;<p_T^{pos}>", qaRunTitles[ii]), nRunsAll, -0.5, nRunsAll-0.5));
 
     list->Add(new TProfile(Form("pDca_%s", qaRunNames[ii]), Form("<dca>%s;Run;<dca>", qaRunTitles[ii]), nRunsAll, -0.5, nRunsAll-0.5));
     list->Add(new TProfile(Form("pNSigmaProton_%s", qaRunNames[ii]), Form("<nSigmaProton>%s;Run;<nSigmaProton>", qaRunTitles[ii]), nRunsAll, -0.5, nRunsAll-0.5));
@@ -1436,6 +1437,7 @@ void FillTrackHists(Double_t *aTrack, Int_t mode) {
 
   TList* list = static_cast<TList*>(fOutList->FindObject(Form("f%s_trackHists_%s", name[analysisIdx], qaNames[mode])));
   (static_cast<TH1F*>(list->FindObject(Form("pt_%s_%d", qaNames[mode], idxSign))))->Fill(aTrack[1]);
+  (static_cast<TH1F*>(list->FindObject(Form("pcm_%s_%d", qaNames[mode], idxSign))))->Fill(aTrack[12]);
   (static_cast<TH1F*>(list->FindObject(Form("eta_%s_%d", qaNames[mode], idxSign))))->Fill(aTrack[2]);
   (static_cast<TH1F*>(list->FindObject(Form("dca_%s_%d", qaNames[mode], idxSign))))->Fill(aTrack[4]);
   (static_cast<TH1F*>(list->FindObject(Form("nHitsDedx_%s_%d", qaNames[mode], idxSign))))->Fill(aTrack[5]);
@@ -1488,5 +1490,6 @@ void FillRunByRunTrackHists(Double_t *aTrack, Int_t isBadRun, Int_t mode, Int_t 
     (static_cast<TH2D*>(list->FindObject(Form("hPt_pos_%s",     qaRunNames[idx]))))->Fill(runIdx, aTrack[1]);
   }
 
+  (static_cast<TProfile*>(list->FindObject(Form("pPt_%s", qaRunNames[idx]))))->Fill(runIdx, aTrack[1]);
   (static_cast<TProfile*>(list->FindObject(Form("pDca_%s", qaRunNames[idx]))))->Fill(runIdx, aTrack[4]);  
 }
