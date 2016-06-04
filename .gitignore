@@ -63,6 +63,7 @@ analysis/plots/URQMD
 analysis/plots/sysError
 analysis/plots/dataBESII
 analysis/plots/STAR_QM2015_Preliminary.*
+analysis/plots/STAR_Preliminary.*
 
 temp_gccflags.c
 .sl64_gcc482/

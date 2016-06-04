@@ -29,11 +29,22 @@ TLegend *legTheo;
 
 // -----------------------------------------------------------
 
-const Char_t* aMomentsTitle[]  = {"c_{1}","c_{2}","c_{3}","c_{4}","#sigma^{2}/M","S #sigma", "#kappa #sigma^{2}"};
-const Char_t* aMomentsTitle2[] = {"c_{1}","c_{2}","c_{3}","c_{4}","#sigma^{2}/M","S #sigma/Skellam", "#kappa #sigma^{2}"};
+      enum    namesType          {kNetQ, kNetK, kNetP}; 
+
+const Int_t   nNames           = 3;
+const Char_t *aNames[3]        = {"Net-Charge", "Net-Kaon", "Net-Proton"};
+
+const Char_t *aNamesPt[3]      = { "0.2 < #it{p}_{T} (GeV/#it{c}) < 2.0, |#eta| < 0.5",
+				   "0.2 < #it{p}_{T} (GeV/#it{c}) < 1.6, |#it{y}| < 0.5",
+				   "0.4 < #it{p}_{T} (GeV/#it{c}) < 2.0, |#it{y}| < 0.5" };  
+
+// -----------------------------------------------------------
+
+const Char_t* aMomentsTitle[]  = {"c_{1}","c_{2}","c_{3}","c_{4}","#sigma^{2}/M","S #sigma","#kappa #sigma^{2}"};
+const Char_t* aMomentsTitle2[] = {"c_{1}","c_{2}","c_{3}","c_{4}","#sigma^{2}/M","S #sigma/Skellam","#kappa #sigma^{2}","S #sigma"};
 
 const Char_t* aMoments[]       = {"C1","C2","C3","C4","VM","SD","KV"};
-const Char_t* aMoments2[]      = {"C1","C2","C3","C4","VM","SDSk","KV"};
+const Char_t* aMoments2[]      = {"C1","C2","C3","C4","VM","SDSk","KV","SD"};
 const Int_t   nMoments         = 7;
 
 const Char_t* aDataSetsTitle[] = {"corrected - 11.5 GeV #epsilon_{1} , #epsilon_{2}"};
@@ -79,10 +90,21 @@ const Double_t tc[]            = {140,  152,  156,  160, 163, 164,  165, 166};
 
 // -----------------------------------------------------------
 
+TList lGraphStat;
+TList lGraphSys; 
+TList lGraphPoisson;
+TList lGraphUrqmd; 
+TList lGraph14; 
+
+// -----------------------------------------------------------
 
 // ______________________________________________________________________________________
 void PrepareGraph(TGraphErrors* g) {
   // -- Prepare Graph
+
+  if (!g)
+    return;  
+  
   g->SetTitle("");
   g->GetXaxis()->SetTitle("");
   g->GetYaxis()->SetTitle("");
@@ -97,6 +119,10 @@ void PrepareGraph(TGraphErrors* g) {
 // ______________________________________________________________________________________
 void PrepareGraphCumulants(TGraphErrors* g) {
   // -- Prepare Graph
+
+  if (!g)
+    return;
+
   g->SetTitle("");
   g->GetXaxis()->SetTitle("");
   g->GetYaxis()->SetTitle("");
@@ -108,10 +134,16 @@ void PrepareGraphCumulants(TGraphErrors* g) {
   g->GetXaxis()->SetNoExponent(kTRUE);
 }
 
-
 // ______________________________________________________________________________________
 void ConfigGraph(TGraphErrors* g, Int_t yLimitIdx, Int_t idxMarker, Int_t is = 0) {
   // -- Config Graph
+  //    is = 1 :  URQMD
+  //    is = 2 :  Sys
+  //    is = 3 :  Poisson
+
+  if (!g)
+    return;
+  
   g->SetMinimum(aMinY[yLimitIdx]);
   g->SetMaximum(aMaxY[yLimitIdx]);
   g->GetXaxis()->SetLimits(aMinX, aMaxX);  
@@ -124,16 +156,16 @@ void ConfigGraph(TGraphErrors* g, Int_t yLimitIdx, Int_t idxMarker, Int_t is = 0
     g->SetMarkerSize(1.8);
 
   g->SetLineColor(aColors[idxMarker]);
-  if (is == 1) {
+  if (is == 1) { // Poisson
     g->SetLineStyle(2);
     g->SetLineWidth(2);
   }
-  if (is == 2) {
+  if (is == 2) { // SYS
     g->SetFillColorAlpha(aColors[idxMarker], 0.35);
     g->SetFillColor(aColors[idxMarker]);
     g->SetFillStyle(3344);
   }
-  if (is == 3) {
+  if (is == 3) {  // UrQMD
     g->SetLineColor(kAzure);
     g->SetLineWidth(2);
     g->SetLineStyle(2);
@@ -163,7 +195,7 @@ void ShiftGraphX(TGraphErrors* g, Double_t shift) {
 }
 
 // ______________________________________________________________________________________
-void DrawSet(TGraphErrors *gStat, TGraphErrors *gSys, TGraphErrors *gPoisson, TGraphErrors *gUrqmd,
+void DrawSet(TGraphErrors *gStat, TGraphErrors *gSys, TGraphErrors *gUrqmd, TGraphErrors *gPoisson, 
 	     Int_t idxMoment, Int_t idxCent, TGraphErrors* g14 = NULL) {
   // -- Draw Set 
 
@@ -174,12 +206,11 @@ void DrawSet(TGraphErrors *gStat, TGraphErrors *gSys, TGraphErrors *gPoisson, TG
 
   ConfigGraph(gStat,    idxMoment, idxCent);
   ConfigGraph(gSys,     idxMoment, idxCent, 2);
+  ConfigGraph(gUrqmd,   idxMoment, idxCent, 3);
   ConfigGraph(gPoisson, idxMoment, idxCent, 1);
-  if (idxCent == 0) 
-    ConfigGraph(gUrqmd, idxMoment, idxCent, 3);
   
   if (g14) {
-    PrepareGraph(gUrqmd);
+    PrepareGraph(g14);
     ConfigGraph(g14, idxMoment, idxCent);
     if (idxCent == 0)
       g14->SetMarkerStyle(29);
@@ -333,7 +364,7 @@ void CreateLegends(Int_t linesExp, Int_t linesTheo, Float_t leftX, Float_t topY)
 }
 
 // ______________________________________________________________________________________
-void SaveCanvas(const Char_t* name) {
+void SaveCanvas(const Char_t* name, Bool_t isNice = kTRUE) {
   // -- Write out canvas
   
   gSystem->Exec(Form("mkdir -p results/nice/%s/png",  name));
@@ -341,9 +372,11 @@ void SaveCanvas(const Char_t* name) {
   gSystem->Exec(Form("mkdir -p results/nice/%s/eps",  name));
   gSystem->Exec(Form("mkdir -p results/nice/%s/gif",  name));
   gSystem->Exec(Form("mkdir -p results/nice/%s/root", name));
-  gSystem->Exec(Form("mkdir -p results/nice/pdf"));
-  gSystem->Exec(Form("mkdir -p results/nice/png"));
-  
+  if (isNice) {
+    gSystem->Exec(Form("mkdir -p results/nice/pdf"));
+    gSystem->Exec(Form("mkdir -p results/nice/png"));
+  }
+
   // -----------------------------------------------------
   
   for (Int_t idx = 0; idx < canA.GetEntriesFast() ; ++idx) {
@@ -355,10 +388,12 @@ void SaveCanvas(const Char_t* name) {
     c->SaveAs(Form("results/nice/%s/eps/%s.eps",   name, c->GetName()));
     c->SaveAs(Form("results/nice/%s/gif/%s.gif",   name, c->GetName()));
     c->SaveAs(Form("results/nice/%s/pdf/%s.pdf",   name, c->GetName()));
-    c->SaveAs(Form("results/nice/pdf/%s.pdf",            c->GetName()));
-    c->SaveAs(Form("results/nice/png/%s.png",            c->GetName()));
     c->SaveAs(Form("results/nice/%s/root/%s.C",    name, c->GetName()));
     c->SaveAs(Form("results/nice/%s/root/%s.root", name, c->GetName()));
+    if (isNice) {
+      c->SaveAs(Form("results/nice/pdf/%s.pdf",            c->GetName()));
+      c->SaveAs(Form("results/nice/png/%s.png",            c->GetName()));
+    }
   }
 }
 
@@ -447,3 +482,4 @@ void SetupStyle() {
 
 // ______________________________________________________________________________________
 void toolsEnergyNice(){;}
+  
